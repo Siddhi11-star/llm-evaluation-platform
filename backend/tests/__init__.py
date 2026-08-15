@@ -1,1 +1,1 @@
-"""Tests package."""
+"""Backend setup and component verification tests."""

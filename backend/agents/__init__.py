@@ -1,3 +1,0 @@
-"""
-Judge agents package.
-"""

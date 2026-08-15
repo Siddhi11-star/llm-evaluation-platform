@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet } from 'react-router'
 import { useTheme } from './ThemeProvider'
+import { Logo } from './Logo'
 import {
   IcHome,
   IcChat,
@@ -71,21 +72,8 @@ export default function AppShell() {
         }}
         className={mobileOpen ? 'max-md:!translate-x-0' : 'max-md:-translate-x-full'}
       >
-        <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 8,
-              background: 'linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-cyan))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <IcJudge size={16} style={{ color: '#fff' }} />
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-foreground)' }}>JudgeAI</span>
+        <div style={{ padding: '18px 20px' }}>
+          <Logo size={32} fontSize={17} />
         </div>
 
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -215,22 +203,7 @@ export default function AppShell() {
             borderBottom: '1px solid var(--color-border)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-cyan))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IcJudge size={16} style={{ color: '#fff' }} />
-            </div>
-            <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-foreground)' }}>JudgeAI</span>
-          </div>
+          <Logo size={30} fontSize={16} />
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             style={{ background: 'none', border: 'none', color: 'var(--color-foreground)', cursor: 'pointer' }}

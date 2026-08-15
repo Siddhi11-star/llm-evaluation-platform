@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Outlet } from 'react-router'
 import { useTheme } from './ThemeProvider'
 import { IcSun, IcMoon } from './icons'
+import { Logo } from './Logo'
 
 function MarketingNav() {
   const { theme, toggleTheme } = useTheme()
@@ -29,26 +30,7 @@ function MarketingNav() {
           justifyContent: 'space-between',
         }}
       >
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 8,
-              background: 'linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-cyan))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--color-foreground)' }}>JudgeAI</span>
-        </Link>
+        <Logo size={36} fontSize={18} />
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: 28 }} className="max-md:hidden">
           <Link to="/pricing" style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-muted)', textDecoration: 'none', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-foreground)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}>Pricing</Link>

@@ -1,3 +1,0 @@
-"""
-Orchestration package — LangGraph pipeline.
-"""
