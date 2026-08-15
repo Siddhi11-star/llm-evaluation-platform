@@ -15,7 +15,6 @@ import {
   IcRotate,
   IcMic,
 } from '../components/icons'
-import { MeshGradientSVG } from '../components/ui/shader-svg'
 
 // Models available for selection
 export type LLMModel = {
@@ -602,13 +601,16 @@ const handleSend = (overrideText?: string) => {
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
               <div style={{ width: '100%', maxWidth: 680 }}>
                 {/* Centered welcome message */}
-                <div style={{ textAlign: 'center', marginBottom: 22 }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <MeshGradientSVG size={145} />
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 14, background: 'linear-gradient(135deg, #7C3AED, #38BDF8)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+                    <IcSparkles size={24} style={{ color: '#fff' }} />
                   </div>
-                  <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px', color: 'var(--color-foreground)' }}>
+                  <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 8px', color: 'var(--color-foreground)' }}>
                     Welcome to JudgeAI Chatbot
                   </h1>
+                  <p style={{ fontSize: 13.5, color: 'var(--color-muted)', margin: '0 auto', maxWidth: 440, lineHeight: 1.6 }}>
+                    Pick a model and ask about LLM evaluations, benchmarks, or rubric design — or try a quick action below.
+                  </p>
                 </div>
 
                 {/* Model selector */}
