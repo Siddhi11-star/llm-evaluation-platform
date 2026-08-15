@@ -122,7 +122,7 @@ def _call_groq(prompt: str) -> str:
         temperature=0,
         max_tokens=1024,
     )
-    return completion.choices[0].message.content
+    return completion.choices[0].message.content or ""
 
 
 def _call_huggingface(prompt: str) -> str:

@@ -114,3 +114,41 @@ def insert_scores(scores: list[dict]) -> list[str]:
 def get_scores_for_run(run_id: str) -> list[dict]:
     cursor = get_scores_col().find({"run_id": run_id})
     return [_id_str(s) for s in cursor]
+
+
+# ── Users ─────────────────────────────────────────────────────────────────────
+
+import bcrypt
+
+
+def get_users_col():
+    return get_db()["users"]
+
+
+def create_user(name: str, email: str, password: str) -> str:
+    """Hash the password and insert a new user document. Returns the user _id."""
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+    user = {
+        "name": name,
+        "email": email.lower().strip(),
+        "password_hash": hashed,
+        "created_at": _now(),
+    }
+    result = get_users_col().insert_one(user)
+    return str(result.inserted_id)
+
+
+def find_user_by_email(email: str) -> dict | None:
+    doc = get_users_col().find_one({"email": email.lower().strip()})
+    return _id_str(doc) if doc else None
+
+
+def find_user_by_id(user_id: str) -> dict | None:
+    doc = get_users_col().find_one({"_id": ObjectId(user_id)})
+    return _id_str(doc) if doc else None
+
+
+def verify_password(plain: str, hashed: bytes) -> bool:
+    """Check a plaintext password against the stored bcrypt hash."""
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed)
+

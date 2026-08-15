@@ -39,5 +39,9 @@ class Config:
     # ── Timeouts (seconds) ────────────────────────────────────────────────────
     LLM_TIMEOUT: int = int(os.getenv("LLM_TIMEOUT", "60"))
 
+    # ── Auth / JWT ────────────────────────────────────────────────────────────
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "change-me-in-production")
+    JWT_EXPIRY_HOURS: int = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
+
 
 cfg = Config()
