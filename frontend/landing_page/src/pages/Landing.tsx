@@ -2,7 +2,16 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { LANDING_NAV, FOOTER_LINK_ROUTES } from '../app/navLinks'
 import { useTheme } from '../components/ThemeProvider'
-import { IcSun, IcMoon } from '../components/icons'
+import {
+  IcSun,
+  IcMoon,
+  IcJudgeAccuracy,
+  IcJudgeRelevance,
+  IcJudgeReasoning,
+  IcJudgeHallucination,
+  IcJudgeSafety,
+  IcJudgeStyle,
+} from '../components/icons'
 import { Logo } from '../components/Logo'
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -417,7 +426,7 @@ function FeatureCards() {
             </div>
             <div style={{ position: 'relative' }}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C3AED', marginBottom: 20 }}>
-                <IconTarget />
+                <IcJudgeAccuracy size={22} />
               </div>
               <h3 style={{ fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em', marginBottom: 10 }}>Rubric Scoring</h3>
               <p style={{ color: 'var(--color-muted)', fontSize: 14, lineHeight: 1.65, marginBottom: 24 }}>
@@ -563,12 +572,12 @@ function ProductScreenshot() {
 // ─── Six Judge Agents ─────────────────────────────────────────────────────────
 
 const JUDGES = [
-  { icon: <IconTarget />, label: 'Accuracy', desc: 'Factual correctness verified against ground truth and retrieved context.', color: '#38BDF8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.2)' },
-  { icon: <IconZap />, label: 'Relevance', desc: 'Measures how directly the response addresses the input query.', color: '#7C3AED', bg: 'rgba(124,58,237,0.1)', border: 'rgba(124,58,237,0.2)' },
-  { icon: <IconBrain />, label: 'Reasoning', desc: 'Evaluates logical coherence, chain-of-thought quality, and inference steps.', color: '#EC4899', bg: 'rgba(236,72,153,0.1)', border: 'rgba(236,72,153,0.2)' },
-  { icon: <IconAlertTriangle />, label: 'Hallucination', desc: 'Detects unsupported claims, confabulated facts, and source misattributions.', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
-  { icon: <IconShield />, label: 'Safety', desc: 'Flags harmful, biased, or policy-violating content before it reaches users.', color: '#34D399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.2)' },
-  { icon: <IconPalette />, label: 'Style', desc: 'Assesses tone, formatting, and alignment with brand voice guidelines.', color: '#A78BFA', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)' },
+  { icon: <IcJudgeAccuracy size={22} />, label: 'Accuracy', desc: 'Factual correctness verified against ground truth and retrieved context.', color: '#38BDF8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.2)' },
+  { icon: <IcJudgeRelevance size={22} />, label: 'Relevance', desc: 'Measures how directly the response addresses the input query.', color: '#7C3AED', bg: 'rgba(124,58,237,0.1)', border: 'rgba(124,58,237,0.2)' },
+  { icon: <IcJudgeReasoning size={22} />, label: 'Reasoning', desc: 'Evaluates logical coherence, chain-of-thought quality, and inference steps.', color: '#EC4899', bg: 'rgba(236,72,153,0.1)', border: 'rgba(236,72,153,0.2)' },
+  { icon: <IcJudgeHallucination size={22} />, label: 'Hallucination', desc: 'Detects unsupported claims, confabulated facts, and source misattributions.', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
+  { icon: <IcJudgeSafety size={22} />, label: 'Safety', desc: 'Flags harmful, biased, or policy-violating content before it reaches users.', color: '#34D399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.2)' },
+  { icon: <IcJudgeStyle size={22} />, label: 'Style', desc: 'Assesses tone, formatting, and alignment with brand voice guidelines.', color: '#A78BFA', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)' },
 ]
 
 function JudgeAgents() {
