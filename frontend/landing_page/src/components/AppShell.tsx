@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet } from 'react-router'
-import { useTheme } from './ThemeProvider'
+import { useSettings } from './ThemeProvider'
 import { Logo } from './Logo'
 import {
   IcHome,
   IcChat,
   IcEvaluations,
   IcJudge,
+  IcSwarm,
   IcAdvisor,
   IcCompare,
   IcSettings,
@@ -21,6 +22,7 @@ const NAV = [
   { to: '/dashboard/chat', label: 'Chat', icon: IcChat },
   { to: '/dashboard/evaluations', label: 'Evaluations', icon: IcEvaluations },
   { to: '/dashboard/judges', label: 'Judge Agents', icon: IcJudge, aliases: ['/dashboard/judge-config'] },
+  { to: '/dashboard/agent-swarm', label: 'Agent Swarm', icon: IcSwarm, aliases: ['/dashboard/agents'] },
   { to: '/dashboard/advisor', label: 'Advisor Agent', icon: IcAdvisor, aliases: ['/dashboard/advisor-agent'] },
   { to: '/dashboard/compare', label: 'Model Comparison', icon: IcCompare, aliases: ['/dashboard/model-comparison', '/dashboard/comparison'] },
   { to: '/dashboard/settings', label: 'Settings', icon: IcSettings },
@@ -46,20 +48,26 @@ export function TopBar({ title, children }: { title: string; children?: React.Re
 }
 
 export function PageContent({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={{ padding: 24, ...style }}>{children}</div>
+  return (
+    <div className="page-content-wrapper" style={{ padding: 'var(--page-padding, 24px)', ...style }}>
+      {children}
+    </div>
+  )
 }
 
 export default function AppShell() {
   const { pathname } = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, profile, sidebarCollapsed, setSidebarCollapsed } = useSettings()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const sidebarWidth = sidebarCollapsed ? 72 : 240
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-background)' }}>
       {/* Sidebar */}
       <aside
         style={{
-          width: 240,
+          width: sidebarWidth,
           borderRight: '1px solid var(--color-border)',
           display: 'flex',
           flexDirection: 'column',
@@ -69,15 +77,15 @@ export default function AppShell() {
           bottom: 0,
           zIndex: 50,
           background: 'var(--color-background)',
-          transition: 'background 0.15s ease, border-color 0.15s ease',
+          transition: 'width 0.2s ease, background 0.15s ease, border-color 0.15s ease',
         }}
         className={mobileOpen ? 'max-md:!translate-x-0' : 'max-md:-translate-x-full'}
       >
-        <div style={{ padding: '18px 20px' }}>
-          <Logo size={32} fontSize={17} />
+        <div style={{ padding: sidebarCollapsed ? '18px 12px' : '18px 20px', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'space-between' }}>
+          <Logo size={32} fontSize={sidebarCollapsed ? 0 : 17} />
         </div>
 
-        <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <nav style={{ flex: 1, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
           {NAV.map(({ to, label, icon: Icon, aliases }) => {
             const active =
               pathname === to ||
@@ -88,18 +96,20 @@ export default function AppShell() {
                 key={to}
                 to={to}
                 onClick={() => setMobileOpen(false)}
+                title={sidebarCollapsed ? label : undefined}
+                className="nav-item-smooth"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                   gap: 10,
-                  padding: '8px 12px',
+                  padding: sidebarCollapsed ? '10px' : '8px 12px',
                   borderRadius: 8,
                   fontSize: 13,
                   fontWeight: 500,
                   textDecoration: 'none',
                   color: active ? 'var(--color-nav-active-fg)' : 'var(--color-muted)',
                   background: active ? 'var(--color-nav-active-bg)' : 'transparent',
-                  transition: 'background 0.15s, color 0.15s',
                 }}
                 onMouseEnter={e => {
                   if (!active) {
@@ -115,21 +125,23 @@ export default function AppShell() {
                 }}
               >
                 <Icon size={18} />
-                {label}
+                {!sidebarCollapsed && label}
               </Link>
             )
           })}
         </nav>
 
-        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--color-border)' }}>
+        <div style={{ padding: sidebarCollapsed ? '12px 8px' : '16px 20px', borderTop: '1px solid var(--color-border)' }}>
           <button
             onClick={toggleTheme}
+            title={sidebarCollapsed ? (theme === 'dark' ? 'Light mode' : 'Dark mode') : undefined}
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
               gap: 8,
               width: '100%',
-              padding: '8px 12px',
+              padding: sidebarCollapsed ? '8px 0' : '8px 12px',
               borderRadius: 8,
               border: '1px solid var(--color-border)',
               background: 'var(--color-card)',
@@ -149,31 +161,48 @@ export default function AppShell() {
             }}
           >
             {theme === 'dark' ? <IcSun size={16} /> : <IcMoon size={16} />}
-            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            {!sidebarCollapsed && (theme === 'dark' ? 'Light mode' : 'Dark mode')}
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+          <Link
+            to="/dashboard/settings"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+              gap: 10,
+              marginTop: 14,
+              textDecoration: 'none',
+            }}
+          >
             <div
               style={{
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-cyan))',
+                background: profile.avatarColor || 'linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-cyan))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 12,
                 fontWeight: 700,
                 color: '#fff',
+                flexShrink: 0,
               }}
             >
-              SL
+              {profile.avatarInitials || 'SL'}
             </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)' }}>Sarah Lin</div>
-              <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>sarah@judgeai.dev</div>
-            </div>
-          </div>
+            {!sidebarCollapsed && (
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                  {profile.name}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--color-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                  {profile.email}
+                </div>
+              </div>
+            )}
+          </Link>
         </div>
       </aside>
 
@@ -192,7 +221,7 @@ export default function AppShell() {
       )}
 
       {/* Main */}
-      <main style={{ flex: 1, marginLeft: 240, transition: 'margin 0.2s' }} className="max-md:!ml-0">
+      <main style={{ flex: 1, marginLeft: sidebarWidth, transition: 'margin 0.2s ease' }} className="max-md:!ml-0">
         {/* Mobile header */}
         <div
           className="md:hidden"
@@ -213,7 +242,9 @@ export default function AppShell() {
           </button>
         </div>
 
-        <Outlet />
+        <div key={pathname} className="page-transition-container">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

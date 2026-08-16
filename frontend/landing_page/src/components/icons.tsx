@@ -108,11 +108,45 @@ export const IcEyeOff = (p: IconProps) => (
     <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>
   </svg>
 )
-export const IcToggle = ({ on, size = 18 }: { on: boolean; size?: number }) => (
-  <div style={{ width: size * 2.2, height: size * 1.1, borderRadius: 9999, background: on ? '#7C3AED' : 'rgba(255,255,255,0.12)', position: 'relative', transition: 'background 0.2s', cursor: 'pointer', border: `1px solid ${on ? '#7C3AED' : 'rgba(255,255,255,0.15)'}`, flexShrink: 0 }}>
-    <div style={{ position: 'absolute', top: 2, left: on ? `calc(100% - ${size * 0.9}px - 2px)` : 2, width: size * 0.9, height: size * 0.9, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }} />
-  </div>
-)
+export const IcToggle = ({ on, size = 18, onClick }: { on: boolean; size?: number; onClick?: (e: React.MouseEvent) => void }) => {
+  const w = Math.round(size * 2.2)
+  const h = Math.round(size * 1.25)
+  const thumbSize = h - 4
+
+  return (
+    <div
+      role="switch"
+      aria-checked={on}
+      onClick={onClick}
+      style={{
+        width: w,
+        height: h,
+        borderRadius: 9999,
+        background: on ? 'var(--color-accent-violet, #7C3AED)' : 'var(--color-border-light, rgba(140,140,140,0.3))',
+        border: `1.5px solid ${on ? 'var(--color-accent-violet, #7C3AED)' : 'var(--color-border, rgba(140,140,140,0.4))'}`,
+        position: 'relative',
+        transition: 'background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+        cursor: 'pointer',
+        flexShrink: 0,
+        boxShadow: on ? '0 0 12px rgba(124, 58, 237, 0.4)' : 'none',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: 1,
+          left: on ? `calc(100% - ${thumbSize}px - 1px)` : 1,
+          width: thumbSize,
+          height: thumbSize,
+          borderRadius: '50%',
+          background: '#FFFFFF',
+          transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.35)',
+        }}
+      />
+    </div>
+  )
+}
 
 export const IcKey = (p: IconProps) => (
   <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -261,6 +295,41 @@ export const IcJudgeStyle = (p: IconProps) => (
     <circle cx="11" cy="11" r="1.5" fill={p.color ?? 'currentColor'} stroke="none" />
     <path d="M19 3v3m-1.5-1.5h3" strokeWidth="1.5" strokeLinecap="round" />
   </svg>
+)/** Swarm Agent: Interconnected multi-agent node constellation and neural hive network */
+export const IcSwarm = (p: IconProps) => (
+  <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
+    <circle cx="12" cy="5" r="2.5" />
+    <circle cx="5" cy="17" r="2.5" />
+    <circle cx="19" cy="17" r="2.5" />
+    <path d="M12 7.5v4M6.8 15l3.2-2.5M17.2 15l-3.2-2.5" strokeWidth="1.5" />
+    <circle cx="12" cy="13.5" r="1.5" fill={p.color ?? 'currentColor'} stroke="none" />
+  </svg>
 )
 
+export const IcPlay = (p: IconProps) => (
+  <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
+    <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" fillOpacity="0.2" />
+  </svg>
+)
 
+export const IcPause = (p: IconProps) => (
+  <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
+    <rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" fillOpacity="0.2" />
+    <rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" fillOpacity="0.2" />
+  </svg>
+)
+
+export const IcCpu = (p: IconProps) => (
+  <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <rect x="9" y="9" width="6" height="6" />
+    <line x1="9" y1="1" x2="9" y2="4" />
+    <line x1="15" y1="1" x2="15" y2="4" />
+    <line x1="9" y1="20" x2="9" y2="23" />
+    <line x1="15" y1="20" x2="15" y2="23" />
+    <line x1="20" y1="9" x2="23" y2="9" />
+    <line x1="20" y1="15" x2="23" y2="15" />
+    <line x1="1" y1="9" x2="4" y2="9" />
+    <line x1="1" y1="15" x2="4" y2="15" />
+  </svg>
+)

@@ -198,3 +198,115 @@ body {
 .syntax-comment { color: rgba(255,255,255,0.3); font-style: italic; }
 .syntax-method  { color: #89ddff; }
 .syntax-url     { color: #38bdf8; }
+
+/* ─── Settings Appearance & Global Scale Overrides ─── */
+:root {
+  --base-font-size: 14px;
+  --page-padding: 24px;
+}
+
+:root[data-font-size="small"] {
+  --base-font-size: 12.5px;
+  font-size: 13px;
+  zoom: 0.92;
+}
+:root[data-font-size="medium"] {
+  --base-font-size: 14px;
+  font-size: 14px;
+  zoom: 1;
+}
+:root[data-font-size="large"] {
+  --base-font-size: 16px;
+  font-size: 15.5px;
+  zoom: 1.08;
+}
+
+/* ─── Global Layout Density ─── */
+:root[data-density="compact"] {
+  --page-padding: 14px;
+}
+:root[data-density="compact"] .card-base,
+:root[data-density="compact"] [class*="card"] {
+  padding: 12px 14px !important;
+  margin-bottom: 12px !important;
+}
+:root[data-density="compact"] .page-content-wrapper {
+  padding: 14px !important;
+}
+:root[data-density="compact"] table th,
+:root[data-density="compact"] table td {
+  padding: 6px 10px !important;
+}
+:root[data-density="compact"] input,
+:root[data-density="compact"] select,
+:root[data-density="compact"] textarea {
+  padding: 6px 10px !important;
+  font-size: 12.5px !important;
+}
+:root[data-density="compact"] aside nav a {
+  padding: 6px 10px !important;
+}
+
+:root[data-density="comfortable"] {
+  --page-padding: 24px;
+}
+
+:root[data-density="spacious"] {
+  --page-padding: 36px;
+}
+:root[data-density="spacious"] .card-base,
+:root[data-density="spacious"] [class*="card"] {
+  padding: 30px !important;
+  margin-bottom: 24px !important;
+}
+:root[data-density="spacious"] .page-content-wrapper {
+  padding: 34px !important;
+}
+:root[data-density="spacious"] table th,
+:root[data-density="spacious"] table td {
+  padding: 16px 20px !important;
+}
+:root[data-density="spacious"] input,
+:root[data-density="spacious"] select,
+:root[data-density="spacious"] textarea {
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+}
+:root[data-density="spacious"] aside nav a {
+  padding: 10px 14px !important;
+}
+
+/* ─── Smooth Navigation & Page Transitions ─── */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition-container {
+  animation: pageEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  min-height: 100%;
+}
+
+.nav-item-smooth {
+  position: relative;
+  transition: background-color 0.18s cubic-bezier(0.4, 0, 0.2, 1), color 0.18s ease, transform 0.15s ease;
+}
+.nav-item-smooth:active {
+  transform: scale(0.98);
+}
+
+:root[data-animations="false"] *,
+:root[data-animations="false"] *::before,
+:root[data-animations="false"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
