@@ -382,8 +382,8 @@ export default function AgentSwarm() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Top Header Bar matching Chat */}
-      <TopBar title="JudgeAI Chatbot">
+      {/* Top Header Bar */}
+      <TopBar title="Agent Swarm">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {toastMessage && (
             <div
@@ -524,7 +524,7 @@ export default function AgentSwarm() {
               }}
             >
               <IcPlus size={16} />
-              <span>New Chat</span>
+              <span>New Swarm</span>
             </button>
           </div>
 
@@ -651,7 +651,7 @@ export default function AgentSwarm() {
                       <MeshGradientSVG size={145} />
                     </div>
                     <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px', color: 'var(--color-foreground)' }}>
-                      Welcome to JudgeAI Chatbot
+                      Welcome to Agent Swarm
                     </h1>
                   </div>
 
