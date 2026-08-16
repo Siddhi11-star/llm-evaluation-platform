@@ -21,6 +21,7 @@ import {
   IcKey,
   IcPlus,
 } from '../components/icons'
+import { AnimatedAIChat } from '../components/ui/animated-ai-chat'
 
 // ─── Persona Avatars ────────────────────────────────────────────────────────
 
@@ -225,15 +226,18 @@ function PersonaAvatarSvg({ type, size = 32 }: { type: string; size?: number }) 
 
 export default function AgentSwarm() {
   const [selectedPreset, setSelectedPreset] = useState(TASK_PRESETS[0])
+  const [personas, setPersonas] = useState<AgentPersona[]>(SWARM_PERSONAS)
   const [activePersona, setActivePersona] = useState<AgentPersona>(SWARM_PERSONAS[4]) // Default to Ayesha
   const [hoveredPersona, setHoveredPersona] = useState<AgentPersona | null>(SWARM_PERSONAS[4])
   const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null)
   
   const [isRunning, setIsRunning] = useState(true)
   const [progressCount, setProgressCount] = useState(4)
-  const [totalSteps] = useState(6)
+  const [totalSteps, setTotalSteps] = useState(6)
   const [selectedHiveAgent, setSelectedHiveAgent] = useState<any | null>(null)
   const [swarmOutputTab, setSwarmOutputTab] = useState<'prompt' | 'json' | 'stats'>('prompt')
+  const [showAssignChat, setShowAssignChat] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
   
   const hoveredCardRef = useRef<HTMLDivElement | null>(null)
 
@@ -243,7 +247,7 @@ export default function AgentSwarm() {
     if (isRunning) {
       timer = setInterval(() => {
         setProgressCount(prev => (prev >= totalSteps ? 1 : prev + 1))
-      }, 4000)
+      }, 4500)
     }
     return () => clearInterval(timer)
   }, [isRunning, totalSteps])
@@ -254,9 +258,84 @@ export default function AgentSwarm() {
     setPopoverPos({ top: rect.top - 10, left: rect.right + 12 })
   }
 
+  const handleTaskAssign = (promptText: string, commandName?: string, attachments?: string[]) => {
+    const avatarList = ['glasses', 'cap', 'curly', 'beard', 'woman_hair', 'glasses_woman', 'round_glasses', 'hoodie']
+    const randomAvatar = avatarList[Math.floor(Math.random() * avatarList.length)]
+    const newId = `agent_${Date.now()}`
+    const nextIndex = String(personas.length + 5).padStart(2, '0')
+
+    const newPersona: AgentPersona = {
+      id: newId,
+      name: commandName ? `${commandName.replace('/', '')} Agent` : `Swarm Agent #${nextIndex}`,
+      role: 'Autonomous Sub-Agent',
+      avatarType: randomAvatar,
+      specialty: 'Parallel reasoning, tool execution and verification',
+      status: 'active',
+      taskIndex: nextIndex,
+      currentPrompt: promptText,
+      outputSample: JSON.stringify({
+        task_id: newId,
+        directive: promptText,
+        attachments_processed: attachments?.length || 0,
+        status: 'EXECUTING_IN_PARALLEL',
+        swarm_workers_allocated: 24,
+        confidence_score: 99.1,
+      }, null, 2),
+    }
+
+    setPersonas(prev => [newPersona, ...prev])
+    setActivePersona(newPersona)
+    setHoveredPersona(newPersona)
+    setTotalSteps(prev => prev + 1)
+    setProgressCount(prev => Math.min(prev + 1, totalSteps + 1))
+    
+    setToastMessage(`Dispatched task to ${newPersona.name}!`)
+    setTimeout(() => setToastMessage(null), 3000)
+    setTimeout(() => setShowAssignChat(false), 1200)
+  }
+
   return (
     <>
-      <TopBar title="Agent Swarm Orchestrator" />
+      <TopBar title="Agent Swarm Orchestrator">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {toastMessage && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12.5,
+                fontWeight: 600,
+                padding: '5px 12px',
+                borderRadius: 999,
+                background: 'rgba(52,211,153,0.15)',
+                color: '#34D399',
+                border: '1px solid rgba(52,211,153,0.3)',
+              }}
+            >
+              <IcCheck size={14} color="#34D399" />
+              {toastMessage}
+            </div>
+          )}
+
+          <button
+            onClick={() => setShowAssignChat(true)}
+            className="pill-primary"
+            style={{
+              fontSize: 12.5,
+              fontWeight: 600,
+              padding: '7px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 7,
+              cursor: 'pointer',
+              boxShadow: '0 2px 10px rgba(124, 58, 237, 0.3)',
+            }}
+          >
+            <IcSparkles size={14} /> Assign Swarm Task
+          </button>
+        </div>
+      </TopBar>
 
       <PageContent style={{ padding: '16px 20px', maxWidth: 1440, margin: '0 auto' }}>
         {/* ─── Main Two-Pane Split Layout Matching the Screenshot ─────────── */}
@@ -318,12 +397,17 @@ export default function AgentSwarm() {
                 <IcChevronDown size={14} color="var(--color-muted)" />
               </div>
               <button
+                onClick={() => setShowAssignChat(true)}
+                title="Assign new task via AI Chat"
                 style={{
                   background: 'none',
                   border: 'none',
                   color: 'var(--color-muted)',
                   cursor: 'pointer',
-                  fontSize: 14,
+                  fontSize: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 +
@@ -341,7 +425,7 @@ export default function AgentSwarm() {
                 gap: 8,
               }}
             >
-              {SWARM_PERSONAS.map(persona => {
+              {personas.map(persona => {
                 const isSelected = activePersona.id === persona.id
                 return (
                   <div
@@ -446,6 +530,8 @@ export default function AgentSwarm() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <button
+                    onClick={() => setShowAssignChat(true)}
+                    title="Open Task Assignment Chat"
                     style={{
                       width: 28,
                       height: 28,
@@ -493,6 +579,7 @@ export default function AgentSwarm() {
               </div>
             </div>
           </div>
+
 
           {/* ═════════════════════════════════════════════════════════════════
               RIGHT PANE: "JUDGEAI / KIMI'S COMPUTER" SWARM CANVAS
@@ -758,6 +845,67 @@ export default function AgentSwarm() {
 
         </div>
       </PageContent>
+
+      {/* ─── Animated AI Chat Modal for Assigning Tasks ─── */}
+      {showAssignChat && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+          onClick={() => setShowAssignChat(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 720,
+              background: 'var(--color-background)',
+              borderRadius: 20,
+              border: '1px solid var(--color-border)',
+              position: 'relative',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.8)',
+              overflow: 'hidden',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowAssignChat(false)}
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                zIndex: 30,
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              ✕
+            </button>
+
+            <AnimatedAIChat
+              title="Assign Swarm Task"
+              subtitle="Describe the benchmark or dataset task to dispatch across the parallel swarm workers"
+              placeholder="e.g. /math Generate 10 calculus rate of change problems with step-by-step solutions..."
+              onTaskAssign={handleTaskAssign}
+            />
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeIn {
