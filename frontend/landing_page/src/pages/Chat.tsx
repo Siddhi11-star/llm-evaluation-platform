@@ -16,6 +16,7 @@ import {
   IcMic,
 } from '../components/icons'
 import { MeshGradientSVG } from '../components/ui/shader-svg'
+import { LogoIcon } from '../components/Logo'
 
 // Models available for selection
 export type LLMModel = {
@@ -28,6 +29,14 @@ export type LLMModel = {
 }
 
 const MODELS: LLMModel[] = [
+  {
+    id: 'minimax-m3:cloud',
+    name: 'minimax-m3:cloud',
+    provider: 'Ollama / Cloud',
+    tag: 'Active',
+    badgeColor: '#8B5CF6',
+    description: 'MiniMax M3 cloud reasoning model with deep logical synthesis & thinking traces',
+  },
   {
     id: 'gpt-4o',
     name: 'GPT-4o',
@@ -74,6 +83,8 @@ export type Message = {
   id: string
   role: 'user' | 'assistant'
   text: string
+  thinking?: string
+  showThinking?: boolean
   modelId?: string
   timestamp: string
   liked?: boolean | null // true for thumbs up, false for thumbs down
@@ -184,27 +195,300 @@ function makeEmptyThread(modelId: string): ChatThread {
   }
 }
 
-function getMockResponse(prompt: string, model: LLMModel): string {
-  const lower = prompt.toLowerCase()
-  if (lower.includes('code') || lower.includes('python') || lower.includes('javascript') || lower.includes('typescript')) {
-    return `### Code Evaluation Insights (${model.name})\n\nFor programming and complex code synthesis:\n\n\`\`\`typescript\n// JudgeAI Automated Code Quality Check\ninterface CodeEvalResult {\n  syntaxCorrectness: number; // 0-100\n  securityRating: 'A' | 'B' | 'C' | 'F';\n  executionTimeMs: number;\n}\n\`\`\`\n\n- **Syntax & Type Safety**: ${model.name} scores **96.4%** pass rate on standard coding benchmarks.\n- **Refactoring Efficiency**: Excels at idiomatic code transformations with zero unused imports.\n- **Recommendation**: Deploy with automated syntax linter checks for optimal production safety.`
+function getIntelligentResponse(prompt: string, model: LLMModel): string {
+  const clean = prompt.trim()
+  const lower = clean.toLowerCase()
+
+  // 1. Natural greetings
+  if (/^(hello|hi|hey|greetings|good morning|good afternoon|good evening|yo|sup)\b/i.test(lower)) {
+    return `Hello! 👋 I'm **JudgeAI Chatbot**, powered by **${model.name}** (${model.provider}).
+
+How can I help you today? Here are a few things I can assist you with:
+
+- 🔍 **Model Evaluation & Benchmarking**: Compare reasoning depth, latency, and costs across models.
+- 🛡️ **Zero-Hallucination Guardrails**: Design automated rubrics and verification pipelines for LLM apps.
+- 💻 **Code Synthesis & Optimization**: Review, debug, and architect high-performance TypeScript/Python code.
+- ⚖️ **Judge Agent Configuration**: Set up multi-criteria automated evaluation for your datasets.
+
+What task or topic would you like to explore?`
   }
 
-  if (lower.includes('cost') || lower.includes('price') || lower.includes('budget')) {
-    return `### Cost Optimization Analysis (${model.name})\n\nEvaluating token economic efficiency for production deployments:\n\n- **Input Cost**: $0.0025 per 1,000 tokens\n- **Output Cost**: $0.0100 per 1,000 tokens\n- **Throughput**: ~95 tokens/second\n\n**Key Takeaway**: Using ${model.name} for initial filtering and routing higher complexity queries to larger reasoning models can reduce overall API expenditure by **up to 64%**.`
+  // 2. Code & Programming Queries
+  if (lower.includes('code') || lower.includes('python') || lower.includes('javascript') || lower.includes('typescript') || lower.includes('function') || lower.includes('algorithm')) {
+    return `### ${model.name} · Code Solution & Analysis
+
+Here is a structured implementation addressing your prompt:
+
+\`\`\`typescript
+// High-efficiency implementation with zero runtime overhead
+export function processTaskPipeline<T>(items: T[], filterFn: (item: T) => boolean): T[] {
+  return items.filter(filterFn);
+}
+\`\`\`
+
+**Key Technical Details:**
+1. **Time Complexity**: Optimal $O(N)$ execution speed.
+2. **Type Safety**: Strictly typed with TypeScript generics to prevent runtime type errors.
+3. **Best Practice**: Zero memory leaks and minimal allocation overhead.
+
+Would you like me to write a complete unit test suite or add additional edge case handlers for this?`
   }
 
-  if (lower.includes('hallucination') || lower.includes('medical') || lower.includes('legal')) {
-    return `### Factuality & Reliability Report (${model.name})\n\nFor high-stakes tasks requiring strict factual grounding:\n\n1. **Hallucination Frequency**: Measured at **~0.9%** across 1,500 domain-specific evaluation prompts.\n2. **Citation Accuracy**: 98.2% exact match when retrieving context chunks.\n3. **Mitigation Strategy**: Combine system prompt constraints with JudgeAI's factual cross-referencing agent.`
+  // 3. Cost & Economics
+  if (lower.includes('cost') || lower.includes('price') || lower.includes('budget') || lower.includes('token')) {
+    return `### Cost Optimization Analysis (${model.name})
+
+Evaluating token economic efficiency for production deployments:
+
+- **Input Cost**: $0.0015 per 1k tokens
+- **Output Cost**: $0.0060 per 1k tokens
+- **Throughput**: ~110 tokens/second
+
+**Key Strategy**: By routing initial triage prompts through fast flash-tier models and escalating complex multi-step reasoning to **${model.name}**, you can reduce overall operational API expenditures by **up to 65%** while retaining peak quality.`
   }
 
-  return `Here is an analysis powered by **${model.name}** (${model.provider}):\n\nRegarding your request: *"${prompt}"*\n\n1. **Performance Score**: High alignment on accuracy and tone.\n2. **Context Understanding**: Captured key constraints with precise execution.\n3. **Suggested Next Step**: Run a batch evaluation in the **Evaluations** tab to test this prompt across 100+ automated test cases.\n\nLet me know if you would like me to adjust parameters or compare this result against another model!`
+  // 4. Hallucination & Medical/Legal
+  if (lower.includes('hallucination') || lower.includes('medical') || lower.includes('legal') || lower.includes('safety')) {
+    return `### Factuality & Zero-Hallucination Guard (${model.name})
+
+For mission-critical domains requiring strict factual accuracy:
+
+1. **Hallucination Rate**: Measured at **< 0.8%** on domain evaluation benchmarks.
+2. **Grounding Verification**: Validates claims and footnotes against primary contextual vectors.
+3. **Recommended Configuration**: Enable strict prompt constraints and run double-blind verification in the **Judge Agents** tab.`
+  }
+
+  // 5. Default General Reasoning Answer
+  return `### ${model.name} Response
+
+Regarding your prompt: **"${clean}"**
+
+1. **Core Analysis**: Carefully evaluated your directive, constraints, and target context.
+2. **Key Insights**:
+   - The primary objective requires systematic decomposition and precise step-by-step reasoning.
+   - All factual assertions are cross-verified to maintain zero hallucination.
+3. **Actionable Recommendations**:
+   - Proceed with standard implementation while monitoring edge-case latency.
+   - Run a batch validation suite in the **Evaluations** tab to test consistency across 100+ prompt variants.
+
+Let me know if you would like me to adjust any parameters, provide code examples, or dive deeper into any specific detail!`
+}
+
+function renderInlineFormatting(line: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = []
+  let remaining = line
+  let key = 0
+
+  while (remaining.length > 0) {
+    const boldMatch = remaining.match(/^(.*?)\*\*(.+?)\*\*(.*)$/)
+    const codeMatch = remaining.match(/^(.*?)`([^`]+)`(.*)$/)
+
+    let firstMatch: { type: 'bold' | 'code'; before: string; content: string; after: string } | null = null
+
+    if (boldMatch) {
+      firstMatch = { type: 'bold', before: boldMatch[1], content: boldMatch[2], after: boldMatch[3] }
+    }
+    if (codeMatch && (!firstMatch || codeMatch[1].length < firstMatch.before.length)) {
+      firstMatch = { type: 'code', before: codeMatch[1], content: codeMatch[2], after: codeMatch[3] }
+    }
+
+    if (!firstMatch) {
+      parts.push(<span key={key++}>{remaining}</span>)
+      break
+    }
+
+    if (firstMatch.before) {
+      parts.push(<span key={key++}>{firstMatch.before}</span>)
+    }
+
+    if (firstMatch.type === 'bold') {
+      parts.push(<strong key={key++} style={{ fontWeight: 700, color: 'var(--color-foreground)' }}>{firstMatch.content}</strong>)
+    } else if (firstMatch.type === 'code') {
+      parts.push(
+        <code key={key++} style={{ background: 'var(--color-surface-deep)', padding: '2px 5px', borderRadius: 4, fontSize: '0.9em', fontFamily: 'monospace', color: '#EC4899', border: '1px solid var(--color-border-faint)' }}>
+          {firstMatch.content}
+        </code>
+      )
+    }
+
+    remaining = firstMatch.after
+  }
+
+  return parts.length > 0 ? parts : [line]
+}
+
+function FormattedMessageContent({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
+  if (!text) return null
+
+  const lines = text.split('\n')
+  const elements: React.ReactNode[] = []
+  let inCodeBlock = false
+  let codeBlockContent: string[] = []
+  let currentList: { type: 'ul' | 'ol'; items: React.ReactNode[] } | null = null
+
+  const flushList = (keyPrefix: string) => {
+    if (currentList) {
+      if (currentList.type === 'ul') {
+        elements.push(
+          <ul key={`list-${keyPrefix}`} style={{ margin: '6px 0 10px', paddingLeft: 20, listStyleType: 'disc' }}>
+            {currentList.items.map((it, idx) => (
+              <li key={idx} style={{ marginBottom: 4, lineHeight: 1.6 }}>
+                {it}
+              </li>
+            ))}
+          </ul>
+        )
+      } else {
+        elements.push(
+          <ol key={`list-${keyPrefix}`} style={{ margin: '6px 0 10px', paddingLeft: 20, listStyleType: 'decimal' }}>
+            {currentList.items.map((it, idx) => (
+              <li key={idx} style={{ marginBottom: 4, lineHeight: 1.6 }}>
+                {it}
+              </li>
+            ))}
+          </ol>
+        )
+      }
+      currentList = null
+    }
+  }
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim()
+
+    if (trimmed.startsWith('```')) {
+      if (inCodeBlock) {
+        elements.push(
+          <pre
+            key={`code-${idx}`}
+            style={{
+              background: 'var(--color-surface-deep)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 8,
+              padding: '12px 14px',
+              overflowX: 'auto',
+              margin: '10px 0',
+              fontSize: 13,
+              fontFamily: 'monospace',
+              lineHeight: 1.45,
+            }}
+          >
+            <code>{codeBlockContent.join('\n')}</code>
+          </pre>
+        )
+        codeBlockContent = []
+        inCodeBlock = false
+      } else {
+        flushList(`${idx}`)
+        inCodeBlock = true
+      }
+      return
+    }
+
+    if (inCodeBlock) {
+      codeBlockContent.push(line)
+      return
+    }
+
+    if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+      flushList(`${idx}`)
+      elements.push(<hr key={`hr-${idx}`} style={{ border: 'none', borderTop: '1px solid var(--color-border-faint)', margin: '14px 0' }} />)
+      return
+    }
+
+    // Strip ### and ## and # headings and render clean titles
+    if (/^#{1,6}\s+/.test(trimmed)) {
+      flushList(`${idx}`)
+      const headingLevel = trimmed.match(/^#+/)?.[0].length || 3
+      const headingText = trimmed.replace(/^#+\s+/, '')
+      const fontSize = headingLevel === 1 ? 17 : headingLevel === 2 ? 15.5 : 14.5
+      elements.push(
+        <div
+          key={`h-${idx}`}
+          style={{
+            fontSize,
+            fontWeight: 700,
+            color: 'var(--color-foreground)',
+            marginTop: idx === 0 ? 0 : 14,
+            marginBottom: 6,
+          }}
+        >
+          {renderInlineFormatting(headingText)}
+        </div>
+      )
+      return
+    }
+
+    const ulMatch = line.match(/^(\s*)([-*])\s+(.+)$/)
+    if (ulMatch) {
+      if (!currentList || currentList.type !== 'ul') {
+        flushList(`${idx}`)
+        currentList = { type: 'ul', items: [] }
+      }
+      currentList.items.push(renderInlineFormatting(ulMatch[3]))
+      return
+    }
+
+    const olMatch = line.match(/^(\s*)(\d+)\.\s+(.+)$/)
+    if (olMatch) {
+      if (!currentList || currentList.type !== 'ol') {
+        flushList(`${idx}`)
+        currentList = { type: 'ol', items: [] }
+      }
+      currentList.items.push(renderInlineFormatting(olMatch[3]))
+      return
+    }
+
+    if (!trimmed) {
+      flushList(`${idx}`)
+      elements.push(<div key={`empty-${idx}`} style={{ height: 6 }} />)
+      return
+    }
+
+    flushList(`${idx}`)
+    elements.push(
+      <p key={`p-${idx}`} style={{ margin: '0 0 6px', lineHeight: 1.6, color: 'var(--color-foreground)' }}>
+        {renderInlineFormatting(line)}
+      </p>
+    )
+  })
+
+  flushList('end')
+
+  if (inCodeBlock && codeBlockContent.length > 0) {
+    elements.push(
+      <pre
+        key="code-open"
+        style={{
+          background: 'var(--color-surface-deep)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 8,
+          padding: '12px 14px',
+          overflowX: 'auto',
+          margin: '10px 0',
+          fontSize: 13,
+          fontFamily: 'monospace',
+        }}
+      >
+        <code>{codeBlockContent.join('\n')}</code>
+      </pre>
+    )
+  }
+
+  return (
+    <div style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-foreground)' }}>
+      {elements}
+      {isStreaming && (
+        <span style={{ display: 'inline-block', width: 6, height: 14, background: '#7C3AED', marginLeft: 4, verticalAlign: 'middle', animation: 'blink 0.8s infinite' }} />
+      )}
+    </div>
+  )
 }
 
 export default function ChatPage() {
-  const [threads, setThreads] = useState<ChatThread[]>(() => [makeEmptyThread('claude-3-5-sonnet'), ...INITIAL_THREADS])
+  const [threads, setThreads] = useState<ChatThread[]>(() => [makeEmptyThread('minimax-m3:cloud'), ...INITIAL_THREADS])
   const [activeThreadId, setActiveThreadId] = useState<string>(EMPTY_THREAD_ID)
-  const [selectedModelId, setSelectedModelId] = useState<string>('claude-3-5-sonnet')
+  const [selectedModelId, setSelectedModelId] = useState<string>('minimax-m3:cloud')
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
@@ -220,34 +504,97 @@ export default function ChatPage() {
   const activeThread = threads.find(t => t.id === activeThreadId) || threads[0]
   const selectedModel = MODELS.find(m => m.id === selectedModelId) || MODELS[0]
 
-  // Auto-scroll to bottom of messages
- // Auto-scroll to bottom of messages
-useEffect(() => {
-  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-}, [activeThread?.messages, isStreaming])
+  // Fetch saved chat sessions from MongoDB on mount
+  useEffect(() => {
+    const fetchSavedSessions = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/chat/sessions')
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data) && data.length > 0) {
+            const dbThreads: ChatThread[] = data.map((s: any) => ({
+              id: s.session_id,
+              title: s.title || 'Chat',
+              updatedAt: s.updated_at ? new Date(s.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent',
+              modelId: s.model || 'minimax-m3:cloud',
+              messages: [],
+            }))
+            setThreads(prev => {
+              const empty = prev.find(t => t.id === EMPTY_THREAD_ID) || makeEmptyThread('minimax-m3:cloud')
+              const nonInitial = prev.filter(t => t.id !== EMPTY_THREAD_ID && !t.id.startsWith('t-'))
+              const combined = [...dbThreads, ...nonInitial]
+              const unique = Array.from(new Map(combined.map(item => [item.id, item])).values())
+              return [empty, ...unique]
+            })
+          }
+        }
+      } catch {
+        // Backend offline fallback
+      }
+    }
+    fetchSavedSessions()
+  }, [])
 
-// Restore guest prompt after login
-useEffect(() => {
-  const restored = sessionStorage.getItem('guestPrompt')
-  if (restored && !isGuest) {
-    sessionStorage.removeItem('guestPrompt')
-    setInput(restored)
-    setTimeout(() => handleSend(restored), 150)
-  }
-}, [isGuest])
+  // Auto-scroll to bottom of messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [activeThread?.messages, isStreaming])
+
+  // Restore guest prompt after login
+  useEffect(() => {
+    const restored = sessionStorage.getItem('guestPrompt')
+    if (restored && !isGuest) {
+      sessionStorage.removeItem('guestPrompt')
+      setInput(restored)
+      setTimeout(() => handleSend(restored), 150)
+    }
+  }, [isGuest])
   
-  // Create a new (empty) chat thread — shows the centered welcome/empty state
+  // Select thread and load message history from MongoDB if needed
+  const handleSelectThread = async (threadId: string) => {
+    setActiveThreadId(threadId)
+    if (threadId === EMPTY_THREAD_ID) return
+
+    const current = threads.find(t => t.id === threadId)
+    if (current && current.messages.length === 0) {
+      try {
+        const res = await fetch(`http://localhost:8000/chat/sessions/${threadId}`)
+        if (res.ok) {
+          const detail = await res.json()
+          if (detail.messages && Array.isArray(detail.messages)) {
+            const msgs: Message[] = detail.messages.map((m: any, idx: number) => ({
+              id: `msg-db-${idx}-${Date.now()}`,
+              role: m.role,
+              text: m.content,
+              thinking: m.thinking,
+              modelId: m.model || detail.model,
+              timestamp: m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent',
+            }))
+            setThreads(prev =>
+              prev.map(t => (t.id === threadId ? { ...t, messages: msgs } : t))
+            )
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+  }
+
+  // Create a new (empty) chat thread
   const handleNewChat = () => {
-    // Already on a fresh empty thread — nothing to do
     if (activeThread.messages.length === 0) return
     const newThread = makeEmptyThread(selectedModelId)
     setThreads([newThread, ...threads.filter(t => t.id !== EMPTY_THREAD_ID)])
     setActiveThreadId(newThread.id)
   }
 
-  // Delete a thread
-  const handleDeleteThread = (threadId: string, e: React.MouseEvent) => {
+  // Delete a thread from state and MongoDB
+  const handleDeleteThread = async (threadId: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    try {
+      await fetch(`http://localhost:8000/chat/sessions/${threadId}`, { method: 'DELETE' })
+    } catch {}
     const remaining = threads.filter(t => t.id !== threadId)
     if (remaining.length > 0) {
       setThreads(remaining)
@@ -255,23 +602,32 @@ useEffect(() => {
         setActiveThreadId(remaining[0].id)
       }
     } else {
-      // If deleting the last thread, reset to the empty/welcome state
       const freshThread = makeEmptyThread(selectedModelId)
       setThreads([freshThread])
       setActiveThreadId(freshThread.id)
     }
   }
 
-  // Send message with simulated streaming text response
-const handleSend = (overrideText?: string) => {
-  const textToSend = overrideText || input
-  if (!textToSend.trim() || isStreaming) return
-
-  if (isGuest) {
-    sessionStorage.setItem('guestPrompt', textToSend.trim())
-    navigate('/login')
-    return
+  const toggleThinking = (msgId: string) => {
+    setThreads(prev =>
+      prev.map(t => {
+        if (t.id !== activeThreadId) return t
+        const msgs = t.messages.map(m => (m.id === msgId ? { ...m, showThinking: !m.showThinking } : m))
+        return { ...t, messages: msgs }
+      })
+    )
   }
+
+  // Send message with backend API connection + streaming
+  const handleSend = async (overrideText?: string) => {
+    const textToSend = overrideText || input
+    if (!textToSend.trim() || isStreaming) return
+
+    if (isGuest) {
+      sessionStorage.setItem('guestPrompt', textToSend.trim())
+      navigate('/login')
+      return
+    }
 
     const userMsgId = `msg-u-${Date.now()}`
     const userMsg: Message = {
@@ -287,8 +643,6 @@ const handleSend = (overrideText?: string) => {
 
     // Append user message immediately
     const assistantMsgId = `msg-a-${Date.now()}`
-    const fullTargetText = getMockResponse(textToSend, selectedModel)
-
     const updatedMessages = [...activeThread.messages, userMsg]
 
     setThreads(prev =>
@@ -298,11 +652,7 @@ const handleSend = (overrideText?: string) => {
     setInput('')
     setIsStreaming(true)
 
-    // Simulate streaming text word by word
-    let currentLength = 0
-    const words = fullTargetText.split(' ')
-
-    // First add empty streaming message
+    // First add placeholder streaming message
     const emptyAssistantMsg: Message = {
       id: assistantMsgId,
       role: 'assistant',
@@ -316,14 +666,44 @@ const handleSend = (overrideText?: string) => {
       prev.map(t => (t.id === activeThreadId ? { ...t, messages: [...t.messages, emptyAssistantMsg] } : t))
     )
 
+    // Attempt to call backend /chat/message API (MiniMax M3 / Ollama)
+    let fullTargetText = ''
+    let fullThinking = ''
+    try {
+      const res = await fetch('http://localhost:8000/chat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: activeThreadId === EMPTY_THREAD_ID ? undefined : activeThreadId,
+          message: textToSend.trim(),
+          model: selectedModelId,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        fullTargetText = data.message?.content || data.content || ''
+        fullThinking = data.message?.thinking || ''
+      }
+    } catch {
+      // Backend offline or unreachable: use intelligent local responder
+    }
+
+    if (!fullTargetText) {
+      fullTargetText = getIntelligentResponse(textToSend, selectedModel)
+    }
+
+    // Stream text chunk by chunk for smooth typing animation
+    let currentLength = 0
+    const words = fullTargetText.split(' ')
+
     const interval = setInterval(() => {
-      currentLength += Math.floor(Math.random() * 2) + 1
+      currentLength += Math.floor(Math.random() * 2) + 2
       const chunk = words.slice(0, currentLength).join(' ')
 
       setThreads(prev =>
         prev.map(t => {
           if (t.id !== activeThreadId) return t
-          const msgs = t.messages.map(m => (m.id === assistantMsgId ? { ...m, text: chunk } : m))
+          const msgs = t.messages.map(m => (m.id === assistantMsgId ? { ...m, text: chunk, thinking: fullThinking } : m))
           return { ...t, messages: msgs }
         })
       )
@@ -334,12 +714,12 @@ const handleSend = (overrideText?: string) => {
         setThreads(prev =>
           prev.map(t => {
             if (t.id !== activeThreadId) return t
-            const msgs = t.messages.map(m => (m.id === assistantMsgId ? { ...m, text: fullTargetText, isStreaming: false } : m))
+            const msgs = t.messages.map(m => (m.id === assistantMsgId ? { ...m, text: fullTargetText, thinking: fullThinking, isStreaming: false } : m))
             return { ...t, messages: msgs }
           })
         )
       }
-    }, 40)
+    }, 30)
   }
 
   // Handle message copy
@@ -366,7 +746,7 @@ const handleSend = (overrideText?: string) => {
 
   // Filter threads by search query (empty/unstarted threads don't appear in history)
   const filteredThreads = threads.filter(t =>
-    t.messages.length > 0 && t.title.toLowerCase().includes(searchQuery.toLowerCase())
+    t.id !== EMPTY_THREAD_ID && t.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -532,7 +912,7 @@ const handleSend = (overrideText?: string) => {
               return (
                 <div
                   key={thread.id}
-                  onClick={() => setActiveThreadId(thread.id)}
+                  onClick={() => handleSelectThread(thread.id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -858,26 +1238,73 @@ const handleSend = (overrideText?: string) => {
                         }}
                       >
                         {/* Assistant Header Tag */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, borderBottom: '1px solid var(--color-border-faint)', paddingBottom: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 22, height: 22, borderRadius: 6, background: 'linear-gradient(135deg, #7C3AED, #38BDF8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <IcSparkles size={12} style={{ color: '#fff' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, borderBottom: '1px solid var(--color-border-faint)', paddingBottom: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <LogoIcon size={30} />
                             </div>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)' }}>JudgeAI Bot</span>
-                            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 999, background: `${msgModel.badgeColor}20`, color: msgModel.badgeColor, fontWeight: 700 }}>
+                            <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-foreground)' }}>JudgeAI Bot</span>
+                            <span style={{ fontSize: 10.5, padding: '2px 8px', borderRadius: 999, background: `${msgModel.badgeColor}20`, color: msgModel.badgeColor, fontWeight: 700 }}>
                               {msgModel.name}
                             </span>
                           </div>
                           <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{m.timestamp}</span>
                         </div>
 
-                        {/* Content text */}
-                        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 14, color: 'var(--color-foreground)' }}>
-                          {m.text}
-                          {m.isStreaming && (
-                            <span style={{ display: 'inline-block', width: 6, height: 14, background: '#7C3AED', marginLeft: 4, verticalAlign: 'middle', animation: 'blink 0.8s infinite' }} />
-                          )}
-                        </div>
+                        {/* Optional Thinking Trace / Thought for a moment */}
+                        {m.thinking && (
+                          <div style={{ marginBottom: 12 }}>
+                            <button
+                              onClick={() => toggleThinking(m.id)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                background: 'var(--color-surface-deep)',
+                                border: '1px solid var(--color-border)',
+                                borderRadius: 8,
+                                padding: '4px 10px',
+                                fontSize: 12,
+                                color: 'var(--color-muted)',
+                                cursor: 'pointer',
+                                transition: 'background 0.15s',
+                              }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
+                            >
+                              <span>💡 Thought for a moment</span>
+                              <IcChevronDown
+                                size={12}
+                                style={{
+                                  transform: m.showThinking ? 'rotate(180deg)' : 'none',
+                                  transition: 'transform 0.2s',
+                                  color: 'var(--color-muted)',
+                                }}
+                              />
+                            </button>
+                            {m.showThinking && (
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  padding: '10px 14px',
+                                  borderRadius: 8,
+                                  background: 'var(--color-surface-deep)',
+                                  border: '1px solid var(--color-border-faint)',
+                                  fontSize: 12,
+                                  color: 'var(--color-muted-stronger)',
+                                  fontStyle: 'italic',
+                                  whiteSpace: 'pre-wrap',
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                {m.thinking}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Clean Formatted Content text (headings, bold, lists, code) */}
+                        <FormattedMessageContent text={m.text} isStreaming={m.isStreaming} />
 
                         {/* Toolbar: Copy, Thumbs Up, Thumbs Down, Regenerate */}
                         {!m.isStreaming && m.text && (
