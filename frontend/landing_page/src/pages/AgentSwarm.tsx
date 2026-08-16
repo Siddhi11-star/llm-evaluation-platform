@@ -13,8 +13,11 @@ import {
   IcRotate,
   IcSearch,
   IcFilter,
+  IcSend,
+  IcMic,
+  IcPlus,
 } from '../components/icons'
-import { AnimatedAIChat } from '../components/ui/animated-ai-chat'
+import { MeshGradientSVG } from '../components/ui/shader-svg'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── 4 Specialized Swarm Agents ─────────────────────────────────────────────
@@ -32,16 +35,56 @@ type SwarmAgent = {
   outputSnippet: string
 }
 
-type WorkPacket = {
+type SwarmModelTier = {
   id: string
-  packetNumber: number
-  title: string
-  assignedTo: string
-  status: 'pending' | 'in_progress' | 'verified' | 'completed'
-  progress: number
+  name: string
+  provider: string
+  tag: string
+  badgeColor: string
   description: string
-  output: string
 }
+
+const SWARM_MODELS: SwarmModelTier[] = [
+  {
+    id: 'judgeai-swarm-core',
+    name: 'JudgeAI Swarm Core',
+    provider: 'JudgeAI',
+    tag: 'Recommended',
+    badgeColor: '#7C3AED',
+    description: '4-Agent parallel decomposition with 0% hallucination verification',
+  },
+  {
+    id: 'kimi-k2.6-swarm',
+    name: 'Kimi K2.6 Agent Swarm',
+    provider: 'Moonshot AI',
+    tag: 'Flagship',
+    badgeColor: '#10A37F',
+    description: 'High-throughput parallel reasoning with multi-token tool streams',
+  },
+  {
+    id: 'claude-3-5-sonnet-swarm',
+    name: 'Claude 3.5 Sonnet Swarm',
+    provider: 'Anthropic',
+    tag: 'Code & Math',
+    badgeColor: '#38BDF8',
+    description: 'Industry-leading code generation and formal proof verification',
+  },
+  {
+    id: 'gpt-4o-swarm',
+    name: 'GPT-4o Swarm Orchestrator',
+    provider: 'OpenAI',
+    tag: 'Multimodal',
+    badgeColor: '#F59E0B',
+    description: 'Fast multimodal packet extraction and reasoning pipelines',
+  },
+]
+
+const QUICK_ACTIONS = [
+  { icon: IcSparkles, label: 'Math Benchmark', prompt: 'Generate 100 math word problems with step-by-step calculus & algebra proofs' },
+  { icon: IcCheck, label: 'SEC Financial Audit', prompt: 'Audit 50 SEC 10-K filings for enterprise AI CapEx with double-checked citations' },
+  { icon: IcCopy, label: 'Full-Stack Vibe App', prompt: 'Build a full-stack Next.js web application with JWT auth, Tailwind, and Prisma schema' },
+  { icon: IcRotate, label: 'Clinical Drug Discovery', prompt: 'Synthesize FDA Phase III clinical trial endpoints and orphan drug designations' },
+]
 
 const INITIAL_4_AGENTS: SwarmAgent[] = [
   {
@@ -148,12 +191,20 @@ const INITIAL_4_AGENTS: SwarmAgent[] = [
 export default function AgentSwarm() {
   const [hasStarted, setHasStarted] = useState(false)
   const [currentPrompt, setCurrentPrompt] = useState('')
+  const [input, setInput] = useState('')
+  const [selectedModelId, setSelectedModelId] = useState<string>('judgeai-swarm-core')
+  const [showModelDropdown, setShowModelDropdown] = useState(false)
+  const [showTopModelDropdown, setShowTopModelDropdown] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  
   const [agents, setAgents] = useState<SwarmAgent[]>(INITIAL_4_AGENTS)
   const [selectedAgent, setSelectedAgent] = useState<SwarmAgent>(INITIAL_4_AGENTS[0])
   const [isRunning, setIsRunning] = useState(true)
   const [activeTab, setActiveTab] = useState<'packets' | 'logs' | 'output'>('packets')
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [globalProgress, setGlobalProgress] = useState(75)
+
+  const selectedModel = SWARM_MODELS.find(m => m.id === selectedModelId) || SWARM_MODELS[0]
 
   // Simulation timer for 4 agents working on the packets
   useEffect(() => {
@@ -186,9 +237,12 @@ export default function AgentSwarm() {
     }
   }, [agents])
 
-  const handleStartTask = (promptText: string) => {
-    if (!promptText.trim()) return
-    setCurrentPrompt(promptText)
+  const handleStartTask = (promptText?: string) => {
+    const textToSend = promptText || input
+    if (!textToSend.trim()) return
+
+    setCurrentPrompt(textToSend.trim())
+    setInput('')
     setHasStarted(true)
     setIsRunning(true)
 
@@ -199,7 +253,7 @@ export default function AgentSwarm() {
         progress: idx === 0 ? 100 : idx === 1 ? 40 : idx === 2 ? 20 : 10,
         status: idx === 0 ? 'completed' : 'executing',
         logs: [
-          `Received new major task: "${promptText.slice(0, 60)}..."`,
+          `Received task: "${textToSend.slice(0, 60)}..."`,
           `Allocated Packet ${idx + 1} to ${ag.name}.`,
           'Executing parallel compute pipeline.',
         ],
@@ -214,11 +268,13 @@ export default function AgentSwarm() {
   const handleResetToChat = () => {
     setHasStarted(false)
     setCurrentPrompt('')
+    setInput('')
   }
 
   const handleExportJSON = () => {
     const exportData = {
       major_prompt: currentPrompt || 'Default Math Benchmark Task',
+      orchestration_model: selectedModel.name,
       total_agents: 4,
       global_progress: `${globalProgress}%`,
       execution_timestamp: new Date().toISOString(),
@@ -270,6 +326,85 @@ export default function AgentSwarm() {
               </div>
             )}
 
+            {/* Model Selector Pill */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowTopModelDropdown(!showTopModelDropdown)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-surface)',
+                  color: 'var(--color-foreground)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
+                <span>{selectedModel.name}</span>
+                <IcChevronDown size={13} color="var(--color-muted)" />
+              </button>
+
+              {showTopModelDropdown && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '115%',
+                    right: 0,
+                    width: 300,
+                    background: 'var(--color-card)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 12,
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                    zIndex: 100,
+                    padding: 6,
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Select Swarm Engine
+                  </div>
+                  {SWARM_MODELS.map(m => {
+                    const isSelected = m.id === selectedModelId
+                    return (
+                      <div
+                        key={m.id}
+                        onClick={() => {
+                          setSelectedModelId(m.id)
+                          setShowTopModelDropdown(false)
+                          setToastMessage(`Switched engine to ${m.name}`)
+                          setTimeout(() => setToastMessage(null), 2500)
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          cursor: 'pointer',
+                          background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
+                          border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
+                          marginBottom: 2,
+                        }}
+                      >
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
+                            <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={handleExportJSON}
               style={{
@@ -302,7 +437,7 @@ export default function AgentSwarm() {
                 cursor: 'pointer',
               }}
             >
-              + New Major Task
+              <IcPlus size={14} /> New Major Task
             </button>
           </div>
         )}
@@ -311,15 +446,15 @@ export default function AgentSwarm() {
       <PageContent style={{ padding: '20px 24px', maxWidth: 1440, margin: '0 auto', minHeight: 'calc(100vh - 100px)' }}>
         <AnimatePresence mode="wait">
           {/* ═════════════════════════════════════════════════════════════════
-              STATE 1: INITIAL CENTERED CHATBOX VIEW
+              STATE 1: INITIAL CENTERED CHATBOX VIEW (IDENTICAL TO CHAT PAGE)
               ═════════════════════════════════════════════════════════════════ */}
           {!hasStarted ? (
             <motion.div
               key="chat-screen"
-              initial={{ opacity: 0, scale: 0.96 }}
+              initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
               style={{
                 minHeight: '75vh',
                 display: 'flex',
@@ -329,47 +464,283 @@ export default function AgentSwarm() {
                 position: 'relative',
               }}
             >
-              <div style={{ width: '100%', maxWidth: 780, margin: '0 auto' }}>
-                <AnimatedAIChat
-                  title="Assign Major Task to Agent Swarm"
-                  subtitle="Your prompt will be autonomously partitioned into 4 parallel compute packets across specialized sub-agents."
-                  placeholder="e.g. Create a 100-question math & reasoning benchmark with formal step derivations and 0% hallucination verification..."
-                  onTaskAssign={handleStartTask}
-                />
+              {/* Subtle Animated Shader Mesh in background matching Chat.tsx */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  overflow: 'hidden',
+                  pointerEvents: 'none',
+                  opacity: 0.45,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <MeshGradientSVG />
               </div>
 
-              {/* Sample Quick Presets */}
-              <div style={{ marginTop: 24, display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {[
-                  'Generate 100 math word problems with step-by-step calculus & algebra proofs',
-                  'Audit 50 SEC 10-K filings for enterprise AI CapEx with double-checked citations',
-                  'Build a full-stack Next.js web application with JWT auth, Tailwind, and Prisma schema',
-                ].map((preset, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleStartTask(preset)}
+              <div style={{ width: '100%', maxWidth: 740, position: 'relative', zIndex: 10 }}>
+                {/* Hero Greeting & Icon Header */}
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                  <div
                     style={{
-                      padding: '8px 14px',
-                      borderRadius: 9999,
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border-faint)',
-                      color: 'var(--color-muted)',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = 'var(--color-accent-violet)'
-                      e.currentTarget.style.color = 'var(--color-foreground)'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = 'var(--color-border-faint)'
-                      e.currentTarget.style.color = 'var(--color-muted)'
+                      width: 52,
+                      height: 52,
+                      borderRadius: 16,
+                      background: 'rgba(124,58,237,0.12)',
+                      border: '1px solid rgba(124,58,237,0.25)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 16px',
+                      boxShadow: '0 4px 20px rgba(124,58,237,0.18)',
                     }}
                   >
-                    ⚡ {preset}
+                    <IcSparkles size={24} style={{ color: 'var(--color-accent-violet)' }} />
+                  </div>
+
+                  <h1
+                    style={{
+                      fontSize: 30,
+                      fontWeight: 800,
+                      letterSpacing: '-0.025em',
+                      margin: '0 0 10px',
+                      color: 'var(--color-foreground)',
+                    }}
+                  >
+                    What task would you like the{' '}
+                    <span
+                      style={{
+                        background: 'linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #38BDF8 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}
+                    >
+                      Swarm to solve?
+                    </span>
+                  </h1>
+
+                  <p
+                    style={{
+                      fontSize: 14,
+                      color: 'var(--color-muted)',
+                      margin: 0,
+                      maxWidth: 520,
+                      marginLeft: 'auto',
+                      marginRight: 'auto',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Assign any complex objective. The swarm will autonomously decompose it into{' '}
+                    <strong style={{ color: 'var(--color-foreground)' }}>4 parallel compute packets</strong>.
+                  </p>
+                </div>
+
+                {/* Model Selector Pill on top of prompt box */}
+                <div style={{ position: 'relative', display: 'inline-block', marginBottom: 10 }}>
+                  <button
+                    onClick={() => setShowModelDropdown(d => !d)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      padding: '6px 12px',
+                      borderRadius: 999,
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      cursor: 'pointer',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: 'var(--color-foreground)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
+                  >
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
+                    <span>{selectedModel.name}</span>
+                    <span style={{ fontSize: 10, color: selectedModel.badgeColor, fontWeight: 700 }}>({selectedModel.tag})</span>
+                    <IcChevronDown size={14} style={{ color: 'var(--color-muted)', marginLeft: 2 }} />
                   </button>
-                ))}
+
+                  {showModelDropdown && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '115%',
+                        left: 0,
+                        width: 320,
+                        background: 'var(--color-card)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 12,
+                        boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
+                        zIndex: 100,
+                        padding: 6,
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        Select Swarm Engine
+                      </div>
+                      {SWARM_MODELS.map(m => {
+                        const isSelected = m.id === selectedModelId
+                        return (
+                          <div
+                            key={m.id}
+                            onClick={() => {
+                              setSelectedModelId(m.id)
+                              setShowModelDropdown(false)
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 10,
+                              padding: '10px 12px',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                              background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
+                              border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
+                              marginBottom: 2,
+                            }}
+                          >
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
+                                <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
+                              </div>
+                              <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Main Input Box Card matching Chat.tsx */}
+                <div
+                  className="card-base"
+                  style={{
+                    padding: 14,
+                    borderRadius: 18,
+                    background: 'var(--color-card)',
+                    border: '1.5px solid var(--color-border)',
+                    boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
+                  }}
+                >
+                  <textarea
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleStartTask()
+                      }
+                    }}
+                    placeholder={`Assign major task to ${selectedModel.name}... (Shift+Enter for newline)`}
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '8px 8px 6px',
+                      fontSize: 14,
+                      color: 'var(--color-foreground)',
+                      outline: 'none',
+                      fontFamily: 'Inter, sans-serif',
+                      resize: 'none',
+                      boxSizing: 'border-box',
+                      lineHeight: 1.5,
+                    }}
+                  />
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 0', borderTop: '1px solid var(--color-border-faint)' }}>
+                    {/* Voice input control */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button
+                        onClick={() => setIsListening(l => !l)}
+                        title={isListening ? 'Stop voice input' : 'Start voice input'}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 34,
+                          height: 34,
+                          borderRadius: '50%',
+                          background: isListening ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-deep)',
+                          border: `1px solid ${isListening ? 'rgba(239,68,68,0.4)' : 'var(--color-border)'}`,
+                          color: isListening ? '#EF4444' : 'var(--color-muted)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <IcMic size={15} />
+                      </button>
+
+                      <span style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                        Press <kbd style={{ padding: '2px 5px', borderRadius: 4, background: 'var(--color-surface-deep)', border: '1px solid var(--color-border)', fontSize: 10 }}>Enter ↵</kbd> to launch 4 agents
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleStartTask()}
+                      disabled={!input.trim()}
+                      className="pill-primary"
+                      style={{
+                        padding: '8px 18px',
+                        borderRadius: 10,
+                        opacity: !input.trim() ? 0.35 : 1,
+                        transition: 'opacity 0.15s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        cursor: input.trim() ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      <IcSend size={14} />
+                      <span>Dispatch Swarm</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Action Pills matching Chat.tsx */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 20 }}>
+                  {QUICK_ACTIONS.map(qa => {
+                    const Icon = qa.icon
+                    return (
+                      <button
+                        key={qa.label}
+                        onClick={() => handleStartTask(qa.prompt)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 7,
+                          padding: '9px 14px',
+                          borderRadius: 999,
+                          background: 'var(--color-card)',
+                          border: '1px solid var(--color-border)',
+                          color: 'var(--color-foreground)',
+                          fontSize: 12.5,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = 'rgba(124,58,237,0.12)'
+                          e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'var(--color-card)'
+                          e.currentTarget.style.borderColor = 'var(--color-border)'
+                        }}
+                      >
+                        <Icon size={13} style={{ opacity: 0.7 }} />
+                        <span>{qa.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -381,7 +752,7 @@ export default function AgentSwarm() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
               style={{
                 display: 'grid',
                 gridTemplateColumns: '420px 1fr',
@@ -503,7 +874,7 @@ export default function AgentSwarm() {
                       >
                         <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Orchestrator</div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)', marginTop: 2 }}>
-                          JudgeAI Swarm Core
+                          {selectedModel.name}
                         </div>
                       </div>
 
@@ -587,7 +958,7 @@ export default function AgentSwarm() {
                   </div>
                 </div>
 
-                {/* Left Bottom Quick Prompt Input */}
+                {/* Left Bottom Quick Prompt Input matching Chat style */}
                 <div
                   style={{
                     padding: '12px 14px',
@@ -598,14 +969,14 @@ export default function AgentSwarm() {
                   <form
                     onSubmit={e => {
                       e.preventDefault()
-                      if (currentPrompt.trim()) handleStartTask(currentPrompt)
+                      if (input.trim()) handleStartTask()
                     }}
-                    style={{ display: 'flex', gap: 8 }}
+                    style={{ display: 'flex', gap: 8, alignItems: 'center' }}
                   >
                     <input
                       type="text"
-                      value={currentPrompt}
-                      onChange={e => setCurrentPrompt(e.target.value)}
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
                       placeholder="Refine or dispatch new prompt..."
                       style={{
                         flex: 1,
@@ -613,25 +984,26 @@ export default function AgentSwarm() {
                         border: '1px solid var(--color-border)',
                         borderRadius: 8,
                         padding: '8px 12px',
-                        fontSize: 12,
+                        fontSize: 12.5,
                         color: 'var(--color-foreground)',
                         outline: 'none',
                       }}
                     />
                     <button
                       type="submit"
+                      disabled={!input.trim()}
+                      className="pill-primary"
                       style={{
                         padding: '8px 14px',
                         borderRadius: 8,
-                        background: 'var(--color-accent-violet)',
-                        border: 'none',
-                        color: '#fff',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: 'pointer',
+                        opacity: !input.trim() ? 0.4 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: input.trim() ? 'pointer' : 'default',
                       }}
                     >
-                      Run
+                      <IcSend size={13} />
                     </button>
                   </form>
                 </div>
@@ -669,7 +1041,7 @@ export default function AgentSwarm() {
                     <span style={{ fontSize: 18 }}>🖥️</span>
                     <div>
                       <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--color-foreground)' }}>
-                        JudgeAI Swarm Core · 4 Parallel Agents Working
+                        {selectedModel.name} · 4 Parallel Agents Working
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', boxShadow: '0 0 6px #34D399' }} />
