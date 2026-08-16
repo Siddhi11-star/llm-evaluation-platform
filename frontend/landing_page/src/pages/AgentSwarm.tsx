@@ -17,6 +17,7 @@ import {
   IcMic,
   IcPlus,
   IcTrash,
+  IcPaperclip,
 } from '../components/icons'
 import { MeshGradientSVG } from '../components/ui/shader-svg'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -243,6 +244,8 @@ export default function AgentSwarm() {
   const [showModelDropdown, setShowModelDropdown] = useState(false)
   const [showTopModelDropdown, setShowTopModelDropdown] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [attachedFiles, setAttachedFiles] = useState<string[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [agents, setAgents] = useState<SwarmAgent[]>(INITIAL_4_AGENTS)
   const [selectedAgent, setSelectedAgent] = useState<SwarmAgent>(INITIAL_4_AGENTS[0])
@@ -655,97 +658,41 @@ export default function AgentSwarm() {
                     </h1>
                   </div>
 
-                  {/* Centered Model Selector Pill */}
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18, position: 'relative' }}>
-                    <button
-                      onClick={() => setShowModelDropdown(!showModelDropdown)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        background: 'var(--color-surface-deep)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 999,
-                        padding: '7px 14px',
-                        color: 'var(--color-foreground)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
-                    >
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
-                      <span>{selectedModel.name}</span>
-                      <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: `${selectedModel.badgeColor}25`, color: selectedModel.badgeColor, fontWeight: 700 }}>
-                        {selectedModel.provider}
-                      </span>
-                      <IcChevronDown size={14} style={{ color: 'var(--color-muted)', marginLeft: 2 }} />
-                    </button>
-
-                    {showModelDropdown && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '115%',
-                          width: 320,
-                          background: 'var(--color-card)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: 12,
-                          boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
-                          zIndex: 100,
-                          padding: 6,
-                        }}
-                      >
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          Select Active Model
-                        </div>
-                        {MODELS.map(m => {
-                          const isSelected = m.id === selectedModelId
-                          return (
-                            <div
-                              key={m.id}
-                              onClick={() => {
-                                setSelectedModelId(m.id)
-                                setShowModelDropdown(false)
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                gap: 10,
-                                padding: '10px 12px',
-                                borderRadius: 8,
-                                cursor: 'pointer',
-                                background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
-                                border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
-                                marginBottom: 2,
-                                transition: 'background 0.15s',
-                              }}
-                              onMouseEnter={e => {
-                                if (!isSelected) e.currentTarget.style.background = 'var(--color-hover)'
-                              }}
-                              onMouseLeave={e => {
-                                if (!isSelected) e.currentTarget.style.background = 'transparent'
-                              }}
+                  {/* Prompt Box Card */}
+                  <div className="card-base" style={{ padding: 14, borderRadius: 20, position: 'relative' }}>
+                    
+                    {/* Attached files preview chips if any */}
+                    {attachedFiles.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8, padding: '2px 4px' }}>
+                        {attachedFiles.map((file, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              fontSize: 11.5,
+                              fontWeight: 600,
+                              padding: '4px 10px',
+                              borderRadius: 6,
+                              background: 'var(--color-surface)',
+                              border: '1px solid var(--color-border)',
+                              color: 'var(--color-foreground)',
+                            }}
+                          >
+                            <IcPaperclip size={12} style={{ color: 'var(--color-accent-violet)' }} />
+                            <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file}</span>
+                            <button
+                              onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
+                              style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 0, display: 'flex' }}
                             >
-                              <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
-                                  <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
-                                </div>
-                                <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
-                              </div>
-                            </div>
-                          )
-                        })}
+                              ✕
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
-                  </div>
 
-                  {/* Prompt Box Card matching Chat */}
-                  <div className="card-base" style={{ padding: 12, borderRadius: 18 }}>
                     <textarea
                       value={input}
                       onChange={e => setInput(e.target.value)}
@@ -761,7 +708,7 @@ export default function AgentSwarm() {
                         width: '100%',
                         background: 'transparent',
                         border: 'none',
-                        padding: '8px 8px 4px',
+                        padding: '8px 8px 10px',
                         fontSize: 14,
                         color: 'var(--color-foreground)',
                         outline: 'none',
@@ -770,36 +717,170 @@ export default function AgentSwarm() {
                         boxSizing: 'border-box',
                       }}
                     />
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
-                      {/* Voice input control */}
-                      <button
-                        onClick={() => setIsListening(l => !l)}
-                        title={isListening ? 'Stop voice input' : 'Start voice input'}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 34,
-                          height: 34,
-                          borderRadius: '50%',
-                          background: isListening ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-deep)',
-                          border: `1px solid ${isListening ? 'rgba(239,68,68,0.4)' : 'var(--color-border)'}`,
-                          color: isListening ? '#EF4444' : 'var(--color-muted)',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        <IcMic size={15} />
-                      </button>
 
+                    {/* Bottom Toolbar with Mic, Attach File, Model Selector, and Send */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', gap: 10 }}>
+                      
+                      {/* Left Controls: Mic, Paperclip, Model Selector Pill */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {/* Voice input control */}
+                        <button
+                          onClick={() => setIsListening(l => !l)}
+                          title={isListening ? 'Stop voice input' : 'Start voice input'}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            background: isListening ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-deep)',
+                            border: `1px solid ${isListening ? 'rgba(239,68,68,0.4)' : 'var(--color-border)'}`,
+                            color: isListening ? '#EF4444' : 'var(--color-muted)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          <IcMic size={15} />
+                        </button>
+
+                        {/* File attachment button */}
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={e => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const names = Array.from(e.target.files).map(f => f.name)
+                              setAttachedFiles(prev => [...prev, ...names])
+                              setToastMessage(`Attached ${names.length} file(s)`)
+                              setTimeout(() => setToastMessage(null), 2500)
+                            }
+                          }}
+                          multiple
+                          style={{ display: 'none' }}
+                        />
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Attach files or datasets"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            background: attachedFiles.length > 0 ? 'rgba(124,58,237,0.15)' : 'var(--color-surface-deep)',
+                            border: `1px solid ${attachedFiles.length > 0 ? 'rgba(124,58,237,0.4)' : 'var(--color-border)'}`,
+                            color: attachedFiles.length > 0 ? 'var(--color-accent-violet)' : 'var(--color-muted)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-foreground)')}
+                          onMouseLeave={e => (e.currentTarget.style.color = attachedFiles.length > 0 ? 'var(--color-accent-violet)' : 'var(--color-muted)')}
+                        >
+                          <IcPaperclip size={15} />
+                        </button>
+
+                        {/* Model Selector Tool Pill */}
+                        <div style={{ position: 'relative' }}>
+                          <button
+                            onClick={() => setShowModelDropdown(!showModelDropdown)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 7,
+                              background: 'var(--color-surface-deep)',
+                              border: '1px solid var(--color-border)',
+                              borderRadius: 999,
+                              padding: '6px 12px',
+                              color: 'var(--color-foreground)',
+                              fontSize: 12.5,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
+                          >
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
+                            <span>{selectedModel.name}</span>
+                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: `${selectedModel.badgeColor}25`, color: selectedModel.badgeColor, fontWeight: 700 }}>
+                              {selectedModel.provider}
+                            </span>
+                            <IcChevronDown size={13} style={{ color: 'var(--color-muted)', marginLeft: 1 }} />
+                          </button>
+
+                          {showModelDropdown && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                bottom: '125%',
+                                left: 0,
+                                width: 320,
+                                background: 'var(--color-card)',
+                                border: '1px solid var(--color-border)',
+                                borderRadius: 12,
+                                boxShadow: '0 -10px 32px rgba(0,0,0,0.25)',
+                                zIndex: 100,
+                                padding: 6,
+                              }}
+                            >
+                              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                Select Active Model
+                              </div>
+                              {MODELS.map(m => {
+                                const isSelected = m.id === selectedModelId
+                                return (
+                                  <div
+                                    key={m.id}
+                                    onClick={() => {
+                                      setSelectedModelId(m.id)
+                                      setShowModelDropdown(false)
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                      gap: 10,
+                                      padding: '10px 12px',
+                                      borderRadius: 8,
+                                      cursor: 'pointer',
+                                      background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
+                                      border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
+                                      marginBottom: 2,
+                                      transition: 'background 0.15s',
+                                    }}
+                                    onMouseEnter={e => {
+                                      if (!isSelected) e.currentTarget.style.background = 'var(--color-hover)'
+                                    }}
+                                    onMouseLeave={e => {
+                                      if (!isSelected) e.currentTarget.style.background = 'transparent'
+                                    }}
+                                  >
+                                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
+                                        <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
+                                      </div>
+                                      <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Send Button */}
                       <button
                         onClick={() => handleStartTask()}
-                        disabled={!input.trim()}
+                        disabled={!input.trim() && attachedFiles.length === 0}
                         className="pill-primary"
                         style={{
                           padding: '8px 16px',
                           borderRadius: 8,
-                          opacity: !input.trim() ? 0.35 : 1,
+                          opacity: (!input.trim() && attachedFiles.length === 0) ? 0.35 : 1,
                           transition: 'opacity 0.15s',
                         }}
                       >
