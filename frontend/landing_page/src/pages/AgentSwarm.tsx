@@ -248,64 +248,89 @@ export default function AgentSwarm() {
   return (
     <>
       <TopBar title="Agent Swarm Orchestrator">
-        {hasStarted && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {toastMessage && (
-              <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <a
+            href="/agent_swarm_monitor.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-surface-deep)',
+              color: 'var(--color-foreground)',
+              fontSize: 12,
+              fontWeight: 600,
+              textDecoration: 'none',
+              cursor: 'pointer',
+              fontFamily: 'JetBrains Mono, monospace',
+            }}
+          >
+            🖥️ Dense 6-Judge CI Monitor
+          </a>
+
+          {hasStarted && (
+            <>
+              {toastMessage && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    background: 'rgba(52,211,153,0.15)',
+                    color: '#34D399',
+                    border: '1px solid rgba(52,211,153,0.3)',
+                  }}
+                >
+                  <IcCheck size={13} color="#34D399" />
+                  {toastMessage}
+                </div>
+              )}
+
+              <button
+                onClick={handleExportJSON}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-surface)',
+                  color: 'var(--color-foreground)',
                   fontSize: 12,
                   fontWeight: 600,
-                  padding: '5px 12px',
-                  borderRadius: 999,
-                  background: 'rgba(52,211,153,0.15)',
-                  color: '#34D399',
-                  border: '1px solid rgba(52,211,153,0.3)',
+                  cursor: 'pointer',
                 }}
               >
-                <IcCheck size={13} color="#34D399" />
-                {toastMessage}
-              </div>
-            )}
+                <IcDownload size={13} /> Export JSON
+              </button>
 
-            <button
-              onClick={handleExportJSON}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)',
-                color: 'var(--color-foreground)',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              <IcDownload size={13} /> Export JSON
-            </button>
-
-            <button
-              onClick={handleResetToChat}
-              className="pill-primary"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                padding: '6px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                cursor: 'pointer',
-              }}
-            >
-              + New Major Task
-            </button>
-          </div>
-        )}
+              <button
+                onClick={handleResetToChat}
+                className="pill-primary"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: '6px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                + New Major Task
+              </button>
+            </>
+          )}
+        </div>
       </TopBar>
 
       <PageContent style={{ padding: '20px 24px', maxWidth: 1440, margin: '0 auto', minHeight: 'calc(100vh - 100px)' }}>

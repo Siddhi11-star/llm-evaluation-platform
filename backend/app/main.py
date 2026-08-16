@@ -63,8 +63,23 @@ async def root() -> JSONResponse:
     )
 
 
+import os
+from fastapi.responses import FileResponse, HTMLResponse
+
 # Mount API V1 endpoints
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.get("/swarm-monitor", response_class=HTMLResponse, tags=["Agent Swarm"])
+@app.get("/agent-swarm-monitor", response_class=HTMLResponse, tags=["Agent Swarm"])
+async def serve_swarm_monitor() -> FileResponse:
+    """Serve the plain HTML/CSS/JS dense Kimi-style Agent Swarm Control Console."""
+    html_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../../../frontend/agent_swarm_monitor.html")
+    )
+    if os.path.exists(html_path):
+        return FileResponse(html_path, media_type="text/html")
+    return HTMLResponse("<h1>Agent Swarm Monitor not found</h1>", status_code=404)
 
 
 if __name__ == "__main__":
