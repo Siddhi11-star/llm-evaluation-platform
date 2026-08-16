@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TopBar, PageContent } from '../components/AppShell'
 import {
   IcSparkles,
@@ -137,6 +137,16 @@ export default function JudgeConfig() {
   const [isJudging, setIsJudging] = useState(false)
   const [judgeResult, setJudgeResult] = useState<JudgeResult | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const promptTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize textarea whenever prompt content updates so all text is 100% visible
+  useEffect(() => {
+    if (promptTextareaRef.current) {
+      promptTextareaRef.current.style.height = 'auto'
+      promptTextareaRef.current.style.height = `${Math.max(90, promptTextareaRef.current.scrollHeight + 4)}px`
+    }
+  }, [prompt])
 
   const modelAObj = AVAILABLE_MODELS.find(m => m.name === modelA) || AVAILABLE_MODELS[0]
   const modelBObj = AVAILABLE_MODELS.find(m => m.name === modelB) || AVAILABLE_MODELS[1]
@@ -419,23 +429,25 @@ export default function JudgeConfig() {
             </div>
 
             <textarea
+              ref={promptTextareaRef}
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               placeholder="Enter the prompt or task directive that both AI models will be evaluated on..."
               style={{
                 width: '100%',
-                minHeight: 85,
+                minHeight: 90,
                 background: 'var(--color-input-bg)',
                 border: '1px solid var(--color-border)',
                 borderRadius: 10,
-                padding: '12px 14px',
+                padding: '14px 16px',
                 fontSize: 13.5,
                 color: 'var(--color-foreground)',
                 fontFamily: 'Inter, sans-serif',
                 lineHeight: 1.6,
                 outline: 'none',
-                resize: 'vertical',
-                transition: 'border-color 0.15s',
+                resize: 'none',
+                overflow: 'hidden',
+                transition: 'border-color 0.15s, height 0.1s ease',
                 boxSizing: 'border-box',
               }}
               onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet)')}
