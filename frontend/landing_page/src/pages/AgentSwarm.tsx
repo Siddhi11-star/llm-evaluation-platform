@@ -14,397 +14,429 @@ import {
   IcJudge,
   IcSearch,
   IcFilter,
+  IcDownload,
+  IcTable,
+  IcDatabase,
+  IcExternalLink,
   IcKey,
   IcSettings,
 } from '../components/icons'
 
-// ─── Agent Swarm Node Definitions ──────────────────────────────────────────
+// ─── Types for Dataset Swarm (Kimi Swarm Architecture) ────────────────────────
 
-export type SwarmAgent = {
+export type DatasetRecord = {
   id: string
-  label: string
-  role: string
-  model: string
-  provider: string
-  color: string
-  bg: string
-  border: string
-  status: 'Idle' | 'Active' | 'Thinking' | 'Completed' | 'Error'
-  temperature: number
-  maxTokens: number
-  tools: string[]
-  systemPrompt: string
-  latencyMs: number
-  tokensUsed: number
+  entity: string
+  category: string
+  metricA: string
+  metricB: string
+  metricC: string
+  confidence: number
+  sourceUrl: string
+  sourceTitle: string
+  verifiedBy: string
+  status: 'Verified' | 'Pending' | 'Flagged'
+  citations: string[]
+  rawSnippet: string
 }
 
-const DEFAULT_AGENTS: SwarmAgent[] = [
+export type DatasetCampaign = {
+  id: string
+  title: string
+  badge: string
+  targetCount: number
+  markdownSpec: string
+  headers: { key: string; label: string }[]
+  initialRecords: DatasetRecord[]
+}
+
+const CAMPAIGNS: DatasetCampaign[] = [
   {
-    id: 'planner',
-    label: 'Planner & Orchestrator',
-    role: 'Decomposes objective into an execution DAG, schedules parallel tasks, and assigns sub-agents.',
-    model: 'claude-3.5-sonnet',
-    provider: 'Anthropic',
-    color: '#7C3AED',
-    bg: 'rgba(124,58,237,0.1)',
-    border: 'rgba(124,58,237,0.25)',
-    status: 'Idle',
-    temperature: 0.2,
-    maxTokens: 2048,
-    tools: ['DAG Generator', 'Resource Scheduler', 'Context Window Manager'],
-    systemPrompt: 'You are the Chief Planning Agent. Break down complex queries into isolated, actionable sub-tasks with strict dependency constraints.',
-    latencyMs: 310,
-    tokensUsed: 840,
+    id: 'ai-startups',
+    title: 'Global AI Frontier Startups & Funding Intelligence',
+    badge: 'Venture / Tech',
+    targetCount: 500,
+    markdownSpec: `# Kimi Agent Swarm Strategy: AI Frontier Startups Dataset
+
+## 1. Objective & Scope
+Autonomous discovery and structured extraction of AI foundation model & agentic workflow startups founded between 2023–2026 with verified venture funding >= $10M.
+
+## 2. Extraction Schema
+- **Entity**: Startup legal / brand name
+- **Primary Architecture**: Foundation Model, Agentic OS, Synthetic Data, Robotics
+- **Total Funding**: Verified USD Series A/B/C amount with primary SEC/Crunchbase citations
+- **Lead Investors**: Tier-1 venture partners (e.g. Founders Fund, Sequoia, Lightspeed)
+- **Primary Source URL**: Direct press release, regulatory filing, or company blog
+
+## 3. Verification & Completion Criteria
+1. Re-query citations to guarantee 0% hallucinated funding rounds.
+2. Require at least 2 independent web-sourced citations per record.
+3. Reject unannounced stealth rumors or speculative valuation metrics.`,
+    headers: [
+      { key: 'entity', label: 'Company / Entity' },
+      { key: 'category', label: 'AI Architecture' },
+      { key: 'metricA', label: 'Total Funding' },
+      { key: 'metricB', label: 'Latest Round' },
+      { key: 'metricC', label: 'Lead Investors' },
+    ],
+    initialRecords: [
+      {
+        id: 'rec-001',
+        entity: 'Cognition AI',
+        category: 'Autonomous Software Agents',
+        metricA: '$175,000,000',
+        metricB: 'Series A ($2.0B Val)',
+        metricC: 'Founders Fund, Peter Thiel',
+        confidence: 99.4,
+        sourceUrl: 'https://cognition.ai/blog/series-a',
+        sourceTitle: 'Cognition AI Funding Announcement & Devin Architecture',
+        verifiedBy: 'Agent #042 (Citation Validator)',
+        status: 'Verified',
+        citations: ['SEC Form D (2024-04-12)', 'Founders Fund Press Dispatch'],
+        rawSnippet: 'Cognition secures $175M Series A led by Founders Fund to scale Devin AI autonomous software engineering swarm.',
+      },
+      {
+        id: 'rec-002',
+        entity: 'Mistral AI',
+        category: 'Open-Weight Multimodal LLMs',
+        metricA: '$640,000,000',
+        metricB: 'Series B ($6.0B Val)',
+        metricC: 'General Catalyst, Lightspeed',
+        confidence: 98.9,
+        sourceUrl: 'https://mistral.ai/news/series-b',
+        sourceTitle: 'Mistral AI Closes €600M Series B Financing',
+        verifiedBy: 'Agent #018 (DOM Extractor)',
+        status: 'Verified',
+        citations: ['General Catalyst Investor Brief', 'EU Enterprise Registry'],
+        rawSnippet: 'Mistral AI expands European frontier computing with Series B led by General Catalyst.',
+      },
+      {
+        id: 'rec-003',
+        entity: 'Perplexity AI',
+        category: 'Conversational Answer Engine',
+        metricA: '$165,000,000',
+        metricB: 'Series C ($3.0B Val)',
+        metricC: 'IVP, NEA, NVIDIA',
+        confidence: 99.1,
+        sourceUrl: 'https://perplexity.ai/hub/blog/series-c',
+        sourceTitle: 'Accelerating Knowledge Discovery with NVIDIA & IVP',
+        verifiedBy: 'Agent #089 (Factual Cross-Checker)',
+        status: 'Verified',
+        citations: ['TechCrunch Disrupt Filing', 'IVP Portfolio Release'],
+        rawSnippet: 'Perplexity triples daily search query volume; announces round participation from NVIDIA and Jeff Bezos.',
+      },
+      {
+        id: 'rec-004',
+        entity: 'Physical Intelligence (Pi)',
+        category: 'Universal Robotics Foundation Model',
+        metricA: '$400,000,000',
+        metricB: 'Early Stage ($2.4B Val)',
+        metricC: 'Jeff Bezos, Thrive Capital, OpenAI',
+        confidence: 98.2,
+        sourceUrl: 'https://physicalintelligence.company/news',
+        sourceTitle: 'Pi Announces $400M Financing for Generalist Robot AI',
+        verifiedBy: 'Agent #007 (Web Crawler)',
+        status: 'Verified',
+        citations: ['Thrive Capital Investment Thesis', 'Bloomberg Technology'],
+        rawSnippet: 'Pi develops π0, a general-purpose robotic foundation model bringing physical AI into industrial manipulation.',
+      },
+      {
+        id: 'rec-005',
+        entity: 'Poolside AI',
+        category: 'Code Generation & Reasoning',
+        metricA: '$500,000,000',
+        metricB: 'Series B ($3.0B Val)',
+        metricC: 'Bain Capital Ventures, DST Global',
+        confidence: 97.6,
+        sourceUrl: 'https://poolside.ai/press/series-b',
+        sourceTitle: 'Building the Foundation of Software Intelligence',
+        verifiedBy: 'Agent #112 (Schema Normalizer)',
+        status: 'Verified',
+        citations: ['Bain Capital Ventures Dispatch', 'French Tech Hub'],
+        rawSnippet: 'Poolside scales next-generation developer reasoning models with massive 500M capitalization.',
+      },
+    ],
   },
   {
-    id: 'researcher',
-    label: 'Deep Context Researcher',
-    role: 'Fetches relevant vector embeddings, web citations, and contextual ground-truth references.',
-    model: 'gemini-2.0-flash',
-    provider: 'Google',
-    color: '#38BDF8',
-    bg: 'rgba(56,189,248,0.1)',
-    border: 'rgba(56,189,248,0.25)',
-    status: 'Idle',
-    temperature: 0.1,
-    maxTokens: 4096,
-    tools: ['Vector Retrieval', 'Google Search API', 'Doc Indexer'],
-    systemPrompt: 'Retrieve factual context and ground all factual propositions in verifiable references.',
-    latencyMs: 440,
-    tokensUsed: 1250,
+    id: 'bio-trials',
+    title: 'Biomedical Clinical Trials & Orphan Drug Pipelines',
+    badge: 'Pharma / Health',
+    targetCount: 350,
+    markdownSpec: `# Kimi Agent Swarm Strategy: Phase II/III Clinical Drug Pipeline
+
+## 1. Scope
+Gather active clinical trial cohorts, molecular targets, primary endpoints, and orphan drug status across NIH ClinicalTrials.gov and EMA registries.
+
+## 2. Extraction Schema
+- **Therapeutic Candidate**: Compound code or generic drug name
+- **Indication / Pathology**: Oncology, CNS neurodegeneration, rare metabolic disorders
+- **Phase & Trial ID**: NCT identifier & current clinical progression
+- **Target Mechanism**: Kinase inhibitor, Monoclonal antibody, RNAi, CRISPR
+- **Primary Endpoint P-Value**: Statistical significance benchmark from interim readouts`,
+    headers: [
+      { key: 'entity', label: 'Therapeutic Drug' },
+      { key: 'category', label: 'Target Pathology' },
+      { key: 'metricA', label: 'Clinical Phase' },
+      { key: 'metricB', label: 'Mechanism of Action' },
+      { key: 'metricC', label: 'Primary Sponsor' },
+    ],
+    initialRecords: [
+      {
+        id: 'rec-201',
+        entity: 'Tirzepatide (SURMOUNT-OSA)',
+        category: 'Obstructive Sleep Apnea & Obesity',
+        metricA: 'Phase III (NCT05412001)',
+        metricB: 'Dual GIP / GLP-1 RA',
+        metricC: 'Eli Lilly & Co.',
+        confidence: 99.8,
+        sourceUrl: 'https://clinicaltrials.gov/study/NCT05412001',
+        sourceTitle: 'Trial of Tirzepatide in Participants With OSA and Obesity',
+        verifiedBy: 'Agent #033 (PubMed Verifier)',
+        status: 'Verified',
+        citations: ['NEJM June 2024 Publication', 'FDA Fast Track Docket'],
+        rawSnippet: 'Met primary endpoint with 62.8% reduction in AHI events per hour compared to placebo (p < 0.001).',
+      },
+      {
+        id: 'rec-202',
+        entity: 'Donanemab (TRAILBLAZER-ALZ 2)',
+        category: 'Early Symptomatic Alzheimer Disease',
+        metricA: 'FDA Approved / Phase IV',
+        metricB: 'Anti-Amyloid Beta (N3pG)',
+        metricC: 'Eli Lilly / Avid Radiopharmaceuticals',
+        confidence: 99.4,
+        sourceUrl: 'https://fda.gov/drugs/donanemab-approval',
+        sourceTitle: 'FDA Center for Drug Evaluation & Research Summary',
+        verifiedBy: 'Agent #074 (Registry Validator)',
+        status: 'Verified',
+        citations: ['FDA CDER Label Summary', 'JAMA Clinical Trial Review'],
+        rawSnippet: 'Slowed clinical cognitive decline by 35% on iADRS scale at 76 weeks in low-medium tau population.',
+      },
+    ],
   },
   {
-    id: 'executor',
-    label: 'Core Task Generator',
-    role: 'Executes sub-tasks, generates draft solutions, produces code implementations or structured data.',
-    model: 'gpt-4o',
-    provider: 'OpenAI',
-    color: '#34D399',
-    bg: 'rgba(52,211,153,0.1)',
-    border: 'rgba(52,211,153,0.25)',
-    status: 'Idle',
-    temperature: 0.4,
-    maxTokens: 4096,
-    tools: ['Python Sandbox', 'AST Parser', 'Mathematical Engine'],
-    systemPrompt: 'Generate precision draft responses based directly on the planner specification and retrieved context.',
-    latencyMs: 780,
-    tokensUsed: 1980,
-  },
-  {
-    id: 'critic',
-    label: 'Adversarial Critic & Judge',
-    role: 'Audits draft outputs against rubric constraints: Hallucination rate, Logical soundness, and Safety.',
-    model: 'llama-3.3-70b',
-    provider: 'Meta / Groq',
-    color: '#EC4899',
-    bg: 'rgba(236,72,153,0.1)',
-    border: 'rgba(236,72,153,0.25)',
-    status: 'Idle',
-    temperature: 0.1,
-    maxTokens: 2048,
-    tools: ['Hallucination Probe', 'Safety Guardrail', 'Rubric Scorer'],
-    systemPrompt: 'Act as a strict adversarial judge. Flag logical non-sequiturs, hallucinated citations, and edge-case liabilities.',
-    latencyMs: 390,
-    tokensUsed: 920,
-  },
-  {
-    id: 'synthesizer',
-    label: 'Consensus Synthesizer',
-    role: 'Reconciles critique feedback, merges multi-agent viewpoints, and formats final delivery artifact.',
-    model: 'claude-3.5-sonnet',
-    provider: 'Anthropic',
-    color: '#FBBF24',
-    bg: 'rgba(251,191,36,0.1)',
-    border: 'rgba(251,191,36,0.25)',
-    status: 'Idle',
-    temperature: 0.3,
-    maxTokens: 4096,
-    tools: ['Markdown Formatter', 'Confidence Calibrator', 'SLA Validator'],
-    systemPrompt: 'Synthesize verified agent streams into a definitive, crystal-clear, executive-ready response.',
-    latencyMs: 360,
-    tokensUsed: 1140,
+    id: 'sec-10k',
+    title: 'SEC 10-K Executive Compensation & Cloud Spend Disclosures',
+    badge: 'SEC / Compliance',
+    targetCount: 250,
+    markdownSpec: `# Kimi Agent Swarm Strategy: Enterprise Cloud & AI Capex
+
+## 1. Scope
+Extract capital expenditures, cloud hosting commitments, and AI infrastructure disclosures from latest 10-K filings of Fortune 500 tech leaders.`,
+    headers: [
+      { key: 'entity', label: 'Enterprise / Ticker' },
+      { key: 'category', label: 'Industry Sector' },
+      { key: 'metricA', label: 'FY25 AI CapEx' },
+      { key: 'metricB', label: 'Cloud Commitments' },
+      { key: 'metricC', label: 'SEC Filing Date' },
+    ],
+    initialRecords: [
+      {
+        id: 'rec-301',
+        entity: 'Microsoft Corp (MSFT)',
+        category: 'Hyperscale Cloud & Enterprise Software',
+        metricA: '$55,700,000,000',
+        metricB: '$120B Azure Backlog',
+        metricC: 'Form 10-K (2025-07-29)',
+        confidence: 99.7,
+        sourceUrl: 'https://sec.gov/edgar/data/789019/msft-10k',
+        sourceTitle: 'SEC EDGAR Microsoft Annual 10-K Filing',
+        verifiedBy: 'Agent #012 (EDGAR Parser)',
+        status: 'Verified',
+        citations: ['SEC EDGAR 10-K Item 7', 'PwC Independent Audit Note'],
+        rawSnippet: 'Capital expenditures including finance leases were $55.7 billion, driven by global cloud and AI infrastructure demand.',
+      },
+    ],
   },
 ]
 
-// ─── Preset Tasks ──────────────────────────────────────────────────────────
+// ─── Sub-Agent Matrix Swarm Worker Archetypes ──────────────────────────────
 
-const PRESET_TASKS = [
-  {
-    id: 'fin-audit',
-    title: 'Financial & SEC 10-K Audit',
-    badge: 'Finance / Risk',
-    prompt: 'Analyze enterprise SaaS ARR churn risks and evaluate compliance with ASC 606 revenue recognition guidelines for multi-year contract renewals.',
-    output: `### Executive Financial Audit & ASC 606 Revenue Assessment
-
-**Swarm Consensus Confidence:** 98.6% | **Composite Evaluation Score:** 96.4/100
-
-#### 1. Core Findings & Risk Vectors
-- **ASC 606 Performance Obligation Breakdown:** Multi-year contract renewals with bundled professional services must be bifurcated into distinct performance obligations at standalone selling prices (SSP).
-- **Material Churn Risk Identified:** Upfront renewal discounts amortized across year 1 create artificial ARR cliffs if usage metrics drop below the 80% contract threshold.
-- **Contractual Clawback Safeguards:** Recommended minimum 90-day cure period for SLA breaches before revenue clawback provisions trigger.
-
-#### 2. Reconciled Agent Synthesis
-All 5 swarm nodes reached unanimous consensus. The Critic agent rejected the initial unhedged churn extrapolation and replaced it with a 3-tier sensitivity model (Base: 4.2% churn, Stressed: 8.7% churn).
-
-\`\`\`json
-{
-  "compliance_status": "APPROVED_WITH_CONDITIONS",
-  "audit_trail_id": "swrm-fin-994182",
-  "recommended_escrow_reserve": "$450,000"
-}
-\`\`\``,
-    thoughtLogs: [
-      { agentId: 'planner', message: 'Deconstructed prompt into: 1) ASC 606 SSP identification, 2) ARR churn hazard rate, 3) SLA clawback mitigation.' },
-      { agentId: 'researcher', message: 'Retrieved FASB ASC 606-10-25 regulations and SaaS benchmark churn percentiles (2025-2026 data).' },
-      { agentId: 'executor', message: 'Drafted 3-part financial audit and calculated ARR impact metrics for cohort renewals.' },
-      { agentId: 'critic', message: 'Flagged unhedged churn projection on line 14; mandated inclusion of sensitivity confidence intervals.' },
-      { agentId: 'synthesizer', message: 'Unified reconciled figures into final compliance brief with JSON metadata block.' },
-    ],
-  },
-  {
-    id: 'sec-patch',
-    title: 'Zero-Day Vulnerability & Patch Review',
-    badge: 'Cybersecurity',
-    prompt: 'Investigate an asynchronous race condition in token refresh middleware causing JWT replay vulnerabilities and author a thread-safe mutex patch in TypeScript.',
-    output: `### Security Vulnerability Advisory & Hotfix Verification
-
-**Swarm Consensus Confidence:** 99.2% | **Judge Safety Score:** 100/100
-
-#### Vulnerability Assessment (CVE-2026-PENDING)
-The asynchronous token refresh pipeline permitted concurrent requests during the token expiration boundary window to invoke \`/api/auth/refresh\` in parallel, leading to token desynchronization and race condition replays.
-
-#### Verified Hotfix Patch:
-\`\`\`typescript
-import { Mutex } from 'async-mutex';
-
-export class TokenRefreshManager {
-  private refreshMutex = new Mutex();
-  private inflightPromise: Promise<string> | null = null;
-
-  async getValidToken(): Promise<string> {
-    if (!this.isTokenExpired()) {
-      return this.currentToken;
-    }
-
-    // Acquire lock to guarantee single in-flight refresh request
-    return this.refreshMutex.runExclusive(async () => {
-      if (!this.isTokenExpired()) return this.currentToken;
-      
-      if (!this.inflightPromise) {
-        this.inflightPromise = this.performTokenExchange()
-          .finally(() => { this.inflightPromise = null; });
-      }
-      return await this.inflightPromise;
-    });
-  }
-}
-\`\`\`
-
-#### Swarm Judge Verification:
-- **Accuracy:** 99% (Deterministic race test passed 10,000/10,000 iterations)
-- **Safety:** 100% (No memory leak found in mutex lifecycle)
-- **Hallucination:** 0% (Standard async-mutex primitive verified)`,
-    thoughtLogs: [
-      { agentId: 'planner', message: 'Mapped exploit topology: Race condition window in async HTTP interceptor pipeline.' },
-      { agentId: 'researcher', message: 'Queried OWASP guidelines and async-mutex concurrency safety benchmarks.' },
-      { agentId: 'executor', message: 'Engineered TypeScript mutex wrapper with in-flight deduplication promise caching.' },
-      { agentId: 'critic', message: 'Simulated 500 concurrent requests; validated that only 1 refresh network call executes.' },
-      { agentId: 'synthesizer', message: 'Compiled advisory report, unit test specs, and zero-downtime deployment guidance.' },
-    ],
-  },
-  {
-    id: 'med-research',
-    title: 'Biomedical Meta-Analysis Synthesis',
-    badge: 'Healthcare / R&D',
-    prompt: 'Synthesize recent clinical trial literature on GLP-1 receptor agonists and cardiovascular mortality reductions in non-diabetic cohorts with BMI > 30.',
-    output: `### Systematic Clinical Synthesis: GLP-1 RA in Non-Diabetic Cardiovascular Risk
-
-**Swarm Consensus Confidence:** 97.8% | **Factuality Score:** 98.2/100
-
-#### 1. Meta-Analysis Summary
-Across 4 major double-blind randomized clinical trials (aggregate $N = 17,604$), GLP-1 receptor agonists exhibited a **20% relative risk reduction (RRR)** in Major Adverse Cardiovascular Events (MACE; HR 0.80, 95% CI 0.72–0.90, $p < 0.001$) in non-diabetic adults with established CVD.
-
-#### 2. Key Physiological Mechanisms
-- **Endothelial Stabilization:** Reduction in systemic inflammatory cytokines (hs-CRP, IL-6).
-- **Blood Pressure & Lipid Modulation:** Average systolic reduction of 3.3 mmHg and modest triglyceride decrease.
-- **Direct Cardioprotective Signaling:** Activation of cardiac GLP-1 receptors dampening ischemic reperfusion injury.
-
-#### 3. Swarm Verification Note
-The Critic Judge cross-referenced patient inclusion criteria and verified all cited hazard ratios against published trial datasets.`,
-    thoughtLogs: [
-      { agentId: 'planner', message: 'Isolated 3 clinical sub-domains: MACE primary endpoints, adverse event safety profile, mechanism of action.' },
-      { agentId: 'researcher', message: 'Extracted hazard ratios and confidence intervals from PubMed and clinical trial registries.' },
-      { agentId: 'executor', message: 'Structured comparative statistics across SELECT, STEP-HFpEF, and SURMOUNT clinical trials.' },
-      { agentId: 'critic', message: 'Flagged discrepancy in baseline patient BMI thresholds; harmonized definitions to $BMI \\ge 30$.' },
-      { agentId: 'synthesizer', message: 'Authored formatted medical summary with rigorous statistical bounds.' },
-    ],
-  },
-]
-
-const ORCHESTRATION_MODES = [
-  { id: 'hierarchical', name: 'Hierarchical Orchestrator', desc: 'Planner coordinates parallel sub-agents with centralized synthesis.', icon: '🎯' },
-  { id: 'sequential', name: 'Sequential Relay', desc: 'Linear pipeline passing cumulative context from agent to agent.', icon: '⚡' },
-  { id: 'consensus', name: 'Consensus Voting', desc: 'Multi-agent majority voting with confidence-weighted aggregation.', icon: '⚖️' },
-  { id: 'adversarial', name: 'Adversarial Debate', desc: 'Continuous proposer vs critic refinement until score target met.', icon: '🛡️' },
+const SWARM_WORKER_ROLES = [
+  { id: 'crawler', name: 'Discovery Crawler', color: '#38BDF8', bg: 'rgba(56,189,248,0.12)', count: 32 },
+  { id: 'extractor', name: 'DOM & JSON Extractor', color: '#34D399', bg: 'rgba(52,211,153,0.12)', count: 48 },
+  { id: 'verifier', name: 'Citation Validator', color: '#EC4899', bg: 'rgba(236,72,153,0.12)', count: 32 },
+  { id: 'normalizer', name: 'Schema Normalizer', color: '#FBBF24', bg: 'rgba(251,191,36,0.12)', count: 16 },
 ]
 
 export default function AgentSwarm() {
-  const [agents, setAgents] = useState<SwarmAgent[]>(DEFAULT_AGENTS)
-  const [selectedTaskIndex, setSelectedTaskIndex] = useState(0)
-  const [prompt, setPrompt] = useState(PRESET_TASKS[0].prompt)
-  const [selectedMode, setSelectedMode] = useState('hierarchical')
-  const [activeTab, setActiveTab] = useState<'output' | 'trace' | 'scratchpad' | 'scorecard'>('output')
-  const [selectedAgentForEdit, setSelectedAgentForEdit] = useState<SwarmAgent | null>(null)
-  
-  // Execution state
-  const [isRunning, setIsRunning] = useState(false)
-  const [currentStep, setCurrentStep] = useState<number>(-1)
-  const [progress, setProgress] = useState(0)
-  const [completedTask, setCompletedTask] = useState<typeof PRESET_TASKS[0] | null>(PRESET_TASKS[0])
-  const [copied, setCopied] = useState(false)
-  const [activeLogs, setActiveLogs] = useState<Array<{ agentId: string; message: string; timestamp: string }>>([])
-  
-  const timerRef = useRef<any>(null)
+  const [selectedCampaignIndex, setSelectedCampaignIndex] = useState(0)
+  const currentCampaign = CAMPAIGNS[selectedCampaignIndex]
 
-  // Sync preset selection
-  const selectPreset = (index: number) => {
-    setSelectedTaskIndex(index)
-    setPrompt(PRESET_TASKS[index].prompt)
-    if (!isRunning) {
-      setCompletedTask(PRESET_TASKS[index])
-      setActiveLogs(
-        PRESET_TASKS[index].thoughtLogs.map(l => ({
-          ...l,
-          timestamp: new Date().toLocaleTimeString(),
-        }))
-      )
-    }
+  // View mode: 'dataset' (Kimi Web Dataset Swarm) | 'spec' (Markdown Strategy) | 'matrix' (Swarm Workers)
+  const [viewMode, setViewMode] = useState<'dataset' | 'spec' | 'matrix'>('dataset')
+
+  // Swarm execution state
+  const [isSwarmRunning, setIsSwarmRunning] = useState(false)
+  const [records, setRecords] = useState<DatasetRecord[]>(currentCampaign.initialRecords)
+  const [activeWorkerCount, setActiveWorkerCount] = useState(128)
+  const [toolCallsCount, setToolCallsCount] = useState(3840)
+  const [searchQueryFilter, setSearchQueryFilter] = useState('')
+  const [selectedRecordForDetail, setSelectedRecordForDetail] = useState<DatasetRecord | null>(null)
+  
+  // Markdown spec state
+  const [markdownSpec, setMarkdownSpec] = useState(currentCampaign.markdownSpec)
+  const [copyFeedback, setCopyFeedback] = useState(false)
+
+  // Live streaming log items
+  const [liveLogs, setLiveLogs] = useState<Array<{ time: string; worker: string; action: string; color: string }>>([
+    { time: '14:50:02', worker: 'Worker #042', action: 'Triangulated SEC Form D filing for Cognition AI ($175M Series A)', color: '#34D399' },
+    { time: '14:50:05', worker: 'Worker #089', action: 'Cross-validated IVP press release with NVIDIA participation for Perplexity', color: '#38BDF8' },
+    { time: '14:50:09', worker: 'Worker #012', action: 'Dispatched Google Search query: "Mistral AI Series B valuation TechCrunch"', color: '#EC4899' },
+    { time: '14:50:14', worker: 'Worker #112', action: 'Normalizing currency fields to USD with ISO-4217 standard schema', color: '#FBBF24' },
+  ])
+
+  const swarmIntervalRef = useRef<any>(null)
+
+  // Switch campaign
+  const handleSelectCampaign = (index: number) => {
+    setSelectedCampaignIndex(index)
+    setRecords(CAMPAIGNS[index].initialRecords)
+    setMarkdownSpec(CAMPAIGNS[index].markdownSpec)
+    setSelectedRecordForDetail(null)
   }
 
-  // Handle Run Simulation
-  const handleRunSwarm = () => {
-    if (isRunning) {
-      clearInterval(timerRef.current)
-      setIsRunning(false)
+  // Toggle Swarm Simulation
+  const toggleSwarm = () => {
+    if (isSwarmRunning) {
+      clearInterval(swarmIntervalRef.current)
+      setIsSwarmRunning(false)
       return
     }
 
-    setIsRunning(true)
-    setCurrentStep(0)
-    setProgress(5)
-    setActiveLogs([])
-    
-    // Reset agent statuses
-    setAgents(prev => prev.map(a => ({ ...a, status: 'Idle' })))
+    setIsSwarmRunning(true)
 
-    const taskData = PRESET_TASKS[selectedTaskIndex] || PRESET_TASKS[0]
-    let step = 0
+    const sampleEntities = [
+      { name: 'Sierra AI', cat: 'Conversational Enterprise Agents', a: '$110,000,000', b: 'Series A ($1.0B Val)', c: 'Sequoia Capital, Benchmark', src: 'https://sierra.ai/news' },
+      { name: 'Harvey AI', cat: 'Legal Reasoning & Analysis', a: '$100,000,000', b: 'Series C ($1.5B Val)', c: 'GV, OpenAI Startup Fund', src: 'https://harvey.ai/blog' },
+      { name: 'Decagon AI', cat: 'Autonomous Customer Service', a: '$65,000,000', b: 'Series B', c: 'Bain Capital Ventures, Accel', src: 'https://decagon.ai/press' },
+      { name: 'Together AI', cat: 'Decentralized GPU Cloud & Training', a: '$106,000,000', b: 'Series A ($1.25B Val)', c: 'Salesforce Ventures, Lux', src: 'https://together.ai/news' },
+      { name: 'Glean', cat: 'Workplace Knowledge Search & Agents', a: '$260,000,000', b: 'Series E ($4.6B Val)', c: 'Altimeter, DST Global', src: 'https://glean.com/press' },
+    ]
 
-    timerRef.current = setInterval(() => {
-      if (step < agents.length) {
-        const activeAgent = agents[step]
-        
-        // Update statuses
-        setAgents(prev =>
-          prev.map((a, i) => {
-            if (i < step) return { ...a, status: 'Completed' }
-            if (i === step) return { ...a, status: 'Thinking' }
-            return { ...a, status: 'Idle' }
-          })
-        )
+    let counter = 0
+    swarmIntervalRef.current = setInterval(() => {
+      setToolCallsCount(prev => prev + Math.floor(Math.random() * 8 + 4))
+      
+      const newEntity = sampleEntities[counter % sampleEntities.length]
+      const randomWorkerId = Math.floor(Math.random() * 128 + 1)
+      const randomRole = SWARM_WORKER_ROLES[Math.floor(Math.random() * SWARM_WORKER_ROLES.length)]
 
-        // Append log
-        const logMsg = taskData.thoughtLogs[step] || {
-          agentId: activeAgent.id,
-          message: `Processing context in ${activeAgent.model} (${activeAgent.tools.join(', ')})...`,
-        }
-
-        setActiveLogs(prev => [
-          ...prev,
-          {
-            agentId: activeAgent.id,
-            message: logMsg.message,
-            timestamp: new Date().toLocaleTimeString(),
-          },
-        ])
-
-        setCurrentStep(step)
-        setProgress(Math.round(((step + 1) / agents.length) * 100))
-        step++
-      } else {
-        // Complete
-        clearInterval(timerRef.current)
-        setIsRunning(false)
-        setCurrentStep(agents.length)
-        setProgress(100)
-        setAgents(prev => prev.map(a => ({ ...a, status: 'Active' })))
-        setCompletedTask(taskData)
+      const newRecord: DatasetRecord = {
+        id: `rec-gen-${Date.now()}-${counter}`,
+        entity: newEntity.name,
+        category: newEntity.cat,
+        metricA: newEntity.a,
+        metricB: newEntity.b,
+        metricC: newEntity.c,
+        confidence: +(97 + Math.random() * 2.8).toFixed(1),
+        sourceUrl: newEntity.src,
+        sourceTitle: `${newEntity.name} Funding Announcement & Verified Disclosures`,
+        verifiedBy: `Worker #${String(randomWorkerId).padStart(3, '0')} (${randomRole.name})`,
+        status: 'Verified',
+        citations: ['Verified Domain DNS Record', 'Regulatory Wire Dispatch'],
+        rawSnippet: `Autonomous extraction completed for ${newEntity.name} across 4 primary domain sources.`,
       }
-    }, 1100)
+
+      setRecords(prev => [newRecord, ...prev.slice(0, 49)])
+
+      setLiveLogs(prev => [
+        {
+          time: new Date().toLocaleTimeString(),
+          worker: `Worker #${String(randomWorkerId).padStart(3, '0')}`,
+          action: `Extracted & verified [${newEntity.name}] schema with 99.4% confidence`,
+          color: randomRole.color,
+        },
+        ...prev.slice(0, 24),
+      ])
+
+      counter++
+    }, 1400)
   }
 
   useEffect(() => {
-    // Initial logs load
-    if (PRESET_TASKS[0]) {
-      setActiveLogs(
-        PRESET_TASKS[0].thoughtLogs.map(l => ({
-          ...l,
-          timestamp: new Date().toLocaleTimeString(),
-        }))
-      )
-    }
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
+      if (swarmIntervalRef.current) clearInterval(swarmIntervalRef.current)
     }
   }, [])
 
-  const handleCopy = () => {
-    if (completedTask?.output) {
-      navigator.clipboard.writeText(completedTask.output)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
+  // Export dataset to CSV
+  const handleExportCSV = () => {
+    const headerRow = currentCampaign.headers.map(h => h.label).concat(['Confidence (%)', 'Source URL', 'Verified By']).join(',')
+    const rows = records.map(r => [
+      `"${r.entity}"`,
+      `"${r.category}"`,
+      `"${r.metricA}"`,
+      `"${r.metricB}"`,
+      `"${r.metricC}"`,
+      r.confidence,
+      `"${r.sourceUrl}"`,
+      `"${r.verifiedBy}"`,
+    ].join(','))
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headerRow, ...rows].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', `kimi-swarm-dataset-${currentCampaign.id}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
-  // Update Agent Modal
-  const saveAgentConfig = (updated: SwarmAgent) => {
-    setAgents(prev => prev.map(a => (a.id === updated.id ? updated : a)))
-    setSelectedAgentForEdit(null)
+  // Export JSON
+  const handleExportJSON = () => {
+    const jsonStr = JSON.stringify(records, null, 2)
+    const blob = new Blob([jsonStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `kimi-swarm-dataset-${currentCampaign.id}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
+
+  // Filtered records
+  const filteredRecords = records.filter(r =>
+    r.entity.toLowerCase().includes(searchQueryFilter.toLowerCase()) ||
+    r.category.toLowerCase().includes(searchQueryFilter.toLowerCase()) ||
+    r.metricC.toLowerCase().includes(searchQueryFilter.toLowerCase())
+  )
 
   return (
     <>
-      <TopBar title="Agent Swarm Orchestrator">
+      <TopBar title="Kimi Agent Swarm · Web Dataset Gathering Engine">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Swarm Live Telemetry Indicator */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              fontSize: 12,
+              gap: 8,
+              fontSize: 12.5,
               fontWeight: 600,
-              padding: '5px 12px',
+              padding: '6px 14px',
               borderRadius: 999,
-              background: isRunning ? 'rgba(56,189,248,0.12)' : 'rgba(52,211,153,0.12)',
-              color: isRunning ? '#38BDF8' : '#34D399',
-              border: `1px solid ${isRunning ? 'rgba(56,189,248,0.3)' : 'rgba(52,211,153,0.3)'}`,
+              background: isSwarmRunning ? 'rgba(56,189,248,0.12)' : 'rgba(52,211,153,0.12)',
+              color: isSwarmRunning ? '#38BDF8' : '#34D399',
+              border: `1px solid ${isSwarmRunning ? 'rgba(56,189,248,0.3)' : 'rgba(52,211,153,0.3)'}`,
             }}
           >
             <span
               style={{
-                width: 7,
-                height: 7,
+                width: 8,
+                height: 8,
                 borderRadius: '50%',
-                background: isRunning ? '#38BDF8' : '#34D399',
-                boxShadow: isRunning ? '0 0 8px #38BDF8' : '0 0 8px #34D399',
-                animation: isRunning ? 'pulse 1.5s infinite' : 'none',
+                background: isSwarmRunning ? '#38BDF8' : '#34D399',
+                boxShadow: isSwarmRunning ? '0 0 10px #38BDF8' : '0 0 10px #34D399',
+                animation: isSwarmRunning ? 'pulse 1.2s infinite' : 'none',
               }}
             />
-            {isRunning ? 'Swarm Executing…' : '5 Agents Online'}
+            {isSwarmRunning ? '128 Sub-Agents Gathering…' : 'Swarm Ready (128 Workers Online)'}
           </div>
 
           <button
-            onClick={handleRunSwarm}
+            onClick={toggleSwarm}
             className="pill-primary"
             style={{
               fontSize: 13,
@@ -414,460 +446,497 @@ export default function AgentSwarm() {
               alignItems: 'center',
               gap: 8,
               cursor: 'pointer',
-              boxShadow: '0 2px 10px rgba(124, 58, 237, 0.3)',
+              boxShadow: '0 2px 12px rgba(124, 58, 237, 0.35)',
             }}
           >
-            {isRunning ? <IcPause size={15} /> : <IcPlay size={15} />}
-            {isRunning ? 'Halt Execution' : 'Run Swarm'}
+            {isSwarmRunning ? <IcPause size={15} /> : <IcPlay size={15} />}
+            {isSwarmRunning ? 'Halt Swarm' : 'Launch Swarm Extraction'}
           </button>
         </div>
       </TopBar>
 
-      <PageContent style={{ maxWidth: 1280, margin: '0 auto' }}>
-        {/* Header Intro Banner */}
+      <PageContent style={{ maxWidth: 1380, margin: '0 auto' }}>
+        {/* ─── Hero Overview Banner ────────────────────────────────────────── */}
         <div
           style={{
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             gap: 20,
-            marginBottom: 24,
+            marginBottom: 20,
             flexWrap: 'wrap',
           }}
         >
           <div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--color-foreground)' }}>
-              Multi-Agent Collaborative Intelligence
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: 6,
+                  background: 'rgba(124,58,237,0.12)',
+                  color: 'var(--color-accent-violet)',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Kimi Agent Swarm Multi-Agent Architecture
+              </span>
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 6px 0', color: 'var(--color-foreground)', letterSpacing: '-0.02em' }}>
+              Massive Web-Sourced Dataset Mining & Verification
             </h2>
-            <p style={{ fontSize: 13.5, color: 'var(--color-muted)', margin: 0, maxWidth: 740, lineHeight: 1.5 }}>
-              Coordinated neural cluster of specialized LLMs working concurrently to plan, research, generate, adversarially critique, and synthesize rigorous responses before delivering verdict-backed outputs.
+            <p style={{ fontSize: 13.5, color: 'var(--color-muted)', margin: 0, maxWidth: 780, lineHeight: 1.5 }}>
+              Orchestrating up to 300+ parallel sub-agents to crawl domains, extract tabular records against Markdown strategy specs, cross-verify primary citations, and synthesize clean datasets at scale.
             </p>
           </div>
 
-          {/* Quick Metrics Bar */}
+          {/* KPI Metrics Dashboard */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <div className="card-base" style={{ padding: '10px 16px', minWidth: 120 }}>
-              <div style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Consensus Agreement</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#34D399', marginTop: 2 }}>98.6%</div>
+            <div className="card-base" style={{ padding: '12px 18px', minWidth: 130 }}>
+              <div style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 600 }}>Active Sub-Agents</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#38BDF8', marginTop: 2 }}>
+                {activeWorkerCount} Workers
+              </div>
             </div>
-            <div className="card-base" style={{ padding: '10px 16px', minWidth: 120 }}>
-              <div style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Avg Hand-off Latency</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>380ms</div>
+            <div className="card-base" style={{ padding: '12px 18px', minWidth: 130 }}>
+              <div style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 600 }}>Parallel Tool Calls</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#7C3AED', marginTop: 2 }}>
+                {toolCallsCount.toLocaleString()} calls
+              </div>
             </div>
-            <div className="card-base" style={{ padding: '10px 16px', minWidth: 120 }}>
-              <div style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Critic Filter Rate</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#EC4899', marginTop: 2 }}>100%</div>
+            <div className="card-base" style={{ padding: '12px 18px', minWidth: 130 }}>
+              <div style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 600 }}>Extracted Records</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#34D399', marginTop: 2 }}>
+                {records.length} Verified Rows
+              </div>
+            </div>
+            <div className="card-base" style={{ padding: '12px 18px', minWidth: 130 }}>
+              <div style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 600 }}>Citation Precision</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#EC4899', marginTop: 2 }}>
+                99.4%
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ─── Swarm Topology Pipeline Visualizer ──────────────────────────── */}
+        {/* ─── Campaign Strategy Selector & View Mode Switcher ─────────────── */}
         <div
           className="card-base"
           style={{
-            padding: 20,
-            marginBottom: 24,
-            position: 'relative',
-            overflow: 'hidden',
-            background: 'var(--color-surface)',
+            padding: '12px 18px',
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 14,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <IcSwarm size={18} color="var(--color-accent-violet)" />
-              <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                Live Swarm Neural Topology & Pipeline
-              </span>
-            </div>
-            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-              Click any agent node to edit parameters
+          {/* Campaign Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
+              Dataset Campaign:
             </span>
-          </div>
-
-          {/* Progress Bar (Visible during run) */}
-          {isRunning && (
-            <div style={{ width: '100%', height: 4, background: 'var(--color-border)', borderRadius: 2, marginBottom: 18, overflow: 'hidden' }}>
-              <div
-                style={{
-                  width: `${progress}%`,
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #7C3AED, #38BDF8, #34D399)',
-                  transition: 'width 0.4s ease',
-                }}
-              />
-            </div>
-          )}
-
-          {/* Pipeline Nodes Flow */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-              overflowX: 'auto',
-              paddingBottom: 8,
-            }}
-          >
-            {agents.map((agent, index) => {
-              const isAgentActive = isRunning && currentStep === index
-              const isAgentDone = currentStep > index || (!isRunning && currentStep === agents.length)
-              
+            {CAMPAIGNS.map((camp, idx) => {
+              const active = selectedCampaignIndex === idx
               return (
-                <div
-                  key={agent.id}
-                  onClick={() => setSelectedAgentForEdit(agent)}
+                <button
+                  key={camp.id}
+                  onClick={() => handleSelectCampaign(idx)}
                   style={{
-                    flex: '1 1 0',
-                    minWidth: 180,
-                    padding: '14px 14px',
-                    borderRadius: 12,
-                    background: isAgentActive ? agent.bg : 'var(--color-card)',
-                    border: `1.5px solid ${isAgentActive ? agent.color : isAgentDone ? 'rgba(52,211,153,0.3)' : agent.border}`,
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: `1.5px solid ${active ? 'var(--color-accent-violet)' : 'var(--color-border)'}`,
+                    background: active ? 'var(--color-nav-active-bg)' : 'var(--color-surface)',
+                    color: active ? 'var(--color-accent-violet)' : 'var(--color-foreground)',
+                    fontWeight: 600,
+                    fontSize: 12.5,
                     cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    boxShadow: isAgentActive ? `0 0 16px ${agent.color}40` : 'none',
-                    transform: isAgentActive ? 'translateY(-2px)' : 'none',
-                    position: 'relative',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {/* Step Badge */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span
-                      style={{
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        padding: '2px 7px',
-                        borderRadius: 6,
-                        background: agent.bg,
-                        color: agent.color,
-                        border: `1px solid ${agent.border}`,
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      Step 0{index + 1}
-                    </span>
-
-                    {/* Status Pill */}
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: isAgentActive ? agent.color : isAgentDone ? '#34D399' : 'var(--color-muted)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      {isAgentActive ? (
-                        <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
-                      ) : isAgentDone ? (
-                        <IcCheck size={12} />
-                      ) : null}
-                      {isAgentActive ? 'Thinking…' : isAgentDone ? 'Done' : 'Standby'}
-                    </span>
-                  </div>
-
-                  {/* Agent Info */}
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 3 }}>
-                    {agent.label}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                    {agent.model}
-                  </div>
-
-                  {/* Telemetry Microchips */}
-                  <div style={{ display: 'flex', gap: 6, marginTop: 10, fontSize: 10.5, color: 'var(--color-muted)' }}>
-                    <span style={{ padding: '2px 5px', borderRadius: 4, background: 'var(--color-hover)' }}>
-                      ~{agent.latencyMs}ms
-                    </span>
-                    <span style={{ padding: '2px 5px', borderRadius: 4, background: 'var(--color-hover)' }}>
-                      {agent.tokensUsed} tkn
-                    </span>
-                  </div>
-                </div>
+                  {camp.title}
+                </button>
               )
             })}
           </div>
-        </div>
 
-        {/* ─── Main Two-Column Layout: Controls & Execution Output ─────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 420px) 1fr', gap: 24, alignItems: 'start' }}>
-          
-          {/* LEFT COLUMN: Preset Selector, Prompt Input & Orchestration Mode */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            
-            {/* Task Presets Card */}
-            <div className="card-base" style={{ padding: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                  Task Benchmark Presets
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>Select scenario</span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {PRESET_TASKS.map((preset, i) => {
-                  const selected = selectedTaskIndex === i
-                  return (
-                    <div
-                      key={preset.id}
-                      onClick={() => selectPreset(i)}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: 8,
-                        background: selected ? 'var(--color-nav-active-bg)' : 'transparent',
-                        border: `1px solid ${selected ? 'var(--color-accent-violet)' : 'var(--color-border)'}`,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: 12.5, fontWeight: 600, color: selected ? 'var(--color-accent-violet)' : 'var(--color-foreground)' }}>
-                          {preset.title}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 10,
-                            padding: '2px 6px',
-                            borderRadius: 4,
-                            background: 'var(--color-hover)',
-                            color: 'var(--color-muted)',
-                          }}
-                        >
-                          {preset.badge}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: 11.5, color: 'var(--color-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {preset.prompt}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Prompt Input & Execution Modes */}
-            <div className="card-base" style={{ padding: 18 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 8 }}>
-                Swarm Task Objective
-              </div>
-              <textarea
-                value={prompt}
-                onChange={e => setPrompt(e.target.value)}
-                rows={4}
-                style={{
-                  width: '100%',
-                  padding: 12,
-                  borderRadius: 8,
-                  border: '1px solid var(--color-border)',
-                  background: 'var(--color-input-bg)',
-                  color: 'var(--color-foreground)',
-                  fontSize: 12.5,
-                  lineHeight: 1.5,
-                  resize: 'vertical',
-                  fontFamily: 'inherit',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                placeholder="Enter complex instruction for the multi-agent swarm..."
-              />
-
-              {/* Orchestration Mode Selector */}
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-foreground)', marginBottom: 8 }}>
-                  Swarm Orchestration Protocol
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {ORCHESTRATION_MODES.map(mode => {
-                    const active = selectedMode === mode.id
-                    return (
-                      <div
-                        key={mode.id}
-                        onClick={() => setSelectedMode(mode.id)}
-                        style={{
-                          padding: '10px 10px',
-                          borderRadius: 8,
-                          background: active ? 'var(--color-nav-active-bg)' : 'var(--color-card)',
-                          border: `1px solid ${active ? 'var(--color-accent-violet)' : 'var(--color-border)'}`,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                          <span>{mode.icon}</span>
-                          <span style={{ fontSize: 11.5, fontWeight: 600, color: active ? 'var(--color-accent-violet)' : 'var(--color-foreground)' }}>
-                            {mode.name}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 10, color: 'var(--color-muted)', lineHeight: 1.3 }}>
-                          {mode.desc}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Execute Action */}
-              <button
-                onClick={handleRunSwarm}
-                disabled={isRunning}
-                className="pill-primary"
-                style={{
-                  width: '100%',
-                  marginTop: 18,
-                  padding: '10px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: isRunning ? 'not-allowed' : 'pointer',
-                  opacity: isRunning ? 0.7 : 1,
-                }}
-              >
-                <IcSparkles size={16} />
-                {isRunning ? 'Agents Collaborating…' : 'Trigger Swarm Execution'}
-              </button>
-            </div>
-
-            {/* Live Agent Thought Stream */}
-            <div className="card-base" style={{ padding: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                  Live Thought Telemetry
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{activeLogs.length} events</span>
-              </div>
-
-              <div
-                style={{
-                  maxHeight: 220,
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                  paddingRight: 4,
-                }}
-              >
-                {activeLogs.length === 0 ? (
-                  <div style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'center', padding: '20px 0' }}>
-                    Click "Run Swarm" to stream agent thoughts.
-                  </div>
-                ) : (
-                  activeLogs.map((log, idx) => {
-                    const agent = agents.find(a => a.id === log.agentId) || agents[0]
-                    return (
-                      <div
-                        key={idx}
-                        style={{
-                          padding: '8px 10px',
-                          borderRadius: 6,
-                          background: 'var(--color-surface)',
-                          borderLeft: `3px solid ${agent.color}`,
-                          fontSize: 11.5,
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                          <span style={{ fontWeight: 600, color: agent.color }}>
-                            {agent.label}
-                          </span>
-                          <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>{log.timestamp}</span>
-                        </div>
-                        <div style={{ color: 'var(--color-foreground)', lineHeight: 1.4 }}>
-                          {log.message}
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: Output Tabs, Waterfall Trace, Raw Payloads & Scorecard */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            
-            {/* View Tabs */}
-            <div
-              className="card-base"
+          {/* View Mode Switcher */}
+          <div style={{ display: 'flex', gap: 6, background: 'var(--color-surface)', padding: 4, borderRadius: 8, border: '1px solid var(--color-border)' }}>
+            <button
+              onClick={() => setViewMode('dataset')}
               style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                border: 'none',
+                background: viewMode === 'dataset' ? 'var(--color-nav-active-bg)' : 'transparent',
+                color: viewMode === 'dataset' ? 'var(--color-accent-violet)' : 'var(--color-muted)',
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '8px 12px',
-                flexWrap: 'wrap',
-                gap: 8,
+                gap: 6,
               }}
             >
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  onClick={() => setActiveTab('output')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    border: 'none',
-                    background: activeTab === 'output' ? 'var(--color-nav-active-bg)' : 'transparent',
-                    color: activeTab === 'output' ? 'var(--color-accent-violet)' : 'var(--color-muted)',
-                    fontWeight: 600,
-                    fontSize: 12.5,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Synthesized Output
-                </button>
-                <button
-                  onClick={() => setActiveTab('trace')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    border: 'none',
-                    background: activeTab === 'trace' ? 'var(--color-nav-active-bg)' : 'transparent',
-                    color: activeTab === 'trace' ? 'var(--color-accent-violet)' : 'var(--color-muted)',
-                    fontWeight: 600,
-                    fontSize: 12.5,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Handoff Waterfall
-                </button>
-                <button
-                  onClick={() => setActiveTab('scratchpad')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    border: 'none',
-                    background: activeTab === 'scratchpad' ? 'var(--color-nav-active-bg)' : 'transparent',
-                    color: activeTab === 'scratchpad' ? 'var(--color-accent-violet)' : 'var(--color-muted)',
-                    fontWeight: 600,
-                    fontSize: 12.5,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Agent Scratchpads
-                </button>
-                <button
-                  onClick={() => setActiveTab('scorecard')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 6,
-                    border: 'none',
-                    background: activeTab === 'scorecard' ? 'var(--color-nav-active-bg)' : 'transparent',
-                    color: activeTab === 'scorecard' ? 'var(--color-accent-violet)' : 'var(--color-muted)',
-                    fontWeight: 600,
-                    fontSize: 12.5,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Judge Scorecard
-                </button>
+              <IcTable size={14} /> Live Dataset Table
+            </button>
+            <button
+              onClick={() => setViewMode('spec')}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                border: 'none',
+                background: viewMode === 'spec' ? 'var(--color-nav-active-bg)' : 'transparent',
+                color: viewMode === 'spec' ? 'var(--color-accent-violet)' : 'var(--color-muted)',
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <IcSparkles size={14} /> Markdown Strategy Spec
+            </button>
+            <button
+              onClick={() => setViewMode('matrix')}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                border: 'none',
+                background: viewMode === 'matrix' ? 'var(--color-nav-active-bg)' : 'transparent',
+                color: viewMode === 'matrix' ? 'var(--color-accent-violet)' : 'var(--color-muted)',
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <IcCpu size={14} /> Swarm Worker Matrix (128x)
+            </button>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            VIEW 1: LIVE DATASET STUDIO & TABLE
+            ═══════════════════════════════════════════════════════════════════ */}
+        {viewMode === 'dataset' && (
+          <div style={{ display: 'grid', gridTemplateColumns: selectedRecordForDetail ? '1fr 400px' : '1fr', gap: 20, alignItems: 'start' }}>
+            {/* Table Container */}
+            <div className="card-base" style={{ padding: 20, overflow: 'hidden' }}>
+              {/* Table Toolbar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '7px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-input-bg)',
+                      width: '100%',
+                      maxWidth: 360,
+                    }}
+                  >
+                    <IcSearch size={15} color="var(--color-muted)" />
+                    <input
+                      type="text"
+                      value={searchQueryFilter}
+                      onChange={e => setSearchQueryFilter(e.target.value)}
+                      placeholder="Search entities, categories, investors…"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        outline: 'none',
+                        color: 'var(--color-foreground)',
+                        fontSize: 12.5,
+                        width: '100%',
+                      }}
+                    />
+                  </div>
+                  <span style={{ fontSize: 12, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
+                    Showing {filteredRecords.length} records
+                  </span>
+                </div>
+
+                {/* Export Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    onClick={handleExportCSV}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '7px 14px',
+                      borderRadius: 7,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-card)',
+                      color: 'var(--color-foreground)',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <IcDownload size={14} /> Export CSV
+                  </button>
+                  <button
+                    onClick={handleExportJSON}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '7px 14px',
+                      borderRadius: 7,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-card)',
+                      color: 'var(--color-foreground)',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <IcDownload size={14} /> Export JSON
+                  </button>
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Data Grid */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1.5px solid var(--color-border)', color: 'var(--color-muted)', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {currentCampaign.headers.map(h => (
+                        <th key={h.key} style={{ padding: '10px 12px', fontWeight: 700 }}>
+                          {h.label}
+                        </th>
+                      ))}
+                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Confidence</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Source Proof</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRecords.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-muted)' }}>
+                          No records match search filter.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRecords.map(rec => (
+                        <tr
+                          key={rec.id}
+                          onClick={() => setSelectedRecordForDetail(rec)}
+                          style={{
+                            borderBottom: '1px solid var(--color-border-faint)',
+                            cursor: 'pointer',
+                            background: selectedRecordForDetail?.id === rec.id ? 'var(--color-nav-active-bg)' : 'transparent',
+                            transition: 'background 0.12s ease',
+                          }}
+                          onMouseEnter={e => {
+                            if (selectedRecordForDetail?.id !== rec.id) {
+                              e.currentTarget.style.background = 'var(--color-hover)'
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            if (selectedRecordForDetail?.id !== rec.id) {
+                              e.currentTarget.style.background = 'transparent'
+                            }
+                          }}
+                        >
+                          {/* Col 1: Entity */}
+                          <td style={{ padding: '12px 12px', fontWeight: 700, color: 'var(--color-foreground)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399' }} />
+                              {rec.entity}
+                            </div>
+                          </td>
+
+                          {/* Col 2: Category */}
+                          <td style={{ padding: '12px 12px', color: 'var(--color-muted)' }}>
+                            <span style={{ fontSize: 11.5, padding: '2px 7px', borderRadius: 5, background: 'var(--color-hover)', color: 'var(--color-foreground)' }}>
+                              {rec.category}
+                            </span>
+                          </td>
+
+                          {/* Col 3: Metric A */}
+                          <td style={{ padding: '12px 12px', fontWeight: 600, color: 'var(--color-foreground)', fontFamily: 'JetBrains Mono, monospace' }}>
+                            {rec.metricA}
+                          </td>
+
+                          {/* Col 4: Metric B */}
+                          <td style={{ padding: '12px 12px', color: 'var(--color-muted)' }}>
+                            {rec.metricB}
+                          </td>
+
+                          {/* Col 5: Metric C */}
+                          <td style={{ padding: '12px 12px', color: 'var(--color-muted)' }}>
+                            {rec.metricC}
+                          </td>
+
+                          {/* Confidence */}
+                          <td style={{ padding: '12px 12px' }}>
+                            <span style={{ fontSize: 11.5, fontWeight: 700, color: '#34D399', background: 'rgba(52,211,153,0.1)', padding: '2px 6px', borderRadius: 4 }}>
+                              {rec.confidence}%
+                            </span>
+                          </td>
+
+                          {/* Source Link */}
+                          <td style={{ padding: '12px 12px' }}>
+                            <a
+                              href={rec.sourceUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                color: 'var(--color-accent-violet)',
+                                textDecoration: 'none',
+                                fontSize: 11.5,
+                                fontWeight: 600,
+                              }}
+                            >
+                              Cite <IcExternalLink size={11} />
+                            </a>
+                          </td>
+
+                          {/* Inspect */}
+                          <td style={{ padding: '12px 12px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => setSelectedRecordForDetail(rec)}
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: 6,
+                                border: '1px solid var(--color-border)',
+                                background: 'transparent',
+                                color: 'var(--color-foreground)',
+                                fontSize: 11.5,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Inspect
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Record Inspector Drawer Subpanel */}
+            {selectedRecordForDetail && (
+              <div
+                className="card-base"
+                style={{
+                  padding: 22,
+                  border: '1.5px solid var(--color-accent-violet)',
+                  position: 'sticky',
+                  top: 24,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                    Record Verification Proof
+                  </div>
+                  <button
+                    onClick={() => setSelectedRecordForDetail(null)}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: 16 }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--color-foreground)' }}>
+                    {selectedRecordForDetail.entity}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>
+                    {selectedRecordForDetail.category}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                  <div style={{ padding: 10, borderRadius: 8, background: 'var(--color-surface)', fontSize: 12 }}>
+                    <div style={{ color: 'var(--color-muted)', fontSize: 11, marginBottom: 2 }}>Primary Metrics</div>
+                    <div style={{ fontWeight: 700, color: 'var(--color-foreground)' }}>
+                      {selectedRecordForDetail.metricA} · {selectedRecordForDetail.metricB}
+                    </div>
+                    <div style={{ color: 'var(--color-muted)', marginTop: 2 }}>{selectedRecordForDetail.metricC}</div>
+                  </div>
+
+                  <div style={{ padding: 10, borderRadius: 8, background: 'var(--color-surface)', fontSize: 12 }}>
+                    <div style={{ color: 'var(--color-muted)', fontSize: 11, marginBottom: 2 }}>Extracted Raw Snippet</div>
+                    <div style={{ color: 'var(--color-foreground)', fontStyle: 'italic', lineHeight: 1.4 }}>
+                      "{selectedRecordForDetail.rawSnippet}"
+                    </div>
+                  </div>
+
+                  <div style={{ padding: 10, borderRadius: 8, background: 'var(--color-surface)', fontSize: 12 }}>
+                    <div style={{ color: 'var(--color-muted)', fontSize: 11, marginBottom: 4 }}>Independent Citation Trail</div>
+                    {selectedRecordForDetail.citations.map((cite, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#34D399', fontSize: 11.5, marginBottom: 2 }}>
+                        <IcCheck size={12} /> {cite}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ padding: 10, borderRadius: 8, background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', fontSize: 11.5 }}>
+                    <div style={{ color: 'var(--color-muted)', marginBottom: 2 }}>Validated By</div>
+                    <div style={{ fontWeight: 600, color: 'var(--color-accent-violet)' }}>
+                      {selectedRecordForDetail.verifiedBy}
+                    </div>
+                  </div>
+                </div>
+
+                <a
+                  href={selectedRecordForDetail.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="pill-primary"
+                  style={{ width: '100%', padding: '8px', fontSize: 12.5, justifyContent: 'center', textDecoration: 'none' }}
+                >
+                  <IcExternalLink size={14} /> Open Primary Source URL
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            VIEW 2: MARKDOWN STRATEGY & SPEC BUILDER
+            ═══════════════════════════════════════════════════════════════════ */}
+        {viewMode === 'spec' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            {/* Editor */}
+            <div className="card-base" style={{ padding: 22 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                    Kimi Swarm Strategy Markdown Spec
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                    Defines task decomposition, schema constraints, and verification logic.
+                  </div>
+                </div>
                 <button
-                  onClick={handleCopy}
+                  onClick={() => {
+                    navigator.clipboard.writeText(markdownSpec)
+                    setCopyFeedback(true)
+                    setTimeout(() => setCopyFeedback(false), 2000)
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -881,510 +950,193 @@ export default function AgentSwarm() {
                     cursor: 'pointer',
                   }}
                 >
-                  {copied ? <IcCheck size={13} color="#34D399" /> : <IcCopy size={13} />}
-                  {copied ? 'Copied' : 'Copy Output'}
+                  {copyFeedback ? <IcCheck size={13} color="#34D399" /> : <IcCopy size={13} />}
+                  {copyFeedback ? 'Copied' : 'Copy Spec'}
                 </button>
               </div>
+
+              <textarea
+                value={markdownSpec}
+                onChange={e => setMarkdownSpec(e.target.value)}
+                rows={18}
+                style={{
+                  width: '100%',
+                  padding: 14,
+                  borderRadius: 8,
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-input-bg)',
+                  color: 'var(--color-foreground)',
+                  fontSize: 12.5,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  lineHeight: 1.6,
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
             </div>
 
-            {/* TAB 1: Synthesized Output */}
-            {activeTab === 'output' && (
-              <div className="card-base" style={{ padding: 22, minHeight: 480 }}>
-                {isRunning ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: 16 }}>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: '50%',
-                        border: '3px solid var(--color-border)',
-                        borderTopColor: 'var(--color-accent-violet)',
-                        animation: 'spin 1s linear infinite',
-                      }}
-                    />
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                        Swarm Agent Consensus in Progress…
-                      </div>
-                      <div style={{ fontSize: 12.5, color: 'var(--color-muted)', marginTop: 4 }}>
-                        Step {currentStep + 1} of {agents.length}: {agents[currentStep]?.label || 'Synthesizing'}
-                      </div>
-                    </div>
-                  </div>
-                ) : completedTask?.output ? (
-                  <div style={{ color: 'var(--color-foreground)', fontSize: 13.5, lineHeight: 1.7 }}>
-                    <div
-                      style={{
-                        padding: '10px 14px',
-                        background: 'rgba(124,58,237,0.08)',
-                        border: '1px solid rgba(124,58,237,0.2)',
-                        borderRadius: 8,
-                        marginBottom: 18,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34D399' }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-foreground)' }}>
-                          Swarm Consensus Verdict: Verified by Critic Judge
-                        </span>
-                      </div>
-                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                        ID: swrm-run-882194
-                      </span>
-                    </div>
-
-                    <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-                      {completedTask.output}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--color-muted)' }}>
-                    No execution output yet. Click "Run Swarm" to trigger the multi-agent pipeline.
-                  </div>
-                )}
+            {/* Live Parsing Preview & Completion Gates */}
+            <div className="card-base" style={{ padding: 22 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 4 }}>
+                Swarm Rule Validation Engine
               </div>
-            )}
+              <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 18 }}>
+                Automatic compliance checks parsed from the active Markdown document.
+              </p>
 
-            {/* TAB 2: Handoff Waterfall & Latency */}
-            {activeTab === 'trace' && (
-              <div className="card-base" style={{ padding: 22, minHeight: 480 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 6 }}>
-                  Agent Execution & Latency Waterfall
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ padding: 12, borderRadius: 8, background: 'var(--color-surface)', borderLeft: '3px solid #34D399' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)', marginBottom: 3 }}>
+                    ✓ Target Entity & Schema Parsed
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                    Extracted 5 required tabular fields: Entity Name, Architecture, Total Funding, Lead Investors, Source URL.
+                  </div>
                 </div>
-                <p style={{ fontSize: 12.5, color: 'var(--color-muted)', marginBottom: 20 }}>
-                  Granular timing profile showing how time was spent across each stage of the swarm workflow.
-                </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {agents.map((agent, i) => {
-                    const totalSwarmTime = agents.reduce((acc, curr) => acc + curr.latencyMs, 0)
-                    const percent = Math.round((agent.latencyMs / totalSwarmTime) * 100)
-                    
-                    return (
-                      <div key={agent.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: agent.color }} />
-                            <span style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>
-                              {agent.label}
-                            </span>
-                            <span style={{ fontSize: 11, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                              ({agent.model})
-                            </span>
-                          </div>
-                          <span style={{ fontWeight: 600, color: agent.color }}>
-                            {agent.latencyMs}ms ({percent}%)
-                          </span>
-                        </div>
+                <div style={{ padding: 12, borderRadius: 8, background: 'var(--color-surface)', borderLeft: '3px solid #38BDF8' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)', marginBottom: 3 }}>
+                    ✓ Sourcing Allowlist Strategy
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                    Primary sources prioritized: SEC EDGAR Form D filings, direct company domain press feeds, Crunchbase Enterprise API.
+                  </div>
+                </div>
 
-                        {/* Bar */}
-                        <div style={{ width: '100%', height: 10, background: 'var(--color-hover)', borderRadius: 5, overflow: 'hidden' }}>
-                          <div
-                            style={{
-                              width: `${percent}%`,
-                              height: '100%',
-                              background: agent.color,
-                              borderRadius: 5,
-                              transition: 'width 0.5s ease',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
+                <div style={{ padding: 12, borderRadius: 8, background: 'var(--color-surface)', borderLeft: '3px solid #EC4899' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)', marginBottom: 3 }}>
+                    ✓ Double-Citation Verification Gate
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                    Sub-agents mandated to verify every single monetary figure across at least 2 independent URLs before committing row.
+                  </div>
+                </div>
 
-                  <div
-                    style={{
-                      marginTop: 18,
-                      padding: 14,
-                      borderRadius: 8,
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: 12.5,
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>Cumulative Swarm Turnaround: </span>
-                      <span style={{ color: '#34D399', fontWeight: 700 }}>2,280 ms</span>
-                    </div>
-                    <div>
-                      <span style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>Total Tokens: </span>
-                      <span style={{ color: '#38BDF8', fontWeight: 700 }}>6,130 tokens ($0.014)</span>
-                    </div>
+                <div style={{ padding: 12, borderRadius: 8, background: 'var(--color-surface)', borderLeft: '3px solid #FBBF24' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)', marginBottom: 3 }}>
+                    ✓ Auto-Deduplication & Unit Normalizer
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                    Fuzzy Levenshtein matching prevents duplicate company entries under parent holding entities.
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
-            {/* TAB 3: Agent Scratchpads */}
-            {activeTab === 'scratchpad' && (
-              <div className="card-base" style={{ padding: 22, minHeight: 480 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 6 }}>
-                  Individual Agent Intermediate Scratchpads
+        {/* ═══════════════════════════════════════════════════════════════════
+            VIEW 3: SWARM WORKER MATRIX (128x PARALLEL NODES)
+            ═══════════════════════════════════════════════════════════════════ */}
+        {viewMode === 'matrix' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20 }}>
+            {/* 128-Worker Visual Grid */}
+            <div className="card-base" style={{ padding: 22 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                    128x Parallel Sub-Agent Cluster
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                    Live status and concurrency load across all worker threads.
+                  </div>
                 </div>
-                <p style={{ fontSize: 12.5, color: 'var(--color-muted)', marginBottom: 16 }}>
-                  Inspect raw intermediate payloads and private memory buffers passed along the chain.
-                </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {agents.map((agent, i) => (
-                    <details
-                      key={agent.id}
-                      open={i === 0 || i === 3}
+                {/* Worker Type Badges */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {SWARM_WORKER_ROLES.map(role => (
+                    <span
+                      key={role.id}
                       style={{
-                        padding: 12,
-                        borderRadius: 8,
-                        background: 'var(--color-surface)',
-                        border: '1px solid var(--color-border)',
+                        fontSize: 11,
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        background: role.bg,
+                        color: role.color,
+                        fontWeight: 600,
                       }}
                     >
-                      <summary
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: agent.color,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <span>{agent.label} Scratchpad</span>
-                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{agent.tools.length} Tools Invoked</span>
-                      </summary>
-
-                      <div style={{ marginTop: 10, fontSize: 12, color: 'var(--color-foreground)', lineHeight: 1.5 }}>
-                        <div style={{ marginBottom: 6, color: 'var(--color-muted)', fontSize: 11 }}>
-                          <strong>System Directive:</strong> {agent.systemPrompt}
-                        </div>
-                        <div
-                          style={{
-                            padding: 10,
-                            borderRadius: 6,
-                            background: 'var(--color-card)',
-                            border: '1px solid var(--color-border)',
-                            fontFamily: 'JetBrains Mono, monospace',
-                            fontSize: 11,
-                            overflowX: 'auto',
-                          }}
-                        >
-                          {i === 0 && `{"subtasks": ["analyze_regulatory_clause", "calculate_churn_bounds", "mitigate_clawback"], "dependencies": {"task_2": ["task_1"], "task_3": ["task_2"]}}`}
-                          {i === 1 && `{"retrieved_docs": 4, "top_source": "FASB_ASC_606_Subtopic_10.pdf", "confidence_similarity": 0.942}`}
-                          {i === 2 && `{"draft_generated": true, "code_blocks": 1, "complexity_score": "O(1) Mutex synchronization"}`}
-                          {i === 3 && `{"verdict": "APPROVED_AFTER_REDLINE", "hallucination_detected": false, "safety_score": 100}`}
-                          {i === 4 && `{"final_synthesis": "COMPLETE", "token_compression_ratio": "1.4x", "status": "DELIVERED"}`}
-                        </div>
-                      </div>
-                    </details>
+                      {role.name} ({role.count})
+                    </span>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* TAB 4: Judge Scorecard */}
-            {activeTab === 'scorecard' && (
-              <div className="card-base" style={{ padding: 22, minHeight: 480 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                      Multi-Criteria Swarm Quality Scorecard
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>
-                      Evaluated by Critic Agent against standardized rubrics
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: 8,
-                      background: 'rgba(52,211,153,0.12)',
-                      border: '1px solid rgba(52,211,153,0.3)',
-                      color: '#34D399',
-                      fontSize: 14,
-                      fontWeight: 700,
-                    }}
-                  >
-                    Composite: 96.8 / 100
-                  </div>
-                </div>
+              {/* Grid Nodes */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(16, 1fr)',
+                  gap: 8,
+                  padding: 14,
+                  borderRadius: 10,
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                {Array.from({ length: 128 }).map((_, i) => {
+                  const roleIndex = Math.floor((i / 128) * SWARM_WORKER_ROLES.length)
+                  const role = SWARM_WORKER_ROLES[roleIndex]
+                  const isNodeActive = isSwarmRunning && Math.random() > 0.25
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
-                  <div className="card-base" style={{ padding: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600, marginBottom: 6 }}>
-                      <span>Factuality & Grounding</span>
-                      <span style={{ color: '#38BDF8' }}>98.2%</span>
-                    </div>
-                    <div style={{ width: '100%', height: 6, background: 'var(--color-hover)', borderRadius: 3 }}>
-                      <div style={{ width: '98.2%', height: '100%', background: '#38BDF8', borderRadius: 3 }} />
-                    </div>
-                  </div>
-
-                  <div className="card-base" style={{ padding: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600, marginBottom: 6 }}>
-                      <span>Hallucination Filter Rate</span>
-                      <span style={{ color: '#34D399' }}>99.5%</span>
-                    </div>
-                    <div style={{ width: '100%', height: 6, background: 'var(--color-hover)', borderRadius: 3 }}>
-                      <div style={{ width: '99.5%', height: '100%', background: '#34D399', borderRadius: 3 }} />
-                    </div>
-                  </div>
-
-                  <div className="card-base" style={{ padding: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600, marginBottom: 6 }}>
-                      <span>Logical Reasoning Depth</span>
-                      <span style={{ color: '#7C3AED' }}>95.0%</span>
-                    </div>
-                    <div style={{ width: '100%', height: 6, background: 'var(--color-hover)', borderRadius: 3 }}>
-                      <div style={{ width: '95%', height: '100%', background: '#7C3AED', borderRadius: 3 }} />
-                    </div>
-                  </div>
-
-                  <div className="card-base" style={{ padding: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600, marginBottom: 6 }}>
-                      <span>Safety & Guardrail Compliance</span>
-                      <span style={{ color: '#EC4899' }}>100.0%</span>
-                    </div>
-                    <div style={{ width: '100%', height: 6, background: 'var(--color-hover)', borderRadius: 3 }}>
-                      <div style={{ width: '100%', height: '100%', background: '#EC4899', borderRadius: 3 }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ padding: 14, borderRadius: 8, background: 'var(--color-surface)', border: '1px solid var(--color-border)', fontSize: 12.5 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--color-foreground)', marginBottom: 4 }}>
-                    Judge Verdict Summary
-                  </div>
-                  <div style={{ color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                    The multi-agent swarm demonstrated complete compliance with required output constraints. Zero hallucinated references detected, and all mathematical assertions match formal theorem bounds.
-                  </div>
-                </div>
+                  return (
+                    <div
+                      key={i}
+                      title={`Worker #${String(i + 1).padStart(3, '0')}: ${role.name}`}
+                      style={{
+                        aspectRatio: '1/1',
+                        borderRadius: 4,
+                        background: isNodeActive ? role.color : role.bg,
+                        border: `1px solid ${role.color}50`,
+                        boxShadow: isNodeActive ? `0 0 8px ${role.color}` : 'none',
+                        transition: 'all 0.3s ease',
+                      }}
+                    />
+                  )
+                })}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* ─── Swarm Agent Configuration Modal / Drawer ───────────────────── */}
-        {selectedAgentForEdit && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 100,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 20,
-            }}
-            onClick={() => setSelectedAgentForEdit(null)}
-          >
-            <div
-              className="card-base"
-              style={{
-                width: '100%',
-                maxWidth: 540,
-                padding: 24,
-                background: 'var(--color-background)',
-                border: `1.5px solid ${selectedAgentForEdit.color}`,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      background: selectedAgentForEdit.bg,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: selectedAgentForEdit.color,
-                      fontWeight: 700,
-                    }}
-                  >
-                    <IcCpu size={20} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--color-foreground)' }}>
-                      Configure {selectedAgentForEdit.label}
-                    </h3>
-                    <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
-                      Provider: {selectedAgentForEdit.provider}
-                    </div>
-                  </div>
+            {/* Live Streaming Worker Log */}
+            <div className="card-base" style={{ padding: 22 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                  Sub-Agent Live Log Stream
                 </div>
-                <button
-                  onClick={() => setSelectedAgentForEdit(null)}
-                  style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: 18 }}
-                >
-                  ✕
-                </button>
+                <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>Real-time telemetry</span>
               </div>
 
-              {/* Form Controls */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Model Selection */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-foreground)', display: 'block', marginBottom: 6 }}>
-                    Backbone LLM Model
-                  </label>
-                  <select
-                    value={selectedAgentForEdit.model}
-                    onChange={e =>
-                      setSelectedAgentForEdit({ ...selectedAgentForEdit, model: e.target.value })
-                    }
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  maxHeight: 380,
+                  overflowY: 'auto',
+                  paddingRight: 4,
+                }}
+              >
+                {liveLogs.map((log, idx) => (
+                  <div
+                    key={idx}
                     style={{
-                      width: '100%',
-                      padding: '8px 12px',
+                      padding: '8px 10px',
                       borderRadius: 6,
-                      border: '1px solid var(--color-border)',
-                      background: 'var(--color-input-bg)',
-                      color: 'var(--color-foreground)',
-                      fontSize: 12.5,
+                      background: 'var(--color-surface)',
+                      borderLeft: `3px solid ${log.color}`,
+                      fontSize: 11.5,
                     }}
                   >
-                    <option value="claude-3.5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
-                    <option value="gpt-4o">GPT-4o (OpenAI)</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Google)</option>
-                    <option value="llama-3.3-70b">Llama 3.3 70B (Meta)</option>
-                    <option value="deepseek-v3">DeepSeek V3 (DeepSeek)</option>
-                  </select>
-                </div>
-
-                {/* System Prompt */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-foreground)', display: 'block', marginBottom: 6 }}>
-                    System Instructions & Role Prompt
-                  </label>
-                  <textarea
-                    value={selectedAgentForEdit.systemPrompt}
-                    onChange={e =>
-                      setSelectedAgentForEdit({ ...selectedAgentForEdit, systemPrompt: e.target.value })
-                    }
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      padding: 10,
-                      borderRadius: 6,
-                      border: '1px solid var(--color-border)',
-                      background: 'var(--color-input-bg)',
-                      color: 'var(--color-foreground)',
-                      fontSize: 12,
-                      fontFamily: 'inherit',
-                      resize: 'vertical',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-
-                {/* Sliders */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
-                      <span style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>Temperature</span>
-                      <span style={{ color: 'var(--color-muted)' }}>{selectedAgentForEdit.temperature}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                      <span style={{ fontWeight: 700, color: log.color }}>{log.worker}</span>
+                      <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>{log.time}</span>
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={selectedAgentForEdit.temperature}
-                      onChange={e =>
-                        setSelectedAgentForEdit({
-                          ...selectedAgentForEdit,
-                          temperature: parseFloat(e.target.value),
-                        })
-                      }
-                      style={{ width: '100%' }}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
-                      <span style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>Max Tokens</span>
-                      <span style={{ color: 'var(--color-muted)' }}>{selectedAgentForEdit.maxTokens}</span>
+                    <div style={{ color: 'var(--color-foreground)', lineHeight: 1.35 }}>
+                      {log.action}
                     </div>
-                    <input
-                      type="range"
-                      min="512"
-                      max="8192"
-                      step="512"
-                      value={selectedAgentForEdit.maxTokens}
-                      onChange={e =>
-                        setSelectedAgentForEdit({
-                          ...selectedAgentForEdit,
-                          maxTokens: parseInt(e.target.value),
-                        })
-                      }
-                      style={{ width: '100%' }}
-                    />
                   </div>
-                </div>
-
-                {/* Tools */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-foreground)', display: 'block', marginBottom: 6 }}>
-                    Enabled Tool Permissions
-                  </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {selectedAgentForEdit.tools.map((t, idx) => (
-                      <span
-                        key={idx}
-                        style={{
-                          fontSize: 11,
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          background: selectedAgentForEdit.bg,
-                          color: selectedAgentForEdit.color,
-                          border: `1px solid ${selectedAgentForEdit.border}`,
-                        }}
-                      >
-                        ✓ {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Save & Cancel */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
-                  <button
-                    onClick={() => setSelectedAgentForEdit(null)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 6,
-                      border: '1px solid var(--color-border)',
-                      background: 'transparent',
-                      color: 'var(--color-foreground)',
-                      fontSize: 12.5,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => saveAgentConfig(selectedAgentForEdit)}
-                    className="pill-primary"
-                    style={{
-                      padding: '8px 18px',
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Save Agent Node
-                  </button>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1396,10 +1148,6 @@ export default function AgentSwarm() {
           0% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(1.3); }
           100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
         }
       `}</style>
     </>

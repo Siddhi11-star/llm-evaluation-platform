@@ -319,6 +319,31 @@ export const IcPause = (p: IconProps) => (
   </svg>
 )
 
+export const IcDownload = (p: IconProps) => (
+  <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+)
+
+export const IcTable = (p: IconProps) => (
+  <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M3 9h18" />
+    <path d="M3 15h18" />
+    <path d="M9 3v18" />
+  </svg>
+)
+
+export const IcDatabase = (p: IconProps) => (
+  <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+    <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
+  </svg>
+)
+
 export const IcCpu = (p: IconProps) => (
   <svg width={p.size ?? 18} height={p.size ?? 18} viewBox="0 0 24 24" fill="none" stroke={p.color ?? 'currentColor'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={p.className} style={{ ...(p.color ? { color: p.color } : {}), ...p.style }}>
     <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -333,3 +358,5 @@ export const IcCpu = (p: IconProps) => (
     <line x1="1" y1="15" x2="4" y2="15" />
   </svg>
 )
+
+
