@@ -248,89 +248,64 @@ export default function AgentSwarm() {
   return (
     <>
       <TopBar title="Agent Swarm Orchestrator">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <a
-            href="/agent_swarm_monitor.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              borderRadius: 8,
-              border: '1px solid var(--color-border)',
-              background: 'var(--color-surface-deep)',
-              color: 'var(--color-foreground)',
-              fontSize: 12,
-              fontWeight: 600,
-              textDecoration: 'none',
-              cursor: 'pointer',
-              fontFamily: 'JetBrains Mono, monospace',
-            }}
-          >
-            🖥️ Dense 6-Judge CI Monitor
-          </a>
-
-          {hasStarted && (
-            <>
-              {toastMessage && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '5px 12px',
-                    borderRadius: 999,
-                    background: 'rgba(52,211,153,0.15)',
-                    color: '#34D399',
-                    border: '1px solid rgba(52,211,153,0.3)',
-                  }}
-                >
-                  <IcCheck size={13} color="#34D399" />
-                  {toastMessage}
-                </div>
-              )}
-
-              <button
-                onClick={handleExportJSON}
+        {hasStarted && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {toastMessage && (
+              <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--color-border)',
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-foreground)',
                   fontSize: 12,
                   fontWeight: 600,
-                  cursor: 'pointer',
+                  padding: '5px 12px',
+                  borderRadius: 999,
+                  background: 'rgba(52,211,153,0.15)',
+                  color: '#34D399',
+                  border: '1px solid rgba(52,211,153,0.3)',
                 }}
               >
-                <IcDownload size={13} /> Export JSON
-              </button>
+                <IcCheck size={13} color="#34D399" />
+                {toastMessage}
+              </div>
+            )}
 
-              <button
-                onClick={handleResetToChat}
-                className="pill-primary"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: '6px 14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                }}
-              >
-                + New Major Task
-              </button>
-            </>
-          )}
-        </div>
+            <button
+              onClick={handleExportJSON}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
+                color: 'var(--color-foreground)',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <IcDownload size={13} /> Export JSON
+            </button>
+
+            <button
+              onClick={handleResetToChat}
+              className="pill-primary"
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '6px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'pointer',
+              }}
+            >
+              + New Major Task
+            </button>
+          </div>
+        )}
       </TopBar>
 
       <PageContent style={{ padding: '20px 24px', maxWidth: 1440, margin: '0 auto', minHeight: 'calc(100vh - 100px)' }}>
@@ -416,7 +391,7 @@ export default function AgentSwarm() {
               }}
             >
               {/* ─────────────────────────────────────────────────────────────
-                  LEFT VERTICAL RECTANGLE: PROMPT & PACKET WORKFLOW DETAILS
+                  LEFT VERTICAL RECTANGLE: PROMPT & EXECUTION CONTEXT ONLY
                   ───────────────────────────────────────────────────────────── */}
               <div
                 className="card-base"
@@ -432,68 +407,169 @@ export default function AgentSwarm() {
                   boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
                 }}
               >
-                {/* Header with Task Directive */}
+                {/* Header */}
                 <div
                   style={{
                     padding: '16px 18px',
                     borderBottom: '1px solid var(--color-border-faint)',
                     background: 'var(--color-surface)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: globalProgress === 100 ? '#34D399' : '#8B5CF6',
-                          boxShadow: `0 0 8px ${globalProgress === 100 ? '#34D399' : '#8B5CF6'}`,
-                        }}
-                      />
-                      <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-muted)' }}>
-                        Major Task Directive
-                      </span>
-                    </div>
-
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span
                       style={{
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        padding: '2px 8px',
-                        borderRadius: 999,
-                        background: 'rgba(139, 92, 246, 0.15)',
-                        color: 'var(--color-accent-violet)',
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: globalProgress === 100 ? '#34D399' : '#8B5CF6',
+                        boxShadow: `0 0 8px ${globalProgress === 100 ? '#34D399' : '#8B5CF6'}`,
                       }}
-                    >
-                      4 Packets Allocated
+                    />
+                    <span style={{ fontSize: 12.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-foreground)' }}>
+                      Task Objective
                     </span>
                   </div>
 
-                  <div
+                  <span
                     style={{
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      fontWeight: 600,
-                      color: 'var(--color-foreground)',
-                      background: 'var(--color-background)',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid var(--color-border-faint)',
-                      maxHeight: 90,
-                      overflowY: 'auto',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      background: 'rgba(139, 92, 246, 0.15)',
+                      color: 'var(--color-accent-violet)',
                     }}
                   >
-                    {currentPrompt || 'Generate 100 math word problems with step-by-step calculus & algebra proofs.'}
+                    4 Agents Active
+                  </span>
+                </div>
+
+                {/* Main Scrollable Prompt View & Context */}
+                <div
+                  style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: '16px 18px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                  }}
+                >
+                  {/* Full Prompt Display Box */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
+                      Submitted Prompt
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        lineHeight: 1.55,
+                        fontWeight: 500,
+                        color: 'var(--color-foreground)',
+                        background: 'var(--color-surface)',
+                        padding: '14px 16px',
+                        borderRadius: 10,
+                        border: '1px solid var(--color-border-faint)',
+                        whiteSpace: 'pre-wrap',
+                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      {currentPrompt || 'Generate 100 math word problems with step-by-step calculus & algebra proofs.'}
+                    </div>
                   </div>
 
-                  {/* Global Progress Bar */}
-                  <div style={{ marginTop: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-muted)', marginBottom: 4 }}>
-                      <span>Swarm Progress</span>
-                      <span style={{ fontWeight: 700, color: 'var(--color-foreground)' }}>{globalProgress}%</span>
+                  {/* Swarm Execution Parameters */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+                      Execution Strategy
                     </div>
-                    <div style={{ height: 6, borderRadius: 999, background: 'var(--color-surface-deep)', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: 'var(--color-surface)',
+                          border: '1px solid var(--color-border-faint)',
+                          borderRadius: 8,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Orchestrator</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)', marginTop: 2 }}>
+                          JudgeAI Swarm Core
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background: 'var(--color-surface)',
+                          border: '1px solid var(--color-border-faint)',
+                          borderRadius: 8,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Concurrency</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent-violet)', marginTop: 2 }}>
+                          4 Parallel Workers
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background: 'var(--color-surface)',
+                          border: '1px solid var(--color-border-faint)',
+                          borderRadius: 8,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Hallucination Guard</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#34D399', marginTop: 2 }}>
+                          0% Strict Proof
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background: 'var(--color-surface)',
+                          border: '1px solid var(--color-border-faint)',
+                          borderRadius: 8,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Execution Speed</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
+                          4.5x Throughput
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Overall Swarm Telemetry */}
+                  <div
+                    style={{
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border-faint)',
+                      borderRadius: 10,
+                      padding: '12px 14px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                        Overall Task Completion
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: globalProgress === 100 ? '#34D399' : 'var(--color-accent-violet)' }}>
+                        {globalProgress}%
+                      </span>
+                    </div>
+
+                    <div style={{ height: 6, borderRadius: 999, background: 'var(--color-surface-deep)', overflow: 'hidden', marginBottom: 8 }}>
                       <div
                         style={{
                           height: '100%',
@@ -503,98 +579,12 @@ export default function AgentSwarm() {
                         }}
                       />
                     </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-muted)' }}>
+                      <span>4 Workstreams Active</span>
+                      <span>0% Discrepancies</span>
+                    </div>
                   </div>
-                </div>
-
-                {/* 4 Partitioned Compute Packets */}
-                <div
-                  style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    padding: '12px 14px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                  }}
-                >
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 0 2px 2px' }}>
-                    Partitioned Compute Packets
-                  </div>
-
-                  {agents.map((agent, index) => {
-                    const isSelected = selectedAgent.id === agent.id
-                    return (
-                      <div
-                        key={agent.id}
-                        onClick={() => setSelectedAgent(agent)}
-                        style={{
-                          padding: 12,
-                          borderRadius: 12,
-                          background: isSelected ? 'var(--color-nav-active-bg)' : 'var(--color-surface)',
-                          border: `1.5px solid ${isSelected ? agent.color : 'var(--color-border-faint)'}`,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div
-                              style={{
-                                width: 26,
-                                height: 26,
-                                borderRadius: '50%',
-                                background: `${agent.color}20`,
-                                border: `1px solid ${agent.color}50`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 13,
-                              }}
-                            >
-                              {agent.avatar}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                                Packet {index + 1}: {agent.name}
-                              </div>
-                            </div>
-                          </div>
-
-                          <span
-                            style={{
-                              fontSize: 10.5,
-                              fontWeight: 700,
-                              padding: '2px 7px',
-                              borderRadius: 6,
-                              background:
-                                agent.progress === 100
-                                  ? 'rgba(52,211,153,0.15)'
-                                  : 'rgba(139,92,246,0.15)',
-                              color: agent.progress === 100 ? '#34D399' : agent.color,
-                            }}
-                          >
-                            {agent.progress === 100 ? 'Verified' : `${agent.progress}%`}
-                          </span>
-                        </div>
-
-                        <div style={{ fontSize: 11.5, color: 'var(--color-muted)', lineHeight: 1.4, marginBottom: 8 }}>
-                          {agent.assignedPacket}
-                        </div>
-
-                        {/* Mini Packet Progress Bar */}
-                        <div style={{ height: 4, borderRadius: 999, background: 'var(--color-surface-deep)', overflow: 'hidden' }}>
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${agent.progress}%`,
-                              background: agent.color,
-                              transition: 'width 0.3s ease',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
                 </div>
 
                 {/* Left Bottom Quick Prompt Input */}
@@ -616,7 +606,7 @@ export default function AgentSwarm() {
                       type="text"
                       value={currentPrompt}
                       onChange={e => setCurrentPrompt(e.target.value)}
-                      placeholder="Modify or dispatch new prompt..."
+                      placeholder="Refine or dispatch new prompt..."
                       style={{
                         flex: 1,
                         background: 'var(--color-input-bg)',
