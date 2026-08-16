@@ -120,33 +120,33 @@ function buildRecommendation(task: string, categoryHint?: string): Recommendatio
           weaknesses: ['Occasional over-explanation in diffs', 'Higher hallucination on edge cases'],
         },
         {
-          model: 'DeepSeek V3',
-          provider: 'DeepSeek',
-          score: 88,
-          color: '#F59E0B',
-          accuracy: 90,
-          hallucination: 1.6,
-          costPerRequest: '$0.003',
+          model: 'Gemini 2.0 Flash',
+          provider: 'Google',
+          score: 89,
+          color: '#38BDF8',
+          accuracy: 88,
+          hallucination: 1.9,
+          costPerRequest: '$0.002',
           latencyP95: '1.2s',
-          strengths: ['Excellent cost efficiency', 'Strong math & logic benchmarks'],
-          weaknesses: ['Less consistent on enterprise codebases', 'Weaker on proprietary framework patterns'],
+          strengths: ['10× lower cost', 'Sub-2s latency'],
+          weaknesses: ['Weaker on complex architectural refactors'],
         },
       ],
-      rationale: 'Claude 3.5 Sonnet leads by a significant margin on code-related tasks in your evaluation history. Its reasoning score of 94 and near-zero hallucination rate on code constructs make it the clear choice for production code review pipelines despite the higher per-request cost.',
+      rationale: 'For TypeScript code review pipelines, Claude 3.5 Sonnet is the strongest model available, scoring 97% across 312 similar runs in our evaluation database. Its 0.8% hallucination rate on syntax ensures false-positive PR comments stay near zero, saving engineering hours.',
       whyPoints: [
-        '312 similar code review runs in your history with 96.4% avg. accuracy',
-        'Lowest hallucination rate (0.8%) among candidates on TypeScript & Python tasks',
-        'Security vulnerability detection scored 94 vs. 87 for GPT-4o in your rubric tests',
-        'Cost tradeoff justified: 8× fewer false-positive flags saves ~14 hrs/week in manual review',
+        '312 similar code-review runs analyzed with 97% average pass rate',
+        'Lowest hallucination on TypeScript ASTs and package imports (0.8%)',
+        'Catches security vulnerabilities that 4o misses on complex async patterns',
+        'Cost is amortized easily over high-value engineering review hours',
       ],
     }
   }
 
-  if (category === 'Research' || t.includes('research') || t.includes('medical') || t.includes('health')) {
+  if (category === 'Research' || t.includes('research') || t.includes('citation')) {
     return {
       task,
       category: 'Research',
-      similarRuns: 214,
+      similarRuns: 489,
       primary: {
         model: 'Claude 3.5 Sonnet',
         provider: 'Anthropic',
@@ -155,9 +155,9 @@ function buildRecommendation(task: string, categoryHint?: string): Recommendatio
         accuracy: 95,
         hallucination: 0.9,
         costPerRequest: '$0.018',
-        latencyP95: '2.1s',
-        strengths: ['Lowest hallucination on factual synthesis', 'Strong citation alignment', 'Nuanced reasoning chains'],
-        weaknesses: ['Premium pricing tier', 'Not ideal for sub-second latency needs'],
+        latencyP95: '2.4s',
+        strengths: ['Superior citation grounding', 'Long-document synthesis quality', 'Faithful summary retention'],
+        weaknesses: ['Higher latency on 50k+ token prompts', 'Premium cost tier'],
       },
       alternatives: [
         {
@@ -165,37 +165,37 @@ function buildRecommendation(task: string, categoryHint?: string): Recommendatio
           provider: 'OpenAI',
           score: 92,
           color: '#10A37F',
-          accuracy: 93,
+          accuracy: 91,
           hallucination: 1.4,
           costPerRequest: '$0.012',
-          latencyP95: '1.8s',
-          strengths: ['Broad knowledge coverage', 'Good multimodal source ingestion'],
-          weaknesses: ['Higher hallucination on niche domains', 'Citation drift in long documents'],
+          latencyP95: '1.9s',
+          strengths: ['Fast document parsing', 'Broad scientific domain coverage'],
+          weaknesses: ['Occasional dropped footnotes on long contexts', 'Higher hallucination on obscure citations'],
         },
         {
           model: 'Gemini 2.0 Flash',
           provider: 'Google',
-          score: 89,
+          score: 90,
           color: '#38BDF8',
-          accuracy: 91,
-          hallucination: 1.8,
+          accuracy: 89,
+          hallucination: 1.6,
           costPerRequest: '$0.002',
-          latencyP95: '1.4s',
-          strengths: ['Fast turnaround for draft research', 'Very low cost at scale'],
-          weaknesses: ['Less reliable on citation verification', 'Shallower reasoning on complex topics'],
+          latencyP95: '1.3s',
+          strengths: ['Massive 1M+ context window', 'Very fast batch synthesis'],
+          weaknesses: ['Slightly lower precision on nuanced academic arguments'],
         },
       ],
-      rationale: 'Research and knowledge-intensive tasks require the lowest possible hallucination rate. Claude 3.5 Sonnet achieves 0.9% hallucination on factual synthesis in your 214 historical runs — significantly better than GPT-4o (1.4%) and Gemini 2.0 Flash (1.8%).',
+      rationale: 'Deep research tasks with citation verification require the lowest possible hallucination rate. Claude 3.5 Sonnet leads with a 0.9% hallucination rate across 489 research evaluations, preserving footnote integrity and claim attribution better than alternatives.',
       whyPoints: [
-        '214 similar research tasks evaluated with pgvector similarity matching',
-        'Citation accuracy scored 93.2% vs. 86.1% for the next-best candidate',
-        'Reasoning depth index of 94 — critical for multi-source synthesis',
-        'Confidence interval [94.1, 97.2] at 95% — statistically significant lead',
+        '489 benchmark runs on academic paper synthesis and legal briefings',
+        '0.9% hallucination rate — crucial for publication-grade research outputs',
+        'Maintains logical coherence across multi-section literature reviews',
+        'Best structured markdown output with verified inline citations',
       ],
     }
   }
 
-  if (category === 'Customer Support' || t.includes('support') || t.includes('customer')) {
+  if (category === 'Customer Support' || t.includes('support') || t.includes('ticket')) {
     return {
       task,
       category: 'Customer Support',
@@ -362,15 +362,15 @@ function ScoreRing({ score, color, size = 88 }: { score: number; color: string; 
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={6} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-border)" strokeWidth={6} />
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={6}
           strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
           style={{ transition: 'stroke-dashoffset 0.8s ease' }}
         />
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: size * 0.26, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{score}</span>
-        <span style={{ fontSize: size * 0.11, color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '0.06em' }}>SCORE</span>
+        <span style={{ fontSize: size * 0.26, fontWeight: 800, color: 'var(--color-foreground)', lineHeight: 1 }}>{score}</span>
+        <span style={{ fontSize: size * 0.11, color: 'var(--color-muted)', fontWeight: 600, letterSpacing: '0.06em' }}>SCORE</span>
       </div>
     </div>
   )
@@ -378,22 +378,22 @@ function ScoreRing({ score, color, size = 88 }: { score: number; color: string; 
 
 function MetricPill({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 4, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: accent ?? '#fff' }}>{value}</div>
+    <div style={{ background: 'var(--color-surface)', borderRadius: 10, padding: '10px 14px', border: '1px solid var(--color-border)' }}>
+      <div style={{ fontSize: 10.5, color: 'var(--color-muted)', marginBottom: 4, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: accent ?? 'var(--color-foreground)' }}>{value}</div>
     </div>
   )
 }
 
 function TagList({ items, variant }: { items: string[]; variant: 'strength' | 'weakness' }) {
   const color = variant === 'strength' ? '#34D399' : '#F87171'
-  const bg = variant === 'strength' ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)'
-  const border = variant === 'strength' ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'
+  const bg = variant === 'strength' ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)'
+  const border = variant === 'strength' ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.25)'
   return (
     <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {items.map(item => (
-        <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
-          <span style={{ width: 16, height: 16, borderRadius: '50%', background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0, marginTop: 1, fontSize: 10 }}>
+        <li key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--color-foreground)', lineHeight: 1.5, opacity: 0.9 }}>
+          <span style={{ width: 16, height: 16, borderRadius: '50%', background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0, marginTop: 1, fontSize: 10, fontWeight: 800 }}>
             {variant === 'strength' ? '✓' : '−'}
           </span>
           {item}
@@ -405,18 +405,18 @@ function TagList({ items, variant }: { items: string[]; variant: 'strength' | 'w
 
 function PrimaryRecCard({ rec, similarRuns }: { rec: ModelRec; similarRuns: number }) {
   return (
-    <div className="card-base" style={{ padding: 28, position: 'relative', overflow: 'hidden', borderColor: `${rec.color}40` }}>
-      <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, background: `radial-gradient(circle, ${rec.color}20, transparent 70%)`, pointerEvents: 'none' }} />
+    <div className="card-base" style={{ padding: 28, position: 'relative', overflow: 'hidden', borderColor: `${rec.color}50`, background: 'var(--color-card)' }}>
+      <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, background: `radial-gradient(circle, ${rec.color}15, transparent 70%)`, pointerEvents: 'none' }} />
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, marginBottom: 24, flexWrap: 'wrap' }}>
           <ScoreRing score={rec.score} color={rec.color} />
           <div style={{ flex: 1, minWidth: 200 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 10, padding: '4px 10px', borderRadius: 9999, background: `${rec.color}18`, border: `1px solid ${rec.color}40`, color: rec.color, fontWeight: 700, letterSpacing: '0.04em' }}>TOP RECOMMENDATION</span>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{similarRuns} similar runs analyzed</span>
+              <span style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>{similarRuns} similar runs analyzed</span>
             </div>
-            <h3 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#fff' }}>{rec.model}</h3>
-            <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>{rec.provider}</p>
+            <h3 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-foreground)' }}>{rec.model}</h3>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>{rec.provider}</p>
           </div>
         </div>
 
@@ -444,20 +444,20 @@ function PrimaryRecCard({ rec, similarRuns }: { rec: ModelRec; similarRuns: numb
 
 function AltModelCard({ rec, rank }: { rec: ModelRec; rank: number }) {
   return (
-    <div className="card-base" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, height: '100%' }}>
+    <div className="card-base" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, height: '100%', background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>ALT #{rank}</span>
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--color-muted)', letterSpacing: '0.06em' }}>ALT #{rank}</span>
         <span style={{ fontSize: 18, fontWeight: 800, color: rec.color }}>{rec.score}</span>
       </div>
       <div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{rec.model}</div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{rec.provider}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 2 }}>{rec.model}</div>
+        <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>{rec.provider}</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <MetricPill label="Cost" value={rec.costPerRequest} />
         <MetricPill label="Latency" value={rec.latencyP95} />
       </div>
-      <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.55 }}>
+      <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.55 }}>
         {rec.strengths[0]}
       </p>
     </div>
@@ -466,10 +466,10 @@ function AltModelCard({ rec, rank }: { rec: ModelRec; rank: number }) {
 
 function LoadingState() {
   return (
-    <div className="card-base" style={{ padding: 48, textAlign: 'center' }}>
+    <div className="card-base" style={{ padding: 48, textAlign: 'center', background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #7C3AED, #38BDF8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <IcAdvisor size={18} />
+          <IcAdvisor size={18} color="#fff" />
         </div>
         <div style={{ display: 'flex', gap: 5 }}>
           {[0, 1, 2].map(i => (
@@ -477,7 +477,7 @@ function LoadingState() {
           ))}
         </div>
       </div>
-      <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>Analyzing your task against evaluation history & benchmarks…</p>
+      <p style={{ margin: 0, fontSize: 14, color: 'var(--color-muted)' }}>Analyzing your task against evaluation history & benchmarks…</p>
     </div>
   )
 }
@@ -527,9 +527,29 @@ export default function AdvisorAgentPage() {
   return (
     <>
       <TopBar title="Advisor Agent">
-        <Link to="/dashboard/compare" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.45)', textDecoration: 'none', padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.15s' }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+        <Link
+          to="/dashboard/compare"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 13,
+            color: 'var(--color-muted)',
+            textDecoration: 'none',
+            padding: '6px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-surface)',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.color = 'var(--color-foreground)'
+            e.currentTarget.style.borderColor = 'var(--color-accent-violet)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.color = 'var(--color-muted)'
+            e.currentTarget.style.borderColor = 'var(--color-border)'
+          }}
         >
           <IcCompare size={14} /> Compare Models
         </Link>
@@ -542,11 +562,11 @@ export default function AdvisorAgentPage() {
           <div style={{ marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #7C3AED, #38BDF8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <IcAdvisor size={22} />
+                <IcAdvisor size={22} color="#fff" />
               </div>
               <div>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Advisor Agent</h2>
-                <p style={{ margin: '4px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.45)', maxWidth: 560, lineHeight: 1.55 }}>
+                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-foreground)' }}>Advisor Agent</h2>
+                <p style={{ margin: '4px 0 0', fontSize: 14, color: 'var(--color-muted)', maxWidth: 560, lineHeight: 1.55 }}>
                   Describe what you're building and get a data-backed model recommendation powered by your evaluation history and benchmark scores.
                 </p>
               </div>
@@ -554,8 +574,8 @@ export default function AdvisorAgentPage() {
           </div>
 
           {/* Task input */}
-          <div className="card-base" style={{ padding: 28, marginBottom: 24 }}>
-            <label htmlFor="advisor-task" style={{ display: 'block', fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 14 }}>
+          <div className="card-base" style={{ padding: 28, marginBottom: 24, background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+            <label htmlFor="advisor-task" style={{ display: 'block', fontSize: 15, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 14 }}>
               What are you trying to build?
             </label>
             <textarea
@@ -566,32 +586,42 @@ export default function AdvisorAgentPage() {
               rows={4}
               style={{
                 width: '100%', boxSizing: 'border-box', resize: 'vertical', minHeight: 110,
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 12, padding: '16px 18px', fontSize: 14, color: '#fff',
+                background: 'var(--color-input-bg)', border: '1px solid var(--color-border)',
+                borderRadius: 12, padding: '16px 18px', fontSize: 14, color: 'var(--color-foreground)',
                 outline: 'none', fontFamily: 'Inter, sans-serif', lineHeight: 1.6,
                 transition: 'border-color 0.15s',
               }}
-              onFocus={e => (e.target.style.borderColor = 'rgba(124,58,237,0.5)')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet)')}
+              onBlur={e => (e.target.style.borderColor = 'var(--color-border)')}
             />
 
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Quick options</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Quick options</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {QUICK_OPTIONS.map(opt => {
                   const active = activeCategory === opt.id
                   return (
                     <button key={opt.id} onClick={() => handleQuickOption(opt)} style={{
                       display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 10,
-                      background: active ? `${opt.color}15` : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${active ? `${opt.color}50` : 'rgba(255,255,255,0.08)'}`,
-                      color: active ? opt.color : 'rgba(255,255,255,0.6)',
-                      cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.15s',
+                      background: active ? `${opt.color}18` : 'var(--color-surface)',
+                      border: `1px solid ${active ? `${opt.color}60` : 'var(--color-border)'}`,
+                      color: active ? opt.color : 'var(--color-foreground)',
+                      cursor: 'pointer', fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
                     }}
-                      onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#fff' } }}
-                      onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' } }}
+                      onMouseEnter={e => {
+                        if (!active) {
+                          e.currentTarget.style.background = 'var(--color-hover)'
+                          e.currentTarget.style.borderColor = 'var(--color-accent-violet)'
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!active) {
+                          e.currentTarget.style.background = 'var(--color-surface)'
+                          e.currentTarget.style.borderColor = 'var(--color-border)'
+                        }
+                      }}
                     >
-                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, opacity: 0.7 }}>{opt.icon}</span>
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, opacity: 0.8 }}>{opt.icon}</span>
                       {opt.label}
                     </button>
                   )
@@ -604,7 +634,7 @@ export default function AdvisorAgentPage() {
                 onClick={() => getRecommendation()}
                 disabled={!task.trim() || loading}
                 className="pill-primary"
-                style={{ fontSize: 14, padding: '12px 24px', gap: 8, opacity: (!task.trim() || loading) ? 0.45 : 1, transition: 'opacity 0.15s' }}
+                style={{ fontSize: 14, padding: '12px 24px', gap: 8, opacity: (!task.trim() || loading) ? 0.45 : 1, transition: 'opacity 0.15s', cursor: (!task.trim() || loading) ? 'not-allowed' : 'pointer' }}
               >
                 <IcSparkles size={16} />
                 {loading ? 'Analyzing…' : 'Get Recommendation'}
@@ -612,9 +642,9 @@ export default function AdvisorAgentPage() {
               </button>
               {result && (
                 <button onClick={() => { setResult(null); setTask(''); setActiveCategory(null) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 12px' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 12px' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-foreground)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
                 >
                   <IcRotate size={14} /> Start over
                 </button>
@@ -630,15 +660,15 @@ export default function AdvisorAgentPage() {
               {/* Primary recommendation */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Recommendation</div>
-                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 9999, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}>{result.category}</span>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>Recommendation</div>
+                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 9999, background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }}>{result.category}</span>
                 </div>
                 <PrimaryRecCard rec={result.primary} similarRuns={result.similarRuns} />
               </div>
 
               {/* Alternatives */}
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 14 }}>Alternative Models</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)', marginBottom: 14 }}>Alternative Models</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
                   {result.alternatives.map((alt, i) => (
                     <AltModelCard key={alt.model} rec={alt} rank={i + 1} />
@@ -647,17 +677,17 @@ export default function AdvisorAgentPage() {
               </div>
 
               {/* Why this recommendation */}
-              <div className="card-base" style={{ padding: 28 }}>
+              <div className="card-base" style={{ padding: 28, background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A78BFA' }}>
                     <IcAdvisor size={16} />
                   </div>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Why this recommendation?</h3>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--color-foreground)' }}>Why this recommendation?</h3>
                 </div>
-                <p style={{ margin: '0 0 20px', fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>{result.rationale}</p>
+                <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--color-muted)', lineHeight: 1.7 }}>{result.rationale}</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {result.whyPoints.map(point => (
-                    <div key={point} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.55 }}>
+                    <div key={point} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: 'var(--color-foreground)', lineHeight: 1.55, opacity: 0.9 }}>
                       <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A78BFA', flexShrink: 0, marginTop: 1 }}>
                         <IcCheck size={11} />
                       </span>
@@ -665,7 +695,7 @@ export default function AdvisorAgentPage() {
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--color-border)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <Link to="/dashboard/evaluations" className="pill-primary" style={{ fontSize: 13, padding: '10px 18px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     Run Evaluation <IcArrowRight size={13} />
                   </Link>
@@ -679,7 +709,7 @@ export default function AdvisorAgentPage() {
 
           {/* Empty state hint */}
           {!result && !loading && (
-            <div style={{ textAlign: 'center', padding: '32px 16px', color: 'rgba(255,255,255,0.25)' }}>
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--color-muted)' }}>
               <p style={{ margin: 0, fontSize: 13 }}>Enter a task description or pick a quick option, then click Get Recommendation.</p>
             </div>
           )}
@@ -687,31 +717,37 @@ export default function AdvisorAgentPage() {
 
         {/* Recent sidebar */}
         <aside className="advisor-recent" style={{
-          width: 280, flexShrink: 0, borderLeft: '1px solid rgba(255,255,255,0.06)',
-          padding: '24px 20px', overflowY: 'auto', background: 'rgba(255,255,255,0.01)',
+          width: 280, flexShrink: 0, borderLeft: '1px solid var(--color-border)',
+          padding: '24px 20px', overflowY: 'auto', background: 'var(--color-surface)',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>
             Recent Recommendations
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {recent.map(item => (
               <button key={item.id} onClick={() => loadRecent(item)} style={{
                 textAlign: 'left', padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
-                background: 'transparent', border: '1px solid transparent', transition: 'all 0.15s',
+                background: 'var(--color-card)', border: '1px solid var(--color-border-faint)', transition: 'all 0.15s',
                 width: '100%',
               }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'var(--color-hover)'
+                  e.currentTarget.style.borderColor = 'var(--color-accent-violet)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'var(--color-card)'
+                  e.currentTarget.style.borderColor = 'var(--color-border-faint)'
+                }}
               >
-                <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.65)', lineHeight: 1.45, marginBottom: 8 }}>{item.task}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--color-foreground)', lineHeight: 1.45, marginBottom: 8, fontWeight: 500 }}>{item.task}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: item.color, fontFamily: 'JetBrains Mono, monospace' }}>{item.model}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: 4 }}>{item.score}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', background: 'var(--color-surface)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--color-border-faint)' }}>{item.score}</span>
                   </div>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>{item.ts}</span>
+                  <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>{item.ts}</span>
                 </div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 6 }}>{item.category}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--color-muted)', marginTop: 6 }}>{item.category}</div>
               </button>
             ))}
           </div>
@@ -722,7 +758,7 @@ export default function AdvisorAgentPage() {
         @keyframes advisorPulse { 0%,100%{opacity:0.3;transform:scale(0.85)} 50%{opacity:1;transform:scale(1)} }
         @media (max-width: 960px) {
           .advisor-layout { flex-direction: column !important; }
-          .advisor-recent { width: 100% !important; border-left: none !important; border-top: 1px solid rgba(255,255,255,0.06) !important; }
+          .advisor-recent { width: 100% !important; border-left: none !important; border-top: 1px solid var(--color-border) !important; }
         }
       `}</style>
     </>
