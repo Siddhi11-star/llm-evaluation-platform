@@ -95,6 +95,8 @@ class ChatService:
                 messages.append(ChatMessage(
                     role=doc["role"],
                     content=doc["content"],
+                    thinking=doc.get("thinking"),
+                    files=doc.get("files"),
                     timestamp=doc.get("timestamp"),
                     model=doc.get("model"),
                     tokens=doc.get("tokens"),
@@ -134,10 +136,12 @@ class ChatService:
         db = MongoDB.get_db()
 
         # 1. Save user message to MongoDB
+        serialized_files = [f.model_dump() for f in req.files] if req.files else None
         user_msg_data = {
             "session_id": session.session_id,
             "role": "user",
             "content": req.message,
+            "files": serialized_files,
             "timestamp": now,
             "model": active_model,
             "tokens": len(req.message.split()),
@@ -150,7 +154,7 @@ class ChatService:
 
         # 2. Build conversation context
         history = await cls.get_session_history(session.session_id)
-        prompt_payload: List[Dict[str, str]] = []
+        prompt_payload: List[Dict[str, Any]] = []
 
         if req.system_prompt:
             prompt_payload.append({"role": "system", "content": req.system_prompt})
@@ -160,8 +164,23 @@ class ChatService:
                 "content": cls._build_system_prompt(active_model),
             })
 
+        # Augment latest prompt if files/photos are attached
+        augmented_user_message = req.message
+        if req.files:
+            file_sections = []
+            for f in req.files:
+                if f.type.startswith("image/"):
+                    file_sections.append(f"[Attached Photo/Image: {f.name} ({f.type})]")
+                else:
+                    file_sections.append(
+                        f"--- Attached Document: {f.name} ({f.type}) ---\n{f.content or ''}\n--- End of {f.name} ---"
+                    )
+            augmented_user_message = "\n\n".join(file_sections) + f"\n\nUser Query:\n{req.message}"
+
         for msg in history[-10:]:
-            prompt_payload.append({"role": msg.role, "content": msg.content})
+            # Use augmented content for the current prompt
+            content_to_send = augmented_user_message if msg.timestamp == now else msg.content
+            prompt_payload.append({"role": msg.role, "content": content_to_send})
 
         # 3. Call Ollama for MiniMax inference (or fallback to MiniMax Cloud if configured)
         if settings.USE_OLLAMA:

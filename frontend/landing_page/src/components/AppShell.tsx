@@ -59,6 +59,7 @@ export default function AppShell() {
   const { pathname } = useLocation()
   const { theme, toggleTheme, profile, sidebarCollapsed, setSidebarCollapsed } = useSettings()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [logoHovered, setLogoHovered] = useState(false)
 
   const sidebarWidth = sidebarCollapsed ? 72 : 240
 
@@ -81,8 +82,110 @@ export default function AppShell() {
         }}
         className={mobileOpen ? 'max-md:!translate-x-0' : 'max-md:-translate-x-full'}
       >
-        <div style={{ padding: sidebarCollapsed ? '18px 12px' : '18px 20px', display: 'flex', alignItems: 'center', justifyContent: sidebarCollapsed ? 'center' : 'space-between' }}>
-          <Logo size={32} fontSize={sidebarCollapsed ? 0 : 17} />
+        <div
+          style={{
+            padding: sidebarCollapsed ? '14px 10px' : '18px 16px 18px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: sidebarCollapsed ? 'center' : 'space-between',
+            borderBottom: '1px solid var(--color-border-faint)',
+            height: 64,
+            boxSizing: 'border-box',
+          }}
+        >
+          {sidebarCollapsed ? (
+            /* Collapsed Mode: Hover on Cat Logo reveals the uncollapse/expand action */
+            <div
+              onClick={() => {
+                setSidebarCollapsed(false)
+                setLogoHovered(false)
+              }}
+              onMouseEnter={() => setLogoHovered(true)}
+              onMouseLeave={() => setLogoHovered(false)}
+              title="Click to uncollapse sidebar"
+              style={{
+                position: 'relative',
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                background: logoHovered ? 'rgba(124, 58, 237, 0.18)' : 'transparent',
+                border: logoHovered ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid transparent',
+              }}
+            >
+              {/* Cat Logo (fades out slightly on hover) */}
+              <div
+                style={{
+                  transition: 'all 0.2s ease',
+                  opacity: logoHovered ? 0.15 : 1,
+                  transform: logoHovered ? 'scale(0.85)' : 'scale(1)',
+                }}
+              >
+                <Logo size={32} fontSize={0} />
+              </div>
+
+              {/* Uncollapse Icon (appears only when hovering over the cat logo) */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: logoHovered ? 1 : 0,
+                  transform: logoHovered ? 'scale(1)' : 'scale(0.7)',
+                  transition: 'all 0.2s ease',
+                  color: 'var(--color-foreground)',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="2" />
+                  <path d="M9 3v18" />
+                  <path d="m14 9 3 3-3 3" />
+                </svg>
+              </div>
+            </div>
+          ) : (
+            /* Expanded Mode: Cat Logo + Name on left, Collapse button on right */
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <Logo size={32} fontSize={17} />
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                title="Collapse sidebar"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--color-muted)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'var(--color-hover)'
+                  e.currentTarget.style.color = 'var(--color-foreground)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--color-muted)'
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="2" />
+                  <path d="M9 3v18" />
+                  <path d="m16 15-3-3 3-3" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
 
         <nav style={{ flex: 1, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>

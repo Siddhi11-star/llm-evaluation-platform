@@ -3,10 +3,19 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
+class AttachedFile(BaseModel):
+    name: str
+    type: str = "text/plain"
+    size: Optional[int] = None
+    content: Optional[str] = None  # text content or base64 data string
+    url: Optional[str] = None
+
+
 class ChatMessage(BaseModel):
     role: str = Field(..., description="Role of the speaker: 'user', 'assistant', or 'system'")
     content: str = Field(..., description="Message text content")
     thinking: Optional[str] = Field(None, description="Optional internal reasoning trace")
+    files: Optional[List[AttachedFile]] = Field(None, description="Optional list of attached files or images")
     timestamp: Optional[datetime] = Field(default_factory=datetime.utcnow)
     model: Optional[str] = None
     tokens: Optional[int] = None
@@ -17,6 +26,7 @@ class SendMessageRequest(BaseModel):
     session_id: Optional[str] = Field(None, description="Existing session ID. If not provided, a new session is created.")
     message: str = Field(..., description="User prompt text")
     model: Optional[str] = Field(None, description="Override model, defaults to MiniMax-Text-01 (M3)")
+    files: Optional[List[AttachedFile]] = Field(None, description="Optional attached files or photos")
     system_prompt: Optional[str] = Field(None, description="Optional custom system directive")
     temperature: Optional[float] = Field(0.7, ge=0.0, le=1.0)
     stream: Optional[bool] = Field(False, description="Whether to stream the response chunks")

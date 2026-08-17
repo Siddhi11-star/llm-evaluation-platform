@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router'
 import { useState, useRef, useEffect } from 'react'
 import { TopBar } from '../components/AppShell'
+import { useSettings } from '../components/ThemeProvider'
 import {
   IcSend,
   IcPlus,
@@ -15,9 +16,21 @@ import {
   IcRotate,
   IcMic,
 } from '../components/icons'
+import { Paperclip, Image as ImageIcon, FileText, X as XIcon, Plus, Search } from 'lucide-react'
 import { MeshGradientSVG } from '../components/ui/shader-svg'
 import { ThinkingTool } from '../components/ui/thinking-tool'
+import { RadialGlowBackground } from '../components/ui/radial-glow-background'
 import { LogoIcon } from '../components/Logo'
+
+export type AttachedFileItem = {
+  name: string
+  type: string
+  size: number
+  content: string
+  url?: string
+}
+
+export type EffortLevel = 'Low' | 'Medium' | 'High'
 
 // Models available for selection
 export type LLMModel = {
@@ -27,33 +40,10 @@ export type LLMModel = {
   tag: string
   badgeColor: string
   description: string
+  effort: EffortLevel
 }
 
 const MODELS: LLMModel[] = [
-  {
-    id: 'minimax-m3:cloud',
-    name: 'minimax-m3:cloud',
-    provider: 'Ollama Cloud',
-    tag: 'Active',
-    badgeColor: '#8B5CF6',
-    description: 'MiniMax M3 cloud reasoning model with deep logical synthesis & thinking traces',
-  },
-  {
-    id: 'glm-5.2:cloud',
-    name: 'glm-5.2:cloud',
-    provider: 'Ollama Cloud',
-    tag: 'Flagship',
-    badgeColor: '#3B82F6',
-    description: 'GLM 5.2 frontier reasoning model with advanced instruction following & coding',
-  },
-  {
-    id: 'glm-5.1:cloud',
-    name: 'glm-5.1:cloud',
-    provider: 'Ollama Cloud',
-    tag: 'Reasoning',
-    badgeColor: '#0EA5E9',
-    description: 'High-accuracy conversational and analytical general intelligence model',
-  },
   {
     id: 'deepseek-v4-flash:cloud',
     name: 'deepseek-v4-flash:cloud',
@@ -61,38 +51,7 @@ const MODELS: LLMModel[] = [
     tag: 'Ultra Fast',
     badgeColor: '#F59E0B',
     description: 'Lightning-fast DeepSeek V4 flash tier for low-latency triage & extraction',
-  },
-  {
-    id: 'deepseek-v4-pro:cloud',
-    name: 'deepseek-v4-pro:cloud',
-    provider: 'Ollama Cloud',
-    tag: 'Deep Pro',
-    badgeColor: '#D97706',
-    description: 'DeepSeek V4 Pro flagship open reasoning model for complex math & code',
-  },
-  {
-    id: 'minimax-m2.7:cloud',
-    name: 'minimax-m2.7:cloud',
-    provider: 'Ollama Cloud',
-    tag: 'Balanced',
-    badgeColor: '#A855F7',
-    description: 'High-throughput multimodal & text synthesis model from MiniMax',
-  },
-  {
-    id: 'minimax-m2.5:cloud',
-    name: 'minimax-m2.5:cloud',
-    provider: 'Ollama Cloud',
-    tag: 'Efficient',
-    badgeColor: '#9333EA',
-    description: 'Cost-optimized conversational reasoning engine with zero-hallucination guard',
-  },
-  {
-    id: 'gpt-oss:120b-cloud',
-    name: 'gpt-oss:120b-cloud',
-    provider: 'Ollama Cloud',
-    tag: '120B Flagship',
-    badgeColor: '#10B981',
-    description: '120B massive open-source GPT architecture for enterprise synthesis & evaluation',
+    effort: 'Low',
   },
   {
     id: 'gpt-oss:20b-cloud',
@@ -101,14 +60,7 @@ const MODELS: LLMModel[] = [
     tag: '20B Fast',
     badgeColor: '#059669',
     description: '20B parameter high-efficiency open model for rapid stream generation',
-  },
-  {
-    id: 'nemotron-3-super:cloud',
-    name: 'nemotron-3-super:cloud',
-    provider: 'Ollama Cloud',
-    tag: 'Super Cloud',
-    badgeColor: '#84CC16',
-    description: 'NVIDIA Nemotron-3 Super tuned for structured verification & agent workflows',
+    effort: 'Low',
   },
   {
     id: 'gemma4:cloud',
@@ -117,22 +69,7 @@ const MODELS: LLMModel[] = [
     tag: 'Google Open',
     badgeColor: '#06B6D4',
     description: 'Google Gemma 4 cloud edition with leading benchmark accuracy & analysis',
-  },
-  {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
-    provider: 'OpenAI',
-    tag: 'Flagship',
-    badgeColor: '#10A37F',
-    description: 'High intelligence multimodal model for reasoning & complex tasks',
-  },
-  {
-    id: 'claude-3-5-sonnet',
-    name: 'Claude 3.5 Sonnet',
-    provider: 'Anthropic',
-    tag: 'Recommended',
-    badgeColor: '#7C3AED',
-    description: 'Industry-leading code generation, analytical depth & writing',
+    effort: 'Low',
   },
   {
     id: 'gemini-2-flash',
@@ -141,6 +78,97 @@ const MODELS: LLMModel[] = [
     tag: 'Fast',
     badgeColor: '#38BDF8',
     description: 'Ultra-low latency & cost-effective general task processing',
+    effort: 'Low',
+  },
+  {
+    id: 'glm-5.1:cloud',
+    name: 'glm-5.1:cloud',
+    provider: 'Ollama Cloud',
+    tag: 'Reasoning',
+    badgeColor: '#0EA5E9',
+    description: 'High-accuracy conversational and analytical general intelligence model',
+    effort: 'Medium',
+  },
+  {
+    id: 'minimax-m2.7:cloud',
+    name: 'minimax-m2.7:cloud',
+    provider: 'Ollama Cloud',
+    tag: 'Balanced',
+    badgeColor: '#A855F7',
+    description: 'High-throughput multimodal & text synthesis model from MiniMax',
+    effort: 'Medium',
+  },
+  {
+    id: 'minimax-m2.5:cloud',
+    name: 'minimax-m2.5:cloud',
+    provider: 'Ollama Cloud',
+    tag: 'Efficient',
+    badgeColor: '#9333EA',
+    description: 'Cost-optimized conversational reasoning engine with zero-hallucination guard',
+    effort: 'Medium',
+  },
+  {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    provider: 'OpenAI',
+    tag: 'Flagship',
+    badgeColor: '#10A37F',
+    description: 'High intelligence multimodal model for reasoning & complex tasks',
+    effort: 'Medium',
+  },
+  {
+    id: 'minimax-m3:cloud',
+    name: 'minimax-m3:cloud',
+    provider: 'Ollama Cloud',
+    tag: 'Active',
+    badgeColor: '#8B5CF6',
+    description: 'MiniMax M3 cloud reasoning model with deep logical synthesis & thinking traces',
+    effort: 'High',
+  },
+  {
+    id: 'glm-5.2:cloud',
+    name: 'glm-5.2:cloud',
+    provider: 'Ollama Cloud',
+    tag: 'Flagship',
+    badgeColor: '#3B82F6',
+    description: 'GLM 5.2 frontier reasoning model with advanced instruction following & coding',
+    effort: 'High',
+  },
+  {
+    id: 'deepseek-v4-pro:cloud',
+    name: 'deepseek-v4-pro:cloud',
+    provider: 'Ollama Cloud',
+    tag: 'Deep Pro',
+    badgeColor: '#D97706',
+    description: 'DeepSeek V4 Pro flagship open reasoning model for complex math & code',
+    effort: 'High',
+  },
+  {
+    id: 'gpt-oss:120b-cloud',
+    name: 'gpt-oss:120b-cloud',
+    provider: 'Ollama Cloud',
+    tag: '120B Flagship',
+    badgeColor: '#10B981',
+    description: '120B massive open-source GPT architecture for enterprise synthesis & evaluation',
+    effort: 'High',
+  },
+  {
+    id: 'nemotron-3-super:cloud',
+    name: 'nemotron-3-super:cloud',
+    provider: 'Ollama Cloud',
+    tag: 'Super Cloud',
+    badgeColor: '#84CC16',
+    description: 'NVIDIA Nemotron-3 Super tuned for structured verification & agent workflows',
+    effort: 'High',
+  },
+  {
+    id: 'claude-3-5-sonnet',
+    name: 'Claude 3.5 Sonnet',
+    provider: 'Anthropic',
+    tag: 'Recommended',
+    badgeColor: '#7C3AED',
+    description: 'Industry-leading code generation, analytical depth & writing',
+    effort: 'High',
   },
 ]
 
@@ -150,6 +178,7 @@ export type Message = {
   text: string
   thinking?: string
   showThinking?: boolean
+  files?: AttachedFileItem[]
   modelId?: string
   timestamp: string
   liked?: boolean | null // true for thumbs up, false for thumbs down
@@ -570,24 +599,319 @@ function FormattedMessageContent({ text, isStreaming }: { text: string; isStream
   )
 }
 
+function ModelSelectorMenu({
+  selectedModelId,
+  onSelectModel,
+  onClose,
+  activeEffort = 'All',
+  align = 'left',
+}: {
+  selectedModelId: string
+  onSelectModel: (modelId: string) => void
+  onClose: () => void
+  activeEffort?: EffortLevel | 'All'
+  onSelectEffort?: (effort: EffortLevel | 'All') => void
+  align?: 'left' | 'center' | 'right'
+}) {
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [onClose])
+
+  const filtered = MODELS.filter(m => activeEffort === 'All' || m.effort === activeEffort)
+
+  const positionStyles: React.CSSProperties =
+    align === 'right'
+      ? { right: 0, bottom: 'calc(100% + 10px)' }
+      : align === 'left'
+      ? { left: 0, bottom: 'calc(100% + 10px)' }
+      : { left: '50%', transform: 'translateX(-50%)', bottom: 'calc(100% + 10px)' }
+
+  return (
+    <div
+      ref={menuRef}
+      style={{
+        position: 'absolute',
+        ...positionStyles,
+        width: 320,
+        maxWidth: '92vw',
+        background: '#14121E',
+        border: '1px solid rgba(255, 255, 255, 0.14)',
+        borderRadius: 16,
+        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.06)',
+        zIndex: 99999,
+        padding: '6px',
+        display: 'flex',
+        flexDirection: 'column',
+        backdropFilter: 'blur(24px)',
+      }}
+    >
+      {/* Model Scrollable List - 4 models in viewport */}
+      <div
+        style={{
+          overflowY: 'auto',
+          maxHeight: 244,
+          paddingRight: 2,
+          scrollbarWidth: 'thin',
+          scrollSnapType: 'y proximity',
+        }}
+      >
+        {filtered.length === 0 ? (
+          <div style={{ padding: '20px 12px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+            No models in {activeEffort === 'High' ? 'Max Effort' : activeEffort} tier
+          </div>
+        ) : (
+          filtered.map(m => {
+            const isSelected = m.id === selectedModelId
+            return (
+              <div
+                key={m.id}
+                onClick={() => {
+                  onSelectModel(m.id)
+                  onClose()
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  height: 56,
+                  padding: '6px 10px',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  background: isSelected ? 'rgba(124, 58, 237, 0.22)' : 'transparent',
+                  border: isSelected ? '1px solid rgba(124, 58, 237, 0.45)' : '1px solid transparent',
+                  marginBottom: 3,
+                  boxSizing: 'border-box',
+                  transition: 'all 0.12s ease',
+                  scrollSnapAlign: 'start',
+                }}
+                onMouseEnter={e => {
+                  if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: m.badgeColor, flexShrink: 0, boxShadow: isSelected ? `0 0 10px ${m.badgeColor}` : 'none' }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                    <span style={{ fontSize: 12.5, fontWeight: isSelected ? 700 : 600, color: 'var(--color-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {m.name}
+                    </span>
+                    <span style={{ fontSize: 9.5, padding: '1px 6px', borderRadius: 4, background: `${m.badgeColor}25`, color: m.badgeColor, fontWeight: 700, flexShrink: 0 }}>
+                      {m.effort === 'High' ? 'Max Effort' : m.effort}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--color-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>
+                    {m.description}
+                  </div>
+                </div>
+                {isSelected && (
+                  <div style={{ color: '#A78BFA', flexShrink: 0 }}>
+                    <IcCheck size={14} />
+                  </div>
+                )}
+              </div>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function ChatPage() {
-  const [threads, setThreads] = useState<ChatThread[]>(() => [makeEmptyThread('minimax-m3:cloud'), ...INITIAL_THREADS])
+  const [threads, setThreads] = useState<ChatThread[]>(() => [makeEmptyThread('deepseek-v4-flash:cloud'), ...INITIAL_THREADS])
   const [activeThreadId, setActiveThreadId] = useState<string>(EMPTY_THREAD_ID)
-  const [selectedModelId, setSelectedModelId] = useState<string>('minimax-m3:cloud')
+  const [selectedModelId, setSelectedModelId] = useState<string>('deepseek-v4-flash:cloud')
+  const [effortLevel, setEffortLevel] = useState<EffortLevel>('Low')
   const [input, setInput] = useState('')
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFileItem[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showModelDropdown, setShowModelDropdown] = useState(false)
   const [showEmptyModelDropdown, setShowEmptyModelDropdown] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [historyCollapsed, setHistoryCollapsed] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const welcomeFileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const location = useLocation()
+  const { profile } = useSettings()
   const isGuest = location.pathname === '/guest-chat'
 
   const activeThread = threads.find(t => t.id === activeThreadId) || threads[0]
   const selectedModel = MODELS.find(m => m.id === selectedModelId) || MODELS[0]
+
+  // Cycle effort levels: Low -> Medium -> High (Max Effort) -> Low
+  const handleCycleEffort = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    const levels: EffortLevel[] = ['Low', 'Medium', 'High']
+    const nextIdx = (levels.indexOf(effortLevel) + 1) % levels.length
+    const nextEffort = levels[nextIdx]
+    setEffortLevel(nextEffort)
+
+    // Filter models matching new effort and auto-select
+    const matching = MODELS.filter(m => m.effort === nextEffort)
+    if (matching.length > 0 && !matching.some(m => m.id === selectedModelId)) {
+      setSelectedModelId(matching[0].id)
+    }
+  }
+
+  const recognitionRef = useRef<any>(null)
+  const transcriptRef = useRef<string>('')
+  const [micError, setMicError] = useState<string | null>(null)
+
+  // Voice speech-to-text handler: Press once to record, press again to stop & send prompt
+  const toggleVoiceInput = async () => {
+    setMicError(null)
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Google Chrome, Edge, or Safari.')
+      return
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch {}
+      }
+      setIsListening(false)
+
+      // Send prompt automatically when clicking the button to finish recording
+      const text = (transcriptRef.current || input).trim()
+      if (text) {
+        handleSend(text)
+        transcriptRef.current = ''
+      }
+      return
+    }
+
+    // Reset transcript before recording
+    transcriptRef.current = ''
+
+    // Proactively verify browser mic access
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        // Release stream immediately so SpeechRecognition can bind cleanly
+        stream.getTracks().forEach(track => track.stop())
+      } catch (err: any) {
+        console.warn('Microphone permission denied by browser/OS:', err)
+        setMicError('Microphone permission is blocked in macOS/Chrome settings.')
+        setIsListening(false)
+        return
+      }
+    }
+
+    try {
+      const recognition = new SpeechRecognition()
+      recognition.continuous = true
+      recognition.interimResults = true
+      recognition.lang = navigator.language || 'en-US'
+
+      recognition.onstart = () => {
+        setIsListening(true)
+        setMicError(null)
+      }
+
+      recognition.onresult = (event: any) => {
+        let transcript = ''
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript
+        }
+        if (transcript) {
+          transcriptRef.current = transcript
+          setInput(transcript)
+        }
+      }
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error)
+        setIsListening(false)
+        if (event.error === 'not-allowed') {
+          setMicError('Microphone permission blocked. Please allow Chrome in macOS System Settings.')
+        }
+      }
+
+      recognition.onend = () => {
+        setIsListening(false)
+      }
+
+      recognitionRef.current = recognition
+      recognition.start()
+    } catch (err) {
+      console.warn('Failed to start speech recognition:', err)
+      setIsListening(false)
+    }
+  }
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch {}
+      }
+    }
+  }, [])
+
+  // File upload handler
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    Array.from(files).forEach(file => {
+      const isImage = file.type.startsWith('image/')
+      const reader = new FileReader()
+
+      if (isImage) {
+        reader.onload = () => {
+          setAttachedFiles(prev => [
+            ...prev,
+            {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              content: (reader.result as string) || '',
+              url: (reader.result as string) || '',
+            },
+          ])
+        }
+        reader.readAsDataURL(file)
+      } else {
+        reader.onload = () => {
+          setAttachedFiles(prev => [
+            ...prev,
+            {
+              name: file.name,
+              type: file.type || 'text/plain',
+              size: file.size,
+              content: (reader.result as string) || '',
+            },
+          ])
+        }
+        reader.readAsText(file)
+      }
+    })
+
+    e.target.value = ''
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index))
+  }
 
   // Fetch saved chat sessions from MongoDB on mount
   useEffect(() => {
@@ -652,6 +976,7 @@ export default function ChatPage() {
               role: m.role,
               text: m.content,
               thinking: m.thinking,
+              files: m.files,
               modelId: m.model || detail.model,
               timestamp: m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent',
             }))
@@ -672,6 +997,7 @@ export default function ChatPage() {
     const newThread = makeEmptyThread(selectedModelId)
     setThreads([newThread, ...threads.filter(t => t.id !== EMPTY_THREAD_ID)])
     setActiveThreadId(newThread.id)
+    setAttachedFiles([])
   }
 
   // Delete a thread from state and MongoDB
@@ -706,7 +1032,7 @@ export default function ChatPage() {
   // Send message with backend API connection + streaming
   const handleSend = async (overrideText?: string) => {
     const textToSend = overrideText || input
-    if (!textToSend.trim() || isStreaming) return
+    if ((!textToSend.trim() && attachedFiles.length === 0) || isStreaming) return
 
     if (isGuest) {
       sessionStorage.setItem('guestPrompt', textToSend.trim())
@@ -714,16 +1040,18 @@ export default function ChatPage() {
       return
     }
 
+    const currentFiles = [...attachedFiles]
     const userMsgId = `msg-u-${Date.now()}`
     const userMsg: Message = {
       id: userMsgId,
       role: 'user',
-      text: textToSend.trim(),
+      text: textToSend.trim() || (currentFiles.length > 0 ? `Analyzed ${currentFiles.length} file(s)` : ''),
+      files: currentFiles.length > 0 ? currentFiles : undefined,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
     const updatedTitle =
       activeThread.messages.length <= 1
-        ? textToSend.trim().slice(0, 35) + (textToSend.length > 35 ? '...' : '')
+        ? (textToSend.trim() || currentFiles[0]?.name || 'Chat').slice(0, 35) + ((textToSend.length > 35) ? '...' : '')
         : activeThread.title
 
     // Append user message immediately
@@ -735,6 +1063,7 @@ export default function ChatPage() {
     )
 
     setInput('')
+    setAttachedFiles([])
     setIsStreaming(true)
 
     // First add placeholder streaming message
@@ -760,8 +1089,9 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: activeThreadId === EMPTY_THREAD_ID ? undefined : activeThreadId,
-          message: textToSend.trim(),
+          message: textToSend.trim() || 'Please analyze the attached files and photos in detail.',
           model: selectedModelId,
+          files: currentFiles.length > 0 ? currentFiles : undefined,
         }),
       })
       if (res.ok) {
@@ -837,98 +1167,38 @@ export default function ChatPage() {
   return (
     <>
       <TopBar title="JudgeAI">
-        {/* Top bar Model Selector */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowModelDropdown(!showModelDropdown)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'var(--color-surface-deep)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 8,
-              padding: '6px 12px',
-              color: 'var(--color-foreground)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
-          >
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
-            <span>{selectedModel.name}</span>
-            <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: `${selectedModel.badgeColor}25`, color: selectedModel.badgeColor, fontWeight: 700 }}>
-              {selectedModel.provider}
-            </span>
-            <IcChevronDown size={14} style={{ color: 'var(--color-muted)', marginLeft: 4 }} />
-          </button>
-
-          {/* Model Selection Dropdown Menu */}
-          {showModelDropdown && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '115%',
-                right: 0,
-                width: 320,
-                maxHeight: 420,
-                overflowY: 'auto',
-                background: 'var(--color-card)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 12,
-                boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
-                zIndex: 100,
-                padding: 6,
-              }}
-            >
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Select Active Model
-              </div>
-              {MODELS.map(m => {
-                const isSelected = m.id === selectedModelId
-                return (
-                  <div
-                    key={m.id}
-                    onClick={() => {
-                      setSelectedModelId(m.id)
-                      setShowModelDropdown(false)
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
-                      border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
-                      marginBottom: 2,
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={e => {
-                      if (!isSelected) e.currentTarget.style.background = 'var(--color-hover)'
-                    }}
-                    onMouseLeave={e => {
-                      if (!isSelected) e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
-                        <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+        <button
+          onClick={() => setHistoryCollapsed(!historyCollapsed)}
+          title={historyCollapsed ? 'Show history sidebar' : 'Hide history sidebar'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.09)',
+            padding: '5px 10px',
+            borderRadius: 8,
+            color: 'var(--color-muted)',
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.09)'
+            e.currentTarget.style.color = '#FFFFFF'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+            e.currentTarget.style.color = 'var(--color-muted)'
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M9 3v18" />
+          </svg>
+          <span>{historyCollapsed ? 'Show History' : 'Hide History'}</span>
+        </button>
       </TopBar>
 
       {/* Main chat layout */}
@@ -936,12 +1206,16 @@ export default function ChatPage() {
         {/* Left: Chat History Sidebar */}
         <aside
           style={{
-            width: 280,
+            width: historyCollapsed ? 0 : 280,
+            opacity: historyCollapsed ? 0 : 1,
+            pointerEvents: historyCollapsed ? 'none' : 'auto',
             flexShrink: 0,
-            borderRight: '1px solid var(--color-border)',
+            borderRight: historyCollapsed ? 'none' : '1px solid var(--color-border)',
             background: 'var(--color-surface-deep)',
             display: 'flex',
             flexDirection: 'column',
+            overflow: 'hidden',
+            transition: 'width 0.2s ease, opacity 0.15s ease',
           }}
           className="chat-history-sidebar"
         >
@@ -966,7 +1240,19 @@ export default function ChatPage() {
 
           {/* Search Bar */}
           <div style={{ padding: '0 14px 12px' }}>
-            <div style={{ position: 'relative' }}>
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.09)',
+                borderRadius: 8,
+                padding: '0 10px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Search size={14} style={{ color: 'var(--color-muted)', flexShrink: 0, marginRight: 8, pointerEvents: 'none' }} />
               <input
                 type="text"
                 placeholder="Search conversations..."
@@ -974,17 +1260,34 @@ export default function ChatPage() {
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{
                   width: '100%',
-                  background: 'var(--color-input-bg)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  padding: '7px 10px 7px 32px',
-                  fontSize: 12,
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '7px 0',
+                  fontSize: 12.5,
                   color: 'var(--color-foreground)',
                   outline: 'none',
                   boxSizing: 'border-box',
                 }}
               />
-              <IcSearch size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  title="Clear search"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 2,
+                    color: 'var(--color-muted)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <XIcon size={12} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -1062,8 +1365,19 @@ export default function ChatPage() {
           </div>
         </aside>
 
-        {/* Main Chat Content Area */}
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', background: 'var(--color-background)' }}>
+        {/* Main Chat Content Area with Dynamic Radial Glow Aura */}
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', background: 'var(--color-background)', overflow: 'hidden' }}>
+          {/* Dynamic Radial Glow Aura matching the Ghost / Model Theme */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 0,
+              backgroundImage: `radial-gradient(circle 560px at 50% 32%, ${selectedModel.badgeColor}26, transparent 72%)`,
+              transition: 'background-image 0.6s ease',
+            }}
+          />
           {activeThread.messages.length === 0 ? (
             /* ===== Empty / Initial State ===== */
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}>
@@ -1071,106 +1385,86 @@ export default function ChatPage() {
                 {/* Centered welcome message */}
                 <div style={{ textAlign: 'center', marginBottom: 22 }}>
                   <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <MeshGradientSVG size={145} />
+                    <MeshGradientSVG size={145} modelColor={selectedModel.badgeColor} />
                   </div>
                   <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px', color: 'var(--color-foreground)' }}>
-                    Welcome to JudgeAI
+                    {isGuest ? 'Welcome to JudgeAI' : `Welcome, ${profile?.name || 'Hitarth Saparia'}`}
                   </h1>
                 </div>
 
-                {/* Model selector */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18, position: 'relative' }}>
-                  <button
-                    onClick={() => setShowEmptyModelDropdown(!showEmptyModelDropdown)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'var(--color-surface-deep)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 999,
-                      padding: '7px 14px',
-                      color: 'var(--color-foreground)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
-                  >
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
-                    <span>{selectedModel.name}</span>
-                    <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: `${selectedModel.badgeColor}25`, color: selectedModel.badgeColor, fontWeight: 700 }}>
-                      {selectedModel.provider}
-                    </span>
-                    <IcChevronDown size={14} style={{ color: 'var(--color-muted)', marginLeft: 2 }} />
-                  </button>
+                {/* Prompt box */}
+                <div
+                  style={{
+                    background: 'var(--color-card, #14121E)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 22,
+                    padding: '16px 18px 14px',
+                    position: 'relative',
+                    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+                    backdropFilter: 'blur(20px)',
+                  }}
+                >
+                  {/* Hidden File Input */}
+                  <input
+                    type="file"
+                    ref={welcomeFileInputRef}
+                    onChange={handleFileUpload}
+                    multiple
+                    style={{ display: 'none' }}
+                    accept="image/*,.pdf,.txt,.csv,.json,.py,.js,.tsx,.ts,.md,.doc,.docx"
+                  />
 
-                  {showEmptyModelDropdown && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '115%',
-                        width: 320,
-                        maxHeight: 420,
-                        overflowY: 'auto',
-                        background: 'var(--color-card)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 12,
-                        boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
-                        zIndex: 100,
-                        padding: 6,
-                      }}
-                    >
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Select Active Model
-                      </div>
-                      {MODELS.map(m => {
-                        const isSelected = m.id === selectedModelId
-                        return (
-                          <div
-                            key={m.id}
-                            onClick={() => {
-                              setSelectedModelId(m.id)
-                              setShowEmptyModelDropdown(false)
-                            }}
+                  {/* Attached Files / Photos Preview Chips */}
+                  {attachedFiles.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingBottom: 10, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 10 }}>
+                      {attachedFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            background: 'rgba(255, 255, 255, 0.07)',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            borderRadius: 8,
+                            padding: '4px 8px',
+                            fontSize: 12,
+                            color: 'var(--color-foreground)',
+                            maxWidth: 240,
+                          }}
+                        >
+                          {file.type.startsWith('image/') ? (
+                            <img src={file.url || file.content} alt={file.name} style={{ width: 22, height: 22, objectFit: 'cover', borderRadius: 4 }} />
+                          ) : (
+                            <span style={{ fontSize: 13 }}>📄</span>
+                          )}
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130, fontWeight: 500 }}>
+                            {file.name}
+                          </span>
+                          <span style={{ fontSize: 10, color: 'var(--color-muted)', flexShrink: 0 }}>
+                            {(file.size / 1024).toFixed(0)}KB
+                          </span>
+                          <button
+                            onClick={() => handleRemoveFile(idx)}
                             style={{
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: 10,
-                              padding: '10px 12px',
-                              borderRadius: 8,
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--color-muted)',
                               cursor: 'pointer',
-                              background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
-                              border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
-                              marginBottom: 2,
-                              transition: 'background 0.15s',
+                              padding: '0 2px',
+                              display: 'flex',
+                              alignItems: 'center',
                             }}
-                            onMouseEnter={e => {
-                              if (!isSelected) e.currentTarget.style.background = 'var(--color-hover)'
-                            }}
-                            onMouseLeave={e => {
-                              if (!isSelected) e.currentTarget.style.background = 'transparent'
-                            }}
+                            onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+                            onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
                           >
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
-                                <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
-                              </div>
-                              <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
-                            </div>
-                          </div>
-                        )
-                      })}
+                            ✕
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
-                </div>
 
-                {/* Prompt box */}
-                <div className="card-base" style={{ padding: 12, borderRadius: 18 }}>
                   <textarea
                     value={input}
                     onChange={e => setInput(e.target.value)}
@@ -1180,14 +1474,14 @@ export default function ChatPage() {
                         handleSend()
                       }
                     }}
-                    placeholder={`Message ${selectedModel.name}... (Shift+Enter for newline)`}
-                    rows={3}
+                    placeholder={isListening ? "🎙️ Listening... Speak now" : "Ask anything..."}
+                    rows={2}
                     style={{
                       width: '100%',
                       background: 'transparent',
                       border: 'none',
-                      padding: '8px 8px 4px',
-                      fontSize: 14,
+                      padding: '4px 2px 8px',
+                      fontSize: 15,
                       color: 'var(--color-foreground)',
                       outline: 'none',
                       fontFamily: 'Inter, sans-serif',
@@ -1195,42 +1489,196 @@ export default function ChatPage() {
                       boxSizing: 'border-box',
                     }}
                   />
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
-                    {/* Voice input control */}
-                    <button
-                      onClick={() => setIsListening(l => !l)}
-                      title={isListening ? 'Stop voice input' : 'Start voice input'}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 34,
-                        height: 34,
-                        borderRadius: '50%',
-                        background: isListening ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-deep)',
-                        border: `1px solid ${isListening ? 'rgba(239,68,68,0.4)' : 'var(--color-border)'}`,
-                        color: isListening ? '#EF4444' : 'var(--color-muted)',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                        animation: isListening ? 'pulseMic 1.2s infinite' : 'none',
-                      }}
-                    >
-                      <IcMic size={15} />
-                    </button>
 
-                    <button
-                      onClick={() => handleSend()}
-                      disabled={!input.trim() || isStreaming}
-                      className="pill-primary"
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: 8,
-                        opacity: !input.trim() || isStreaming ? 0.35 : 1,
-                        transition: 'opacity 0.15s',
-                      }}
-                    >
-                      <IcSend size={14} />
-                    </button>
+                  {/* Bottom Toolbar: Model on left | + and Mic/Send on right */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 4 }}>
+                    {/* Left: Model Selector Capsule + Parameter / Effort Filter Button */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
+                      {/* Model Selector Button */}
+                      <button
+                        onClick={() => setShowEmptyModelDropdown(!showEmptyModelDropdown)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 7,
+                          background: 'transparent',
+                          border: 'none',
+                          padding: '5px 8px',
+                          borderRadius: 8,
+                          color: 'var(--color-foreground)',
+                          fontSize: 13,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor, flexShrink: 0 }} />
+                        <span style={{ fontWeight: 600 }}>{selectedModel.name}</span>
+                        <IcChevronDown size={11} style={{ color: 'var(--color-muted)', marginLeft: 1 }} />
+                      </button>
+
+                      {/* Parameter / Effort Filter Button (Low -> Medium -> High / Max Effort) */}
+                      <button
+                        onClick={handleCycleEffort}
+                        title={`Parameter filter: ${effortLevel === 'High' ? 'Max Effort' : effortLevel} (Click to toggle: Low -> Medium -> Max Effort)`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.09)',
+                          padding: '4px 9px',
+                          borderRadius: 7,
+                          color: 'var(--color-foreground)',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.22)'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.09)'
+                        }}
+                      >
+                        {/* Dynamic Signal Bars according to Low/Medium/High */}
+                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                          <rect x="0.5" y="7" width="2" height="3" rx="0.6" fill={effortLevel === 'Low' || effortLevel === 'Medium' || effortLevel === 'High' ? "currentColor" : "rgba(255,255,255,0.25)"} />
+                          <rect x="4" y="4" width="2" height="6" rx="0.6" fill={effortLevel === 'Medium' || effortLevel === 'High' ? "currentColor" : "rgba(255,255,255,0.25)"} />
+                          <rect x="7.5" y="1" width="2" height="9" rx="0.6" fill={effortLevel === 'High' ? "currentColor" : "rgba(255,255,255,0.25)"} />
+                        </svg>
+                        <span>{effortLevel === 'High' ? 'Max Effort' : effortLevel}</span>
+                      </button>
+
+                      {/* Dropdown Menu anchored above */}
+                      {showEmptyModelDropdown && (
+                        <ModelSelectorMenu
+                          selectedModelId={selectedModelId}
+                          onSelectModel={setSelectedModelId}
+                          onClose={() => setShowEmptyModelDropdown(false)}
+                          activeEffort={effortLevel}
+                          onSelectEffort={(eff) => {
+                            if (eff !== 'All') setEffortLevel(eff)
+                          }}
+                          align="left"
+                        />
+                      )}
+                    </div>
+
+                    {/* Right: Plus Button (+) & Circular Mic/Send Button */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {/* Plus Button for File/Photo Attachments */}
+                      <button
+                        onClick={() => welcomeFileInputRef.current?.click()}
+                        title="Attach files or photos"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--color-muted)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                          e.currentTarget.style.color = '#FFFFFF'
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = 'var(--color-muted)'
+                        }}
+                      >
+                        <Plus size={19} strokeWidth={2} />
+                      </button>
+
+                      {/* Solid Circular Action Button (Send / Mic / Stop & Send) */}
+                      {isListening ? (
+                        <button
+                          onClick={toggleVoiceInput}
+                          title="Finish recording & send prompt"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: '#EF4444',
+                            border: 'none',
+                            color: '#FFFFFF',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                            animation: 'pulseMic 1.2s infinite',
+                            boxShadow: '0 0 16px rgba(239, 68, 68, 0.7)',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
+                          onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="4" y="4" width="16" height="16" rx="2" />
+                          </svg>
+                        </button>
+                      ) : input.trim() || attachedFiles.length > 0 ? (
+                        <button
+                          onClick={() => handleSend()}
+                          disabled={isStreaming}
+                          title="Send prompt"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: '#FFFFFF',
+                            border: 'none',
+                            color: '#000000',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                            boxShadow: '0 2px 8px rgba(255, 255, 255, 0.25)',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                          onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                        >
+                          <IcSend size={14} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={toggleVoiceInput}
+                          title="Start voice recording (Speak to chat)"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: '#FFFFFF',
+                            border: 'none',
+                            color: '#000000',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                          onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                        >
+                          <IcMic size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1308,6 +1756,45 @@ export default function ChatPage() {
                           boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
                         }}
                       >
+                        {/* Attached Photos / Files inside User Message */}
+                        {m.files && m.files.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: m.text ? 10 : 0 }}>
+                            {m.files.map((file, fIdx) => (
+                              <div
+                                key={fIdx}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 8,
+                                  background: 'rgba(0, 0, 0, 0.3)',
+                                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                                  borderRadius: 8,
+                                  padding: '6px 10px',
+                                  fontSize: 12,
+                                  maxWidth: '100%',
+                                }}
+                              >
+                                {file.type.startsWith('image/') ? (
+                                  <img
+                                    src={file.url || file.content}
+                                    alt={file.name}
+                                    style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6 }}
+                                  />
+                                ) : (
+                                  <span style={{ fontSize: 20 }}>📄</span>
+                                )}
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>
+                                    {file.name}
+                                  </div>
+                                  <div style={{ fontSize: 10, color: 'rgba(255, 255, 255, 0.6)' }}>
+                                    {(file.size / 1024).toFixed(0)} KB • {file.type.split('/')[1] || 'doc'}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         {m.text}
                       </div>
                     ) : (
@@ -1502,7 +1989,78 @@ export default function ChatPage() {
           {/* Bottom Message Input Box */}
           <div style={{ borderTop: '1px solid var(--color-border)', padding: '16px 24px', background: 'var(--color-background)' }}>
             <div style={{ maxWidth: 800, margin: '0 auto' }}>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <div
+                style={{
+                  background: 'var(--color-card, #14121E)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 22,
+                  padding: '16px 18px 14px',
+                  position: 'relative',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+                  backdropFilter: 'blur(20px)',
+                }}
+              >
+                {/* Hidden File Input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  multiple
+                  style={{ display: 'none' }}
+                  accept="image/*,.pdf,.txt,.csv,.json,.py,.js,.tsx,.ts,.md,.doc,.docx"
+                />
+
+                {/* Attached Files / Photos Preview Chips */}
+                {attachedFiles.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingBottom: 10, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 10 }}>
+                    {attachedFiles.map((file, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          background: 'rgba(255, 255, 255, 0.07)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          borderRadius: 8,
+                          padding: '4px 8px',
+                          fontSize: 12,
+                          color: 'var(--color-foreground)',
+                          maxWidth: 240,
+                        }}
+                      >
+                        {file.type.startsWith('image/') ? (
+                          <img src={file.url || file.content} alt={file.name} style={{ width: 22, height: 22, objectFit: 'cover', borderRadius: 4 }} />
+                        ) : (
+                          <span style={{ fontSize: 13 }}>📄</span>
+                        )}
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130, fontWeight: 500 }}>
+                          {file.name}
+                        </span>
+                        <span style={{ fontSize: 10, color: 'var(--color-muted)', flexShrink: 0 }}>
+                          {(file.size / 1024).toFixed(0)}KB
+                        </span>
+                        <button
+                          onClick={() => handleRemoveFile(idx)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--color-muted)',
+                            cursor: 'pointer',
+                            padding: '0 2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <textarea
                   value={input}
                   onChange={e => setInput(e.target.value)}
@@ -1512,42 +2070,210 @@ export default function ChatPage() {
                       handleSend()
                     }
                   }}
-                  placeholder={`Ask ${selectedModel.name} anything about LLMs, benchmarks, or prompts... (Shift+Enter for newline)`}
+                  placeholder={isListening ? "🎙️ Listening... Speak now" : "Ask anything..."}
                   rows={2}
                   style={{
                     width: '100%',
-                    background: 'var(--color-input-bg)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 12,
-                    padding: '12px 50px 12px 16px',
-                    fontSize: 14,
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '4px 2px 8px',
+                    fontSize: 15,
                     color: 'var(--color-foreground)',
                     outline: 'none',
                     fontFamily: 'Inter, sans-serif',
                     resize: 'none',
                     boxSizing: 'border-box',
-                    transition: 'border-color 0.15s',
                   }}
-                  onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet)')}
-                  onBlur={e => (e.target.style.borderColor = 'var(--color-border)')}
                 />
-                <button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isStreaming}
-                  className="pill-primary"
-                  style={{
-                    position: 'absolute',
-                    right: 10,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    padding: '8px 14px',
-                    borderRadius: 8,
-                    opacity: !input.trim() || isStreaming ? 0.35 : 1,
-                    transition: 'opacity 0.15s',
-                  }}
-                >
-                  <IcSend size={14} />
-                </button>
+
+                {/* Bottom Toolbar: Model on left | + and Mic/Send on right */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 4 }}>
+                  {/* Left: Model Selector Capsule + Parameter / Effort Filter Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative', flexWrap: 'nowrap' }}>
+                    <button
+                      onClick={() => setShowModelDropdown(!showModelDropdown)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 7,
+                        background: 'transparent',
+                        border: 'none',
+                        padding: '5px 8px',
+                        borderRadius: 8,
+                        color: 'var(--color-foreground)',
+                        fontSize: 13,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        whiteSpace: 'nowrap',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor, flexShrink: 0 }} />
+                      <span style={{ fontWeight: 600 }}>{selectedModel.name}</span>
+                      <IcChevronDown size={11} style={{ color: 'var(--color-muted)', marginLeft: 1 }} />
+                    </button>
+
+                    {/* Parameter / Effort Filter Button (Low -> Medium -> High / Max Effort) */}
+                    <button
+                      onClick={handleCycleEffort}
+                      title={`Parameter filter: ${effortLevel === 'High' ? 'Max Effort' : effortLevel} (Click to toggle: Low -> Medium -> Max Effort)`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        padding: '4px 9px',
+                        borderRadius: 7,
+                        color: 'var(--color-foreground)',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.22)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.09)'
+                      }}
+                    >
+                      {/* Dynamic Signal Bars according to Low/Medium/High */}
+                      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                        <rect x="0.5" y="7" width="2" height="3" rx="0.6" fill={effortLevel === 'Low' || effortLevel === 'Medium' || effortLevel === 'High' ? "currentColor" : "rgba(255,255,255,0.25)"} />
+                        <rect x="4" y="4" width="2" height="6" rx="0.6" fill={effortLevel === 'Medium' || effortLevel === 'High' ? "currentColor" : "rgba(255,255,255,0.25)"} />
+                        <rect x="7.5" y="1" width="2" height="9" rx="0.6" fill={effortLevel === 'High' ? "currentColor" : "rgba(255,255,255,0.25)"} />
+                      </svg>
+                      <span>{effortLevel === 'High' ? 'Max Effort' : effortLevel}</span>
+                    </button>
+
+                    {/* Dropdown Menu anchored above */}
+                    {showModelDropdown && (
+                      <ModelSelectorMenu
+                        selectedModelId={selectedModelId}
+                        onSelectModel={setSelectedModelId}
+                        onClose={() => setShowModelDropdown(false)}
+                        activeEffort={effortLevel}
+                        onSelectEffort={(eff) => {
+                          if (eff !== 'All') setEffortLevel(eff)
+                        }}
+                        align="left"
+                      />
+                    )}
+                  </div>
+
+                  {/* Right: Plus Button (+) & Circular Mic/Send Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {/* Plus Button for File/Photo Attachments */}
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Attach files or photos"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--color-muted)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                        e.currentTarget.style.color = '#FFFFFF'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = 'var(--color-muted)'
+                      }}
+                    >
+                      <Plus size={19} strokeWidth={2} />
+                    </button>
+
+                    {/* Solid Circular Action Button (Send / Mic / Stop & Send) */}
+                    {isListening ? (
+                      <button
+                        onClick={toggleVoiceInput}
+                        title="Finish recording & send prompt"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: '#EF4444',
+                          border: 'none',
+                          color: '#FFFFFF',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          animation: 'pulseMic 1.2s infinite',
+                          boxShadow: '0 0 16px rgba(239, 68, 68, 0.7)',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
+                        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="4" y="4" width="16" height="16" rx="2" />
+                        </svg>
+                      </button>
+                    ) : input.trim() || attachedFiles.length > 0 ? (
+                      <button
+                        onClick={() => handleSend()}
+                        disabled={isStreaming}
+                        title="Send prompt"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: '#FFFFFF',
+                          border: 'none',
+                          color: '#000000',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          boxShadow: '0 2px 8px rgba(255, 255, 255, 0.25)',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      >
+                        <IcSend size={14} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={toggleVoiceInput}
+                        title="Start voice recording (Speak to chat)"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: '#FFFFFF',
+                          border: 'none',
+                          color: '#000000',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                      >
+                        <IcMic size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, padding: '0 4px' }}>

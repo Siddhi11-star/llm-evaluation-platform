@@ -4,9 +4,61 @@ import { useTheme } from "../ThemeProvider"
 export interface MeshGradientSVGProps {
   className?: string
   size?: number
+  modelColor?: string
 }
 
-export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGProps) {
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  let c = hex.replace("#", "").trim()
+  if (c.length === 3) {
+    c = c.split("").map(ch => ch + ch).join("")
+  }
+  const num = parseInt(c, 16)
+  if (isNaN(num)) return { r: 124, g: 58, b: 237 }
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+  }
+}
+
+function getModelPalette(modelColor: string, isLight: boolean) {
+  const base = hexToRgb(modelColor || "#8B5CF6")
+  const r = base.r
+  const g = base.g
+  const b = base.b
+
+  // Derive 5 harmonious harmonic colors from modelColor
+  return [
+    // 1. Primary Highlight / Glow
+    {
+      r: Math.min(255, Math.floor(r * 1.3 + (isLight ? 20 : 40))),
+      g: Math.min(255, Math.floor(g * 1.2 + (isLight ? 30 : 40))),
+      b: Math.min(255, Math.floor(b * 1.3 + (isLight ? 20 : 40))),
+    },
+    // 2. Analogous Shift 1 (Cyan / Violet blend)
+    {
+      r: Math.max(20, Math.min(255, Math.floor(r * 0.7 + (isLight ? 40 : 20)))),
+      g: Math.min(255, Math.floor(g * 1.1 + 50)),
+      b: Math.min(255, Math.floor(b * 1.2 + 60)),
+    },
+    // 3. Analogous Shift 2 (Warm / Contrast)
+    {
+      r: Math.min(255, Math.floor(r * 1.1 + 60)),
+      g: Math.max(20, Math.min(255, Math.floor(g * 0.8 + 20))),
+      b: Math.min(255, Math.floor(b * 0.9 + 40)),
+    },
+    // 4. Core Brand Base
+    { r, g, b },
+    // 5. Deep Ambient Shadow
+    {
+      r: Math.max(15, Math.floor(r * 0.25)),
+      g: Math.max(15, Math.floor(g * 0.25)),
+      b: Math.max(25, Math.floor(b * 0.35 + 15)),
+    },
+  ]
+}
+
+export function MeshGradientSVG({ className = "", size = 200, modelColor = "#8B5CF6" }: MeshGradientSVGProps) {
   const { theme } = useTheme()
   const isLight = theme === "light"
 
@@ -15,7 +67,7 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
   const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 })
   const svgRef = useRef<SVGSVGElement | null>(null)
 
-  // Animated Mesh Gradient Canvas (Theme Adaptive)
+  // Animated Mesh Gradient Canvas (Model Color Theme Adaptive)
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -25,25 +77,11 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
     let animationFrameId: number
     let t = 0
 
-    // Palette per theme
-    const darkColors = [
-      { r: 255, g: 179, b: 217 }, // Pastel pink
-      { r: 135, g: 206, b: 235 }, // Sky blue
-      { r: 74, g: 144, b: 226 },  // Medium blue
-      { r: 124, g: 58, b: 237 },  // Violet
-      { r: 26, g: 26, b: 46 },    // Deep blue
-    ]
-
-    const lightColors = [
-      { r: 244, g: 114, b: 182 }, // Vivid rose
-      { r: 56, g: 189, b: 248 },  // Cyan sky
-      { r: 99, g: 102, b: 241 },  // Indigo blue
-      { r: 139, g: 92, b: 246 },  // Rich violet
-      { r: 251, g: 113, b: 133 }, // Coral
-    ]
-
-    const colors = isLight ? lightColors : darkColors
-    const bgBase = isLight ? "#EDE9FE" : "#1A1A2E"
+    const colors = getModelPalette(modelColor, isLight)
+    const baseRgb = hexToRgb(modelColor)
+    const bgBase = isLight
+      ? `rgba(${Math.min(255, baseRgb.r + 140)}, ${Math.min(255, baseRgb.g + 140)}, ${Math.min(255, baseRgb.b + 140)}, 0.35)`
+      : `rgba(${Math.floor(baseRgb.r * 0.15 + 12)}, ${Math.floor(baseRgb.g * 0.15 + 12)}, ${Math.floor(baseRgb.b * 0.2 + 20)}, 0.95)`
 
     const render = () => {
       t += 0.015
@@ -54,7 +92,7 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
       ctx.fillStyle = bgBase
       ctx.fillRect(0, 0, w, h)
 
-      // Blob 1 (Top Left / Pink / Coral)
+      // Blob 1 (Top Left / Primary Glow)
       const x1 = w * 0.35 + Math.sin(t * 0.8) * (w * 0.25)
       const y1 = h * 0.3 + Math.cos(t * 0.7) * (h * 0.2)
       const grad1 = ctx.createRadialGradient(x1, y1, 10, x1, y1, w * 0.65)
@@ -63,7 +101,7 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
       ctx.fillStyle = grad1
       ctx.fillRect(0, 0, w, h)
 
-      // Blob 2 (Top Right / Sky Blue)
+      // Blob 2 (Top Right / Analogous 1)
       const x2 = w * 0.7 + Math.cos(t * 0.9) * (w * 0.2)
       const y2 = h * 0.4 + Math.sin(t * 1.1) * (h * 0.25)
       const grad2 = ctx.createRadialGradient(x2, y2, 10, x2, y2, w * 0.6)
@@ -72,7 +110,7 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
       ctx.fillStyle = grad2
       ctx.fillRect(0, 0, w, h)
 
-      // Blob 3 (Bottom Left / Violet)
+      // Blob 3 (Bottom Left / Brand Core)
       const x3 = w * 0.4 + Math.sin(t * 1.2) * (w * 0.25)
       const y3 = h * 0.75 + Math.cos(t * 0.9) * (h * 0.2)
       const grad3 = ctx.createRadialGradient(x3, y3, 10, x3, y3, w * 0.7)
@@ -81,7 +119,7 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
       ctx.fillStyle = grad3
       ctx.fillRect(0, 0, w, h)
 
-      // Blob 4 (Center / Indigo / Blue)
+      // Blob 4 (Center / Warm Accent)
       const x4 = w * 0.5 + Math.cos(t * 0.6) * (w * 0.2)
       const y4 = h * 0.55 + Math.sin(t * 0.8) * (h * 0.25)
       const grad4 = ctx.createRadialGradient(x4, y4, 10, x4, y4, w * 0.55)
@@ -98,7 +136,7 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
     return () => {
       cancelAnimationFrame(animationFrameId)
     }
-  }, [isLight])
+  }, [isLight, modelColor])
 
   // Mouse tracking
   useEffect(() => {
@@ -150,8 +188,9 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
         style={{
           overflow: "visible",
           filter: isLight
-            ? "drop-shadow(0 14px 28px rgba(124, 58, 237, 0.22))"
-            : "drop-shadow(0 14px 32px rgba(124, 58, 237, 0.38))",
+            ? `drop-shadow(0 14px 28px ${modelColor}44)`
+            : `drop-shadow(0 14px 34px ${modelColor}66)`,
+          transition: "filter 0.3s ease",
         }}
       >
         <defs>
@@ -171,7 +210,7 @@ export function MeshGradientSVG({ className = "", size = 200 }: MeshGradientSVGP
         <path
           d={ghostPath}
           fill="none"
-          stroke={isLight ? "rgba(124, 58, 237, 0.3)" : "rgba(255, 255, 255, 0.14)"}
+          stroke={isLight ? `${modelColor}55` : `${modelColor}40`}
           strokeWidth="2"
         />
 
