@@ -324,17 +324,22 @@ export default function AppShell() {
       )}
 
       {/* Main */}
-      <main style={{ flex: 1, marginLeft: sidebarWidth, transition: 'margin 0.2s ease' }} className="max-md:!ml-0">
-        {/* Mobile header */}
+      <main
+        style={{
+          flex: 1,
+          marginLeft: sidebarWidth,
+          transition: 'margin 0.2s ease',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+          height: '100vh',
+          overflow: 'hidden',
+        }}
+        className="max-md:!ml-0"
+      >
+        {/* Mobile header (only on small screens) */}
         <div
-          className="md:hidden"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '14px 16px',
-            borderBottom: '1px solid var(--color-border)',
-          }}
+          className="hidden max-md:flex items-center justify-between px-4 py-3.5 border-b border-[var(--color-border)]"
         >
           <Logo size={30} fontSize={16} />
           <button
@@ -345,7 +350,7 @@ export default function AppShell() {
           </button>
         </div>
 
-        <div key={pathname} className="page-transition-container">
+        <div key={pathname} className="page-transition-container flex-1 flex flex-col h-full overflow-hidden">
           <Outlet />
         </div>
       </main>
