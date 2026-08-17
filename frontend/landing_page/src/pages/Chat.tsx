@@ -16,6 +16,7 @@ import {
   IcMic,
 } from '../components/icons'
 import { MeshGradientSVG } from '../components/ui/shader-svg'
+import { ThinkingTool } from '../components/ui/thinking-tool'
 import { LogoIcon } from '../components/Logo'
 
 // Models available for selection
@@ -201,7 +202,7 @@ function getIntelligentResponse(prompt: string, model: LLMModel): string {
 
   // 1. Natural greetings
   if (/^(hello|hi|hey|greetings|good morning|good afternoon|good evening|yo|sup)\b/i.test(lower)) {
-    return `Hello! 👋 I'm **JudgeAI Chatbot**, powered by **${model.name}** (${model.provider}).
+    return `Hello! 👋 I'm **JudgeAI**, powered by **${model.name}** (${model.provider}).
 
 How can I help you today? Here are a few things I can assist you with:
 
@@ -213,28 +214,46 @@ How can I help you today? Here are a few things I can assist you with:
 What task or topic would you like to explore?`
   }
 
-  // 2. Code & Programming Queries
-  if (lower.includes('code') || lower.includes('python') || lower.includes('javascript') || lower.includes('typescript') || lower.includes('function') || lower.includes('algorithm')) {
-    return `### ${model.name} · Code Solution & Analysis
+  // 2. Project run & setup queries
+  if (lower.includes('run') || lower.includes('start') || lower.includes('setup') || lower.includes('install')) {
+    return `### How to Run the JudgeAI Evaluation System
 
-Here is a structured implementation addressing your prompt:
+Here are the exact commands to start both the Backend and Frontend:
 
-\`\`\`typescript
-// High-efficiency implementation with zero runtime overhead
-export function processTaskPipeline<T>(items: T[], filterFn: (item: T) => boolean): T[] {
-  return items.filter(filterFn);
-}
+**1. Start the Chat Backend Server:**
+\`\`\`bash
+cd backend/chat
+source venv/bin/activate
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 \`\`\`
 
-**Key Technical Details:**
-1. **Time Complexity**: Optimal $O(N)$ execution speed.
-2. **Type Safety**: Strictly typed with TypeScript generics to prevent runtime type errors.
-3. **Best Practice**: Zero memory leaks and minimal allocation overhead.
+**2. Start the Frontend Dashboard:**
+\`\`\`bash
+cd frontend/landing_page
+npm run dev
+\`\`\`
 
-Would you like me to write a complete unit test suite or add additional edge case handlers for this?`
+**3. Ensure Ollama is running:**
+\`\`\`bash
+ollama serve
+\`\`\`
+*(Once the backend is connected to Ollama at \`http://localhost:8000\`, live AI streaming responses will be enabled directly.)*`
   }
 
-  // 3. Cost & Economics
+  // 3. Code & Programming Queries
+  if (lower.includes('code') || lower.includes('python') || lower.includes('javascript') || lower.includes('typescript') || lower.includes('function') || lower.includes('algorithm')) {
+    return `### ${model.name} · Code & Architecture Analysis
+
+Here is a structured solution for your inquiry:
+
+1. **Architecture & Design**: Ensure modular separation between agent orchestration, evaluation schemas, and frontend rendering.
+2. **Type Safety & Reliability**: Use strict TypeScript definitions for frontend API contracts and Pydantic schemas for backend models.
+3. **Execution**: Run parallel evaluations with asynchronous workers to minimize latency.
+
+Let me know the specific function, agent, or algorithm you would like me to generate!`
+  }
+
+  // 4. Cost & Economics
   if (lower.includes('cost') || lower.includes('price') || lower.includes('budget') || lower.includes('token')) {
     return `### Cost Optimization Analysis (${model.name})
 
@@ -247,7 +266,7 @@ Evaluating token economic efficiency for production deployments:
 **Key Strategy**: By routing initial triage prompts through fast flash-tier models and escalating complex multi-step reasoning to **${model.name}**, you can reduce overall operational API expenditures by **up to 65%** while retaining peak quality.`
   }
 
-  // 4. Hallucination & Medical/Legal
+  // 5. Hallucination & Medical/Legal
   if (lower.includes('hallucination') || lower.includes('medical') || lower.includes('legal') || lower.includes('safety')) {
     return `### Factuality & Zero-Hallucination Guard (${model.name})
 
@@ -258,20 +277,19 @@ For mission-critical domains requiring strict factual accuracy:
 3. **Recommended Configuration**: Enable strict prompt constraints and run double-blind verification in the **Judge Agents** tab.`
   }
 
-  // 5. Default General Reasoning Answer
+  // 6. Default General Reasoning Answer
   return `### ${model.name} Response
 
-Regarding your prompt: **"${clean}"**
+Regarding your query: **"${clean}"**
 
-1. **Core Analysis**: Carefully evaluated your directive, constraints, and target context.
+1. **Core Analysis**: Carefully processed your directive and constraints.
 2. **Key Insights**:
-   - The primary objective requires systematic decomposition and precise step-by-step reasoning.
-   - All factual assertions are cross-verified to maintain zero hallucination.
-3. **Actionable Recommendations**:
-   - Proceed with standard implementation while monitoring edge-case latency.
-   - Run a batch validation suite in the **Evaluations** tab to test consistency across 100+ prompt variants.
+   - Decomposed the request into actionable steps.
+   - Verified reasoning to ensure factual consistency and accuracy.
+3. **Next Steps**:
+   - If running locally with Ollama, verify your backend is active on port 8000 with \`uvicorn main:app --reload\`.
 
-Let me know if you would like me to adjust any parameters, provide code examples, or dive deeper into any specific detail!`
+Feel free to ask for specific code snippets, rubric designs, or benchmark comparisons!`
 }
 
 function renderInlineFormatting(line: string): React.ReactNode[] {
@@ -362,7 +380,7 @@ function FormattedMessageContent({ text, isStreaming }: { text: string; isStream
           <pre
             key={`code-${idx}`}
             style={{
-              background: 'var(--color-surface-deep)',
+              background: 'rgba(0, 0, 0, 0.4)',
               border: '1px solid var(--color-border)',
               borderRadius: 8,
               padding: '12px 14px',
@@ -370,7 +388,8 @@ function FormattedMessageContent({ text, isStreaming }: { text: string; isStream
               margin: '10px 0',
               fontSize: 13,
               fontFamily: 'monospace',
-              lineHeight: 1.45,
+              lineHeight: 1.5,
+              scrollbarWidth: 'thin',
             }}
           >
             <code>{codeBlockContent.join('\n')}</code>
@@ -460,7 +479,7 @@ function FormattedMessageContent({ text, isStreaming }: { text: string; isStream
       <pre
         key="code-open"
         style={{
-          background: 'var(--color-surface-deep)',
+          background: 'rgba(0, 0, 0, 0.4)',
           border: '1px solid var(--color-border)',
           borderRadius: 8,
           padding: '12px 14px',
@@ -468,6 +487,8 @@ function FormattedMessageContent({ text, isStreaming }: { text: string; isStream
           margin: '10px 0',
           fontSize: 13,
           fontFamily: 'monospace',
+          lineHeight: 1.5,
+          scrollbarWidth: 'thin',
         }}
       >
         <code>{codeBlockContent.join('\n')}</code>
@@ -751,7 +772,7 @@ export default function ChatPage() {
 
   return (
     <>
-      <TopBar title="JudgeAI Chatbot">
+      <TopBar title="JudgeAI">
         {/* Top bar Model Selector */}
         <div style={{ position: 'relative' }}>
           <button
@@ -987,7 +1008,7 @@ export default function ChatPage() {
                     <MeshGradientSVG size={145} />
                   </div>
                   <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px', color: 'var(--color-foreground)' }}>
-                    Welcome to JudgeAI Chatbot
+                    Welcome to JudgeAI
                   </h1>
                 </div>
 
@@ -1243,63 +1264,20 @@ export default function ChatPage() {
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <LogoIcon size={30} />
                             </div>
-                            <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-foreground)' }}>JudgeAI Bot</span>
-                            <span style={{ fontSize: 10.5, padding: '2px 8px', borderRadius: 999, background: `${msgModel.badgeColor}20`, color: msgModel.badgeColor, fontWeight: 700 }}>
-                              {msgModel.name}
-                            </span>
+                            <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-foreground)' }}>JudgeAI</span>
                           </div>
                           <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{m.timestamp}</span>
                         </div>
 
-                        {/* Optional Thinking Trace / Thought for a moment */}
-                        {m.thinking && (
+                        {/* Thinking Tool (Shimmer animation when thinking / collapsible thought drawer) */}
+                        {(m.thinking || (m.isStreaming && !m.text)) && (
                           <div style={{ marginBottom: 12 }}>
-                            <button
-                              onClick={() => toggleThinking(m.id)}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                background: 'var(--color-surface-deep)',
-                                border: '1px solid var(--color-border)',
-                                borderRadius: 8,
-                                padding: '4px 10px',
-                                fontSize: 12,
-                                color: 'var(--color-muted)',
-                                cursor: 'pointer',
-                                transition: 'background 0.15s',
-                              }}
-                              onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
-                              onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
-                            >
-                              <span>💡 Thought for a moment</span>
-                              <IcChevronDown
-                                size={12}
-                                style={{
-                                  transform: m.showThinking ? 'rotate(180deg)' : 'none',
-                                  transition: 'transform 0.2s',
-                                  color: 'var(--color-muted)',
-                                }}
-                              />
-                            </button>
-                            {m.showThinking && (
-                              <div
-                                style={{
-                                  marginTop: 8,
-                                  padding: '10px 14px',
-                                  borderRadius: 8,
-                                  background: 'var(--color-surface-deep)',
-                                  border: '1px solid var(--color-border-faint)',
-                                  fontSize: 12,
-                                  color: 'var(--color-muted-stronger)',
-                                  fontStyle: 'italic',
-                                  whiteSpace: 'pre-wrap',
-                                  lineHeight: 1.5,
-                                }}
-                              >
-                                {m.thinking}
-                              </div>
-                            )}
+                            <ThinkingTool
+                              state={m.isStreaming && !m.text ? "thinking" : "thought"}
+                              content={m.thinking}
+                              expanded={m.showThinking}
+                              onToggleExpand={() => toggleThinking(m.id)}
+                            />
                           </div>
                         )}
 

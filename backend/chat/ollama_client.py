@@ -2,7 +2,10 @@ import json
 import logging
 from typing import List, Dict, Any, Optional, AsyncGenerator
 import httpx
-from .config import settings
+try:
+    from .config import settings
+except ImportError:
+    from config import settings
 
 logger = logging.getLogger("chat.ollama")
 
@@ -105,6 +108,37 @@ class OllamaClient:
                         },
                         "finish_reason": "stop" if data.get("done") else "length",
                     }
+                elif resp.status_code == 404 or "not found" in resp.text.lower():
+                    # Try falling back to any locally available model in Ollama
+                    models = await self.list_models()
+                    if models:
+                        available_names = [m.get("name") for m in models if m.get("name")]
+                        first_available = available_names[0]
+                        logger.info(f"Target model '{active_model}' not found in Ollama. Trying installed model '{first_available}'...")
+                        payload["model"] = first_available
+                        retry_resp = await client.post(url, json=payload, headers=headers)
+                        if retry_resp.status_code == 200:
+                            data = retry_resp.json()
+                            msg_obj = data.get("message", {})
+                            content = msg_obj.get("content", "")
+                            thinking = msg_obj.get("thinking", "")
+                            prompt_eval_count = data.get("prompt_eval_count", sum(len(m.get("content", "").split()) for m in messages))
+                            eval_count = data.get("eval_count", len(content.split()))
+                            return {
+                                "content": content,
+                                "thinking": thinking,
+                                "model": first_available,
+                                "provider": "ollama",
+                                "usage": {
+                                    "prompt_tokens": prompt_eval_count,
+                                    "completion_tokens": eval_count,
+                                    "total_tokens": prompt_eval_count + eval_count,
+                                },
+                                "finish_reason": "stop" if data.get("done") else "length",
+                            }
+                    error_text = resp.text
+                    logger.warning(f"Ollama returned {resp.status_code}: {error_text}")
+                    return self._fallback_response(messages, active_model, note=f"Model '{active_model}' not installed in Ollama. Run: ollama pull {active_model}")
                 else:
                     error_text = resp.text
                     logger.warning(f"Ollama returned {resp.status_code}: {error_text}")

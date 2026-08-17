@@ -2,9 +2,20 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .config import settings
-from .db import MongoDB
-from .router import router as chat_router
+import sys
+from pathlib import Path
+
+# Ensure directory is on sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+try:
+    from .config import settings
+    from .db import MongoDB
+    from .router import router as chat_router
+except ImportError:
+    from config import settings
+    from db import MongoDB
+    from router import router as chat_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,4 +65,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.chat.main:app", host=settings.HOST, port=settings.PORT, reload=True)
+    uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)

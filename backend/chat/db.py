@@ -1,7 +1,10 @@
 import logging
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from .config import settings
+try:
+    from .config import settings
+except ImportError:
+    from config import settings
 
 logger = logging.getLogger("chat.db")
 

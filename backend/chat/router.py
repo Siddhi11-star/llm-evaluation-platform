@@ -1,16 +1,29 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Body
-from .models import (
-    SendMessageRequest,
-    ChatResponse,
-    ChatSession,
-    ChatSessionDetail,
-    UpdateSessionTitleRequest,
-)
-from .service import ChatService
-from .ollama_client import ollama_client
-from .db import MongoDB
-from .config import settings
+try:
+    from .models import (
+        SendMessageRequest,
+        ChatResponse,
+        ChatSession,
+        ChatSessionDetail,
+        UpdateSessionTitleRequest,
+    )
+    from .service import ChatService
+    from .ollama_client import ollama_client
+    from .db import MongoDB
+    from .config import settings
+except ImportError:
+    from models import (
+        SendMessageRequest,
+        ChatResponse,
+        ChatSession,
+        ChatSessionDetail,
+        UpdateSessionTitleRequest,
+    )
+    from service import ChatService
+    from ollama_client import ollama_client
+    from db import MongoDB
+    from config import settings
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 

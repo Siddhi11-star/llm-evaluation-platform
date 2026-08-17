@@ -2,17 +2,30 @@ import uuid
 import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from .db import MongoDB, IN_MEMORY_SESSIONS, IN_MEMORY_MESSAGES
-from .models import (
-    ChatMessage,
-    SendMessageRequest,
-    ChatResponse,
-    ChatSession,
-    ChatSessionDetail,
-)
-from .ollama_client import ollama_client
-from .minimax_client import minimax_client
-from .config import settings
+try:
+    from .db import MongoDB, IN_MEMORY_SESSIONS, IN_MEMORY_MESSAGES
+    from .models import (
+        ChatMessage,
+        SendMessageRequest,
+        ChatResponse,
+        ChatSession,
+        ChatSessionDetail,
+    )
+    from .ollama_client import ollama_client
+    from .minimax_client import minimax_client
+    from .config import settings
+except ImportError:
+    from db import MongoDB, IN_MEMORY_SESSIONS, IN_MEMORY_MESSAGES
+    from models import (
+        ChatMessage,
+        SendMessageRequest,
+        ChatResponse,
+        ChatSession,
+        ChatSessionDetail,
+    )
+    from ollama_client import ollama_client
+    from minimax_client import minimax_client
+    from config import settings
 
 logger = logging.getLogger("chat.service")
 
@@ -129,7 +142,7 @@ class ChatService:
         else:
             prompt_payload.append({
                 "role": "system",
-                "content": f"You are JudgeAI Chatbot powered by Ollama ({active_model}). You provide highly accurate, structured, and insightful answers with zero hallucination.",
+                "content": f"You are JudgeAI, an AI evaluation assistant powered by Ollama ({active_model}). You provide highly accurate, structured, and insightful answers with zero hallucination.",
             })
 
         for msg in history[-10:]:

@@ -2,7 +2,10 @@ import json
 import logging
 from typing import List, Dict, Any, AsyncGenerator, Optional
 import httpx
-from .config import settings
+try:
+    from .config import settings
+except ImportError:
+    from config import settings
 
 logger = logging.getLogger("chat.minimax")
 
