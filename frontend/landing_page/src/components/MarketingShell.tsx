@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, Outlet } from 'react-router'
 import { useTheme } from './ThemeProvider'
 import { IcSun, IcMoon } from './icons'
@@ -54,9 +54,9 @@ function MarketingNav() {
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             {open ? (
-              <><path d="M18 6L6 18M6 6l12 12" /></>
+              <path d="M18 6L6 18M6 6l12 12" />
             ) : (
-              <><path d="M3 12h18M3 6h18M3 18h18" /></>
+              <path d="M3 12h18M3 6h18M3 18h18" />
             )}
           </svg>
         </button>
@@ -121,29 +121,7 @@ function MarketingFooter() {
     </footer>
   )
 }
-export function Logo() {
-  return (
-    <Link
-      to="/"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        textDecoration: 'none',
-      }}
-    >
-      <span
-        style={{
-          fontWeight: 700,
-          fontSize: 18,
-          color: 'var(--color-foreground)',
-        }}
-      >
-        JudgeAI
-      </span>
-    </Link>
-  )
-}
+
 function MarketingShell({ children }: { children?: React.ReactNode }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-background)', color: 'var(--color-foreground)' }}>
@@ -156,5 +134,5 @@ function MarketingShell({ children }: { children?: React.ReactNode }) {
   )
 }
 
-export { MarketingShell };
+export { MarketingShell, Logo };
 export default MarketingShell;

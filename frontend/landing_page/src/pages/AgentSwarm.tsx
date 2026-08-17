@@ -1,28 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { TopBar } from '../components/AppShell'
 import {
-  IcSparkles,
-  IcCheck,
-  IcChevronDown,
+  IcPlus,
   IcPlay,
   IcPause,
-  IcCpu,
   IcDownload,
   IcCopy,
-  IcArrowRight,
-  IcRotate,
-  IcSearch,
-  IcFilter,
+  IcCheck,
+  IcSparkles,
+  IcChevronDown,
+  IcSwarm,
   IcSend,
-  IcMic,
-  IcPlus,
-  IcTrash,
-  IcPaperclip,
+  IcEye,
+  IcCpu,
+  IcTable,
+  IcDatabase,
+  IcSearch,
+  IcRotate,
+  IcX,
 } from '../components/icons'
-import { MeshGradientSVG } from '../components/ui/shader-svg'
 import { motion, AnimatePresence } from 'framer-motion'
-
-// ─── Swarm Models ───────────────────────────────────────────────────────────
 
 export type SwarmModel = {
   id: string
@@ -33,7 +30,7 @@ export type SwarmModel = {
   description: string
 }
 
-const MODELS: SwarmModel[] = [
+export const MODELS: SwarmModel[] = [
   {
     id: 'claude-3-5-sonnet',
     name: 'Claude 3.5 Sonnet',
@@ -55,15 +52,15 @@ const MODELS: SwarmModel[] = [
     name: 'GPT-4o',
     provider: 'OpenAI',
     tag: 'Multimodal',
-    badgeColor: '#10A37F',
+    badgeColor: '#0284C7',
     description: 'High intelligence multimodal reasoning for complex tasks',
   },
   {
     id: 'gemini-2-flash',
     name: 'Gemini 2.0 Flash',
     provider: 'Google',
-    tag: 'Fast',
-    badgeColor: '#38BDF8',
+    tag: 'Ultra Fast',
+    badgeColor: '#10B981',
     description: 'Ultra-low latency & cost-effective general task processing',
   },
   {
@@ -76,318 +73,540 @@ const MODELS: SwarmModel[] = [
   },
 ]
 
-// ─── 4 Specialized Swarm Agents ─────────────────────────────────────────────
+export type AgentStage = 'waiting' | 'thinking' | 'working' | 'verifying' | 'synthesizing' | 'done'
 
-type SwarmAgent = {
+export type SwarmNode = {
   id: string
   name: string
+  handle: string
   role: string
+  modelName: string
   avatar: string
   color: string
-  assignedPacket: string
-  status: 'idle' | 'decomposing' | 'executing' | 'verifying' | 'completed'
+  stage: AgentStage
   progress: number
-  logs: string[]
-  outputSnippet: string
+  tokensGenerated: number
+  speed: string
+  hallucinationRate: string
+  confidenceScore: string
+  isMain?: boolean
+  description: string
+  tools: Array<{ name: string; icon: string }>
+  subTasks: Array<{ title: string; done: boolean }>
+  assignedPacket: string
+  packetConstraints: string
+  logs: Array<{ time: string; text: string; level?: 'info' | 'success' | 'warn' }>
 }
 
-type SwarmHistoryItem = {
-  id: string
-  title: string
-  updatedAt: string
-  modelId: string
-  prompt: string
-}
-
-const INITIAL_HISTORY: SwarmHistoryItem[] = [
-  {
-    id: 'sw-1',
-    title: '100 Math Word Problem Benchmark',
-    updatedAt: 'Just now',
-    modelId: 'claude-3-5-sonnet',
-    prompt: 'Generate 100 math word problems with step-by-step calculus & algebra proofs and 0% hallucination verification.',
-  },
-  {
-    id: 'sw-2',
-    title: 'SEC 10-K CapEx Multi-Page Audit',
-    updatedAt: '2 hours ago',
-    modelId: 'judgeai-swarm-core',
-    prompt: 'Audit Fortune 500 annual 10-K filings for enterprise AI infrastructure capital expenditures with primary citations.',
-  },
-  {
-    id: 'sw-3',
-    title: 'Next.js Full-Stack App Vibe Coding',
-    updatedAt: 'Yesterday',
-    modelId: 'gpt-4o',
-    prompt: 'Architect and generate a production-ready Next.js application with Tailwind styling, Prisma ORM schema, and JWT auth.',
-  },
-]
-
-const QUICK_ACTIONS = [
-  { icon: IcSparkles, label: 'Compare models', prompt: 'Evaluate GPT-4o vs Claude 3.5 Sonnet for code generation' },
-  { icon: IcCheck, label: 'Reduce hallucination', prompt: 'How can I reduce hallucination in medical QA systems?' },
-  { icon: IcCopy, label: 'Build a rubric', prompt: 'Draft a multi-criteria rubric for LLM output evaluation' },
-  { icon: IcRotate, label: 'Cost efficiency', prompt: 'Compare cost efficiency across open vs closed source models' },
-]
-
-const INITIAL_4_AGENTS: SwarmAgent[] = [
+const INITIAL_NODES: SwarmNode[] = [
   {
     id: 'agent-1',
     name: 'Architect Prime',
-    role: 'Packet Decomposer & Schema Architect',
-    avatar: '📐',
+    handle: '@ArchitectPrime',
+    role: 'Decomposer & Schema Architect',
+    modelName: 'Claude 3.5 Sonnet',
+    avatar: '⚡',
     color: '#8B5CF6',
-    assignedPacket: 'Packet 1: Task Scope, Constraints & Boundary Axioms',
-    status: 'completed',
-    progress: 100,
-    logs: [
-      'Received major objective from orchestrator.',
-      'Decomposed objective into 4 isolated compute packets.',
-      'Constructed strict JSON verification schema.',
-      'Dispatched Packet 2 to Deep Generator and Packet 3 to Citation Guard.',
+    stage: 'waiting',
+    progress: 0,
+    tokensGenerated: 0,
+    speed: '88 tok/s',
+    hallucinationRate: '0.00%',
+    confidenceScore: '99.9%',
+    isMain: true,
+    description: 'Autonomous schema architect that decomposes tasks into formal dependency graphs and locks boundary constraints.',
+    tools: [
+      { name: 'Schema DAG Formulator', icon: '📐' },
+      { name: 'Constraint Bounding Engine', icon: '🔒' },
+      { name: 'Axiom Dependency Graph', icon: '🕸️' },
+      { name: 'Zero-Hallucination Anchor', icon: '🛡️' },
     ],
-    outputSnippet: JSON.stringify({
-      packet_id: 'PKT-01',
-      objective_decomposition: {
-        total_sub_units: 4,
-        constraint_mode: 'ZERO_HALLUCINATION',
-        domain_parameters: ['kinematics', 'discrete_probability', 'quadratic_opt', 'calculus_rates'],
-        target_format: 'JSON_SCHEMA_STRICT',
-      },
-    }, null, 2),
+    subTasks: [
+      { title: 'Decompose prompt axioms & constraints', done: false },
+      { title: 'Formulate dependency DAG schema', done: false },
+      { title: 'Broadcast scope vectors to compute mesh', done: false },
+    ],
+    assignedPacket: 'Packet 1: Task Scope & Boundary Axioms',
+    packetConstraints: 'Strict JSON schema decomposition with dependency DAG graph',
+    logs: [
+      { time: 'Ready', text: 'Standing by to decompose incoming user task prompt.', level: 'info' },
+    ],
   },
   {
     id: 'agent-2',
     name: 'Deep Generator',
+    handle: '@DeepGenerator',
     role: 'Core Synthesis & Compute Specialist',
-    avatar: '⚡',
-    color: '#38BDF8',
-    assignedPacket: 'Packet 2: Core Math & Reasoning Problem Generation',
-    status: 'executing',
-    progress: 85,
-    logs: [
-      'Processing generation stream for algebra & rate kinematics.',
-      'Constructing step-by-step mathematical reasoning chains.',
-      'Calculating exact collision coordinates and derivative rates.',
-      'Streaming intermediate solution vectors to Citation Guard.',
+    modelName: 'GPT-4o',
+    avatar: '🧠',
+    color: '#0284C7',
+    stage: 'waiting',
+    progress: 0,
+    tokensGenerated: 0,
+    speed: '96 tok/s',
+    hallucinationRate: '0.00%',
+    confidenceScore: '99.5%',
+    description: 'Generates step-by-step mathematical proofs, closed-form derivations, and deep synthetic reasoning vectors.',
+    tools: [
+      { name: 'Calculus Proof Engine', icon: '∫' },
+      { name: 'Symbolic Algebra Core', icon: '∑' },
+      { name: 'Neural Code Generator', icon: '💻' },
     ],
-    outputSnippet: JSON.stringify({
-      packet_id: 'PKT-02',
-      items_generated: 25,
-      batch_sample: {
-        problem: 'Two trains start simultaneously from Station A and B, 450 km apart, traveling toward each other at 60 km/h and 90 km/h. When and where do they meet?',
-        step_1: 'Relative approach speed = 60 + 90 = 150 km/h',
-        step_2: 'Time to intercept = 450 / 150 = 3.0 hours',
-        step_3: 'Distance from Station A = 60 * 3.0 = 180 km',
-        final_answer: '3 hours, 180 km from Station A',
-      },
-    }, null, 2),
+    subTasks: [
+      { title: 'Generate closed-form derivations', done: false },
+      { title: 'Synthesize intermediate reasoning steps', done: false },
+      { title: 'Compute unit test vectors', done: false },
+    ],
+    assignedPacket: 'Packet 2: Core Math & Reasoning Generation',
+    packetConstraints: 'Exhaustive intermediate proofs with verifiable units',
+    logs: [
+      { time: 'Ready', text: 'Awaiting decomposed schema from Architect Prime.', level: 'info' },
+    ],
   },
   {
     id: 'agent-3',
     name: 'Citation & Logic Guard',
-    role: '0% Hallucination & Proof Verifier',
+    handle: '@CitationGuard',
+    role: '0% Hallucination & Fact Verifier',
+    modelName: 'JudgeAI Swarm Core',
     avatar: '🛡️',
-    color: '#34D399',
-    assignedPacket: 'Packet 3: Double-Blind Proof Verification & Citation Check',
-    status: 'executing',
-    progress: 70,
-    logs: [
-      'Running formal verification on Packet 2 step-by-step derivations.',
-      'Checking dimensional units and arithmetic boundary conditions.',
-      'Cross-referencing primary reference dataset for collision proofs.',
-      'Passed 23/25 items with 0 logic discrepancies.',
+    color: '#10B981',
+    stage: 'waiting',
+    progress: 0,
+    tokensGenerated: 0,
+    speed: '72 tok/s',
+    hallucinationRate: '0.00%',
+    confidenceScore: '99.9%',
+    description: 'Performs double-blind verification against mathematical ground truth to guarantee zero phantom citations.',
+    tools: [
+      { name: 'Double-Blind Reviewer', icon: '⚖️' },
+      { name: 'Ground Truth Anchor', icon: '📌' },
+      { name: 'Axiom Proof Checker', icon: '✓' },
     ],
-    outputSnippet: JSON.stringify({
-      packet_id: 'PKT-03',
-      verification_scorecard: {
-        proof_soundness: '100% VALIDATED',
-        hallucination_rate: '0.00%',
-        boundary_violations: 0,
-        confidence_interval: [0.994, 0.999],
-      },
-    }, null, 2),
+    subTasks: [
+      { title: 'Double-blind truth comparison', done: false },
+      { title: '0% Hallucination consistency audit', done: false },
+      { title: 'Certify proofs with consensus stamp', done: false },
+    ],
+    assignedPacket: 'Packet 3: Double-Blind Proof Verification',
+    packetConstraints: 'Double-blind review against mathematical ground truth',
+    logs: [
+      { time: 'Ready', text: 'Verification rules and ground truth anchors armed.', level: 'info' },
+    ],
   },
   {
     id: 'agent-4',
     name: 'Synthesis Lead',
-    role: 'Packet Aggregator & Final Delivery',
+    handle: '@SynthesisLead',
+    role: 'Package Aggregator & Final Delivery',
+    modelName: 'DeepSeek V3',
     avatar: '📦',
     color: '#F43F5E',
-    assignedPacket: 'Packet 4: Final JSON Assembly & Artifact Packaging',
-    status: 'decomposing',
-    progress: 45,
-    logs: [
-      'Awaiting verified vectors from Citation Guard.',
-      'Formatting final normalized payload into strict dataset JSON array.',
-      'Generating export bundles (CSV, JSON, Markdown).',
-      'Preparing delivery package for user download.',
+    stage: 'waiting',
+    progress: 0,
+    tokensGenerated: 0,
+    speed: '80 tok/s',
+    hallucinationRate: '0.00%',
+    confidenceScore: '99.8%',
+    description: 'Aggregates validated streams, performs checksum verification, and compiles the final deliverable report.',
+    tools: [
+      { name: 'Artifact Packager', icon: '📦' },
+      { name: 'Checksum Validator', icon: '🔑' },
+      { name: 'Markdown Formatter', icon: '📄' },
     ],
-    outputSnippet: JSON.stringify({
-      packet_id: 'PKT-04',
-      assembly_status: 'IN_PROGRESS',
-      validated_records_queued: 23,
-      export_formats_ready: ['JSON', 'CSV', 'MARKDOWN'],
-    }, null, 2),
+    subTasks: [
+      { title: 'Aggregate verified proof packets', done: false },
+      { title: 'Perform JSON checksum validation', done: false },
+      { title: 'Compile finalized markdown report', done: false },
+    ],
+    assignedPacket: 'Packet 4: Final Assembly & Packaging',
+    packetConstraints: 'Structured JSON schema with checksum validation',
+    logs: [
+      { time: 'Ready', text: 'Assembly pipeline ready to compile validated outputs.', level: 'info' },
+    ],
   },
 ]
 
-export default function AgentSwarm() {
-  const [hasStarted, setHasStarted] = useState(false)
-  const [currentPrompt, setCurrentPrompt] = useState('')
-  const [input, setInput] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [history, setHistory] = useState<SwarmHistoryItem[]>(INITIAL_4_AGENTS ? INITIAL_HISTORY : [])
-  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null)
-  
-  const [selectedModelId, setSelectedModelId] = useState<string>('claude-3-5-sonnet')
-  const [showModelDropdown, setShowModelDropdown] = useState(false)
-  const [showTopModelDropdown, setShowTopModelDropdown] = useState(false)
-  const [isListening, setIsListening] = useState(false)
-  const [attachedFiles, setAttachedFiles] = useState<string[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  
-  const [agents, setAgents] = useState<SwarmAgent[]>(INITIAL_4_AGENTS)
-  const [selectedAgent, setSelectedAgent] = useState<SwarmAgent>(INITIAL_4_AGENTS[0])
-  const [isRunning, setIsRunning] = useState(true)
-  const [activeTab, setActiveTab] = useState<'packets' | 'logs' | 'output'>('packets')
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
-  const [globalProgress, setGlobalProgress] = useState(75)
+const SWARM_TEMPLATES = [
+  {
+    id: 'task-1',
+    title: '100 Calculus Word Problems',
+    category: 'Reasoning & Calculus',
+    prompt: 'Generate 100 math word problems with step-by-step calculus & algebra proofs and 0% hallucination verification.',
+    modelId: 'claude-3-5-sonnet',
+  },
+  {
+    id: 'task-2',
+    title: 'SEC 10-K CapEx Audit',
+    category: 'Finance & Compliance',
+    prompt: 'Audit Fortune 500 annual 10-K filings for enterprise AI infrastructure capital expenditures with primary citations.',
+    modelId: 'judgeai-swarm-core',
+  },
+  {
+    id: 'task-3',
+    title: 'Next.js App Architecture',
+    category: 'Engineering',
+    prompt: 'Architect and generate a production-ready Next.js application with Tailwind styling, Prisma ORM schema, and JWT auth.',
+    modelId: 'gpt-4o',
+  },
+  {
+    id: 'task-4',
+    title: 'Medical Clinical Protocol',
+    category: 'Healthcare',
+    prompt: 'Evaluate clinical symptom triage responses against multi-criteria safety and diagnostic accuracy guidelines.',
+    modelId: 'gemini-2-flash',
+  },
+]
 
+export type ChatMessage = {
+  id: string
+  sender: 'user' | 'orchestrator' | 'agent'
+  agentId?: string
+  agentName?: string
+  agentHandle?: string
+  agentAvatar?: string
+  agentColor?: string
+  text: string
+  time: string
+  stage?: AgentStage
+}
+
+export default function AgentSwarm() {
+  const [nodes, setNodes] = useState<SwarmNode[]>(INITIAL_NODES)
+  const [selectedNodeId, setSelectedNodeId] = useState<string>('agent-1')
+  const [hasActiveTask, setHasActiveTask] = useState<boolean>(false)
+  const [inputTask, setInputTask] = useState<string>('')
+  const [activePrompt, setActivePrompt] = useState<string>('')
+  const [isRunning, setIsRunning] = useState<boolean>(true)
+  const [simulationSpeed, setSimulationSpeed] = useState<number>(1)
+  const [selectedModelId, setSelectedModelId] = useState<string>('claude-3-5-sonnet')
+  const [showModelDropdown, setShowModelDropdown] = useState<boolean>(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [copiedPayload, setCopiedPayload] = useState<boolean>(false)
+  const [showInspector, setShowInspector] = useState<boolean>(true)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [activeTab, setActiveTab] = useState<'editor' | 'executions' | 'output'>('editor')
+
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  const selectedNode = nodes.find(n => n.id === selectedNodeId) || nodes[0]
   const selectedModel = MODELS.find(m => m.id === selectedModelId) || MODELS[0]
 
-  // Simulation timer for 4 agents working on the packets
-  useEffect(() => {
-    let timer: any
-    if (hasStarted && isRunning) {
-      timer = setInterval(() => {
-        setAgents(prevAgents =>
-          prevAgents.map(ag => {
-            if (ag.progress >= 100) return ag
-            const nextProgress = Math.min(100, ag.progress + Math.floor(Math.random() * 6) + 2)
-            const nextStatus =
-              nextProgress === 100 ? 'completed' : nextProgress > 60 ? 'verifying' : 'executing'
-            return {
-              ...ag,
-              progress: nextProgress,
-              status: nextStatus,
-            }
-          })
-        )
-      }, 1500)
-    }
-    return () => clearInterval(timer)
-  }, [hasStarted, isRunning])
+  const globalProgress = Math.round(
+    nodes.reduce((acc, a) => acc + a.progress, 0) / nodes.length
+  )
+  const isSwarmComplete = globalProgress === 100
 
-  // Recalculate global progress
-  useEffect(() => {
-    if (agents.length > 0) {
-      const avg = Math.round(agents.reduce((acc, a) => acc + a.progress, 0) / agents.length)
-      setGlobalProgress(avg)
-    }
-  }, [agents])
+  const activeNode = nodes.find(n => n.stage !== 'done' && n.stage !== 'waiting') || (isSwarmComplete ? nodes[3] : nodes[0])
 
-  const handleStartTask = (promptText?: string) => {
-    const textToSend = promptText || input
-    if (!textToSend.trim()) return
-
-    const trimmed = textToSend.trim()
-    setCurrentPrompt(trimmed)
-    setInput('')
-    setHasStarted(true)
-    setIsRunning(true)
-
-    // Add to history if new
-    const newHistoryItem: SwarmHistoryItem = {
-      id: `sw-${Date.now()}`,
-      title: trimmed.length > 32 ? `${trimmed.slice(0, 32)}...` : trimmed,
-      updatedAt: 'Just now',
-      modelId: selectedModelId,
-      prompt: trimmed,
-    }
-    setHistory(prev => [newHistoryItem, ...prev.filter(h => h.id !== activeHistoryId)])
-    setActiveHistoryId(newHistoryItem.id)
-
-    // Reset agents to initial progressing state for the new prompt
-    setAgents(
-      INITIAL_4_AGENTS.map((ag, idx) => ({
-        ...ag,
-        progress: idx === 0 ? 100 : idx === 1 ? 40 : idx === 2 ? 20 : 10,
-        status: idx === 0 ? 'completed' : 'executing',
-        logs: [
-          `Received task: "${trimmed.slice(0, 60)}..."`,
-          `Allocated Packet ${idx + 1} to ${ag.name}.`,
-          'Executing parallel compute pipeline.',
-        ],
-      }))
-    )
-    setSelectedAgent(INITIAL_4_AGENTS[0])
-
-    setToastMessage('Task decomposed into 4 parallel compute packets!')
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 3000)
   }
 
-  const handleNewChat = () => {
-    setHasStarted(false)
-    setCurrentPrompt('')
-    setInput('')
-    setActiveHistoryId(null)
-  }
-
-  const handleSelectHistory = (item: SwarmHistoryItem) => {
-    setActiveHistoryId(item.id)
-    setSelectedModelId(item.modelId)
-    handleStartTask(item.prompt)
-  }
-
-  const handleDeleteHistory = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setHistory(prev => prev.filter(h => h.id !== id))
-    if (activeHistoryId === id) {
-      handleNewChat()
+  // Scroll chat bottom
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
+  }, [chatMessages])
+
+  // Swarm simulation loop: Thinking → Working → Verifying → Synthesizing → Done
+  useEffect(() => {
+    if (!hasActiveTask || !isRunning) return
+
+    const intervalTime = Math.max(300, Math.floor(1150 / simulationSpeed))
+    const timer = setInterval(() => {
+      const nowStr = new Date().toLocaleTimeString().slice(3, 8)
+
+      setNodes(prev => {
+        let anyChanged = false
+
+        const updated = prev.map((ag, idx) => {
+          if (ag.progress >= 100) return ag
+
+          if (idx === 1 && prev[0].progress < 35) {
+            return {
+              ...ag,
+              stage: 'waiting' as AgentStage,
+            }
+          }
+          if (idx === 2 && prev[1].progress < 35) {
+            return {
+              ...ag,
+              stage: 'waiting' as AgentStage,
+            }
+          }
+          if (idx === 3 && (prev[1].progress < 70 || prev[2].progress < 60)) {
+            return {
+              ...ag,
+              stage: 'waiting' as AgentStage,
+            }
+          }
+
+          anyChanged = true
+          const increment = Math.floor(Math.random() * 8) + 6
+          const nextProg = Math.min(100, ag.progress + increment)
+
+          let nextStage: AgentStage = 'thinking'
+          let thought = ''
+
+          if (nextProg === 100) {
+            nextStage = 'done'
+            thought = 'Completed sub-tasks with 0.00% hallucination rate.'
+          } else if (nextProg > 85) {
+            nextStage = 'synthesizing'
+            thought = idx === 3 ? 'Compiling deliverable payload...' : 'Synthesizing output stream...'
+          } else if (nextProg > 60) {
+            nextStage = 'verifying'
+            thought = 'Performing formal double-blind verification...'
+          } else if (nextProg > 20) {
+            nextStage = 'working'
+            thought = `Executing compute batch (${nextProg}%)...`
+          } else {
+            nextStage = 'thinking'
+            thought = `Analyzing constraints (${nextProg}%)...`
+          }
+
+          const updatedSubTasks = ag.subTasks.map((st, sIdx) => ({
+            ...st,
+            done: nextProg >= (sIdx + 1) * 33 || nextProg === 100,
+          }))
+
+          let newLogs = [...ag.logs]
+          if (nextProg === 100 && ag.progress < 100) {
+            newLogs.push({ time: nowStr, text: `✓ [${ag.name}] Stage complete: 100% verified.`, level: 'success' })
+          } else if (Math.random() > 0.6) {
+            newLogs.push({ time: nowStr, text: `[${ag.name}] ${thought}`, level: 'info' })
+          }
+
+          return {
+            ...ag,
+            progress: nextProg,
+            stage: nextStage,
+            tokensGenerated: ag.tokensGenerated + Math.floor(Math.random() * 45) + 25,
+            subTasks: updatedSubTasks,
+            logs: newLogs.slice(-10),
+          }
+        })
+
+        return updated
+      })
+
+      // Chat stream dialogue progression
+      setChatMessages(prevMsgs => {
+        const count = prevMsgs.length
+
+        if (count === 2 && Math.random() > 0.35) {
+          return [
+            ...prevMsgs,
+            {
+              id: 'msg-1',
+              sender: 'agent',
+              agentId: 'agent-1',
+              agentName: 'Architect Prime',
+              agentHandle: '@ArchitectPrime',
+              agentAvatar: '⚡',
+              agentColor: '#8B5CF6',
+              time: nowStr,
+              stage: 'working',
+              text: 'Decomposed the problem into 4 execution pipelines. Task boundaries, parameter bounds, and strict JSON schemas are locked. Dispatching schema to @DeepGenerator.',
+            },
+          ]
+        }
+
+        if (count === 3 && Math.random() > 0.35) {
+          return [
+            ...prevMsgs,
+            {
+              id: 'msg-2',
+              sender: 'agent',
+              agentId: 'agent-2',
+              agentName: 'Deep Generator',
+              agentHandle: '@DeepGenerator',
+              agentAvatar: '🧠',
+              agentColor: '#0284C7',
+              time: nowStr,
+              stage: 'working',
+              text: 'Generated 25 closed-form intermediate proof derivations with step-by-step calculus proofs. Sending batch to @CitationGuard for formal verification.',
+            },
+          ]
+        }
+
+        if (count === 4 && Math.random() > 0.35) {
+          return [
+            ...prevMsgs,
+            {
+              id: 'msg-3',
+              sender: 'agent',
+              agentId: 'agent-3',
+              agentName: 'Citation & Logic Guard',
+              agentHandle: '@CitationGuard',
+              agentAvatar: '🛡️',
+              agentColor: '#10B981',
+              time: nowStr,
+              stage: 'verifying',
+              text: 'Double-blind formal validation passed. 0.00% hallucination rate certified across all 25 units. Streaming verified vectors to @SynthesisLead.',
+            },
+          ]
+        }
+
+        if (count === 5 && Math.random() > 0.35) {
+          return [
+            ...prevMsgs,
+            {
+              id: 'msg-4',
+              sender: 'agent',
+              agentId: 'agent-4',
+              agentName: 'Synthesis Lead',
+              agentHandle: '@SynthesisLead',
+              agentAvatar: '📦',
+              agentColor: '#F43F5E',
+              time: nowStr,
+              stage: 'done',
+              text: 'All validated packets compiled. Final multi-agent deliverable report and JSON schema artifact are assembled and verified with consensus (4/4 Nodes).',
+            },
+          ]
+        }
+
+        return prevMsgs
+      })
+    }, intervalTime)
+
+    return () => clearInterval(timer)
+  }, [hasActiveTask, isRunning, simulationSpeed])
+
+  const handleStartTask = (taskPrompt: string, modelId?: string) => {
+    if (!taskPrompt.trim()) return
+    const prompt = taskPrompt.trim()
+    const chosenModel = modelId || selectedModelId
+
+    setInputTask('')
+    setActivePrompt(prompt)
+    setHasActiveTask(true)
+    setIsRunning(true)
+    if (modelId) setSelectedModelId(modelId)
+
+    // Reset nodes
+    setNodes([
+      {
+        ...INITIAL_NODES[0],
+        stage: 'thinking',
+        progress: 15,
+        tokensGenerated: 320,
+        logs: [
+          { time: '00:01', text: `Initiated swarm run: "${prompt.slice(0, 40)}..."`, level: 'info' },
+          { time: '00:02', text: 'Partitioned scope into 4 parallel pipelines.', level: 'success' },
+        ],
+      },
+      {
+        ...INITIAL_NODES[1],
+        stage: 'waiting',
+        progress: 0,
+        tokensGenerated: 0,
+      },
+      {
+        ...INITIAL_NODES[2],
+        stage: 'waiting',
+        progress: 0,
+        tokensGenerated: 0,
+      },
+      {
+        ...INITIAL_NODES[3],
+        stage: 'waiting',
+        progress: 0,
+        tokensGenerated: 0,
+      },
+    ])
+
+    // Initial chat
+    setChatMessages([
+      {
+        id: `u-${Date.now()}`,
+        sender: 'user',
+        text: prompt,
+        time: 'Just now',
+      },
+      {
+        id: `o-${Date.now()}`,
+        sender: 'orchestrator',
+        text: `Multi-Agent Swarm activated on **${MODELS.find(m => m.id === chosenModel)?.name || 'Claude 3.5 Sonnet'}**. Canvas pipeline executing: Trigger ➔ Architect Prime ➔ Deep Generator ➔ Citation Guard ➔ Synthesis Lead.`,
+        time: 'Just now',
+        stage: 'thinking',
+      },
+    ])
+
+    setSelectedNodeId('agent-1')
+    triggerToast('🚀 Multi-Agent Workflow Activated!')
+  }
+
+  const handleResetWorkspace = () => {
+    setHasActiveTask(false)
+    setActivePrompt('')
+    setInputTask('')
+    setNodes(INITIAL_NODES)
+    setChatMessages([])
+    setSelectedNodeId('agent-1')
+    triggerToast('Workflow reset to initial state')
+  }
+
+  const handleCopyDeliverable = () => {
+    const text = generateFinalMarkdown(activePrompt, selectedModel.name, nodes)
+    navigator.clipboard.writeText(text)
+    setCopiedPayload(true)
+    triggerToast('✓ Copied Full Deliverable to Clipboard!')
+    setTimeout(() => setCopiedPayload(false), 2000)
   }
 
   const handleExportJSON = () => {
     const exportData = {
-      major_prompt: currentPrompt || 'Default Math Benchmark Task',
-      orchestration_model: selectedModel.name,
-      total_agents: 4,
-      global_progress: `${globalProgress}%`,
+      task_objective: activePrompt,
+      orchestrator_model: selectedModel.name,
+      overall_progress: `${globalProgress}%`,
       execution_timestamp: new Date().toISOString(),
-      agent_packets: agents.map(a => ({
-        agent_name: a.name,
+      hallucination_rate: '0.00%',
+      overall_soundness: '99.85%',
+      swarm_nodes: nodes.map(a => ({
+        id: a.id,
+        name: a.name,
         role: a.role,
-        packet: a.assignedPacket,
+        model: a.modelName,
+        stage: a.stage,
         progress: `${a.progress}%`,
-        status: a.status,
-        output_payload: JSON.parse(a.outputSample),
+        tokens_generated: a.tokensGenerated,
       })),
+      chat_transcript: chatMessages,
     }
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `agent-swarm-packets-${Date.now()}.json`
+    a.download = `judgeai-workflow-${Date.now()}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
+    URL.revokeObjectURL(url)
 
-    setToastMessage('Exported 4-Agent Swarm Packet JSON!')
-    setTimeout(() => setToastMessage(null), 2500)
+    triggerToast('✓ Exported Swarm JSON Artifact!')
   }
 
-  const filteredHistory = history.filter(h =>
-    h.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    h.prompt.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      {/* Top Header Bar */}
-      <TopBar title="Agent Swarm">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 'calc(100vh - 65px)',
+        background: 'var(--color-background)',
+        overflow: 'hidden',
+        position: 'relative',
+        width: '100%',
+      }}
+    >
+      {/* ─── TOP BAR CONTROLS ─── */}
+      <TopBar title="Interactive AI Swarm Workspace">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {toastMessage && (
             <div
               style={{
@@ -396,1078 +615,1058 @@ export default function AgentSwarm() {
                 gap: 6,
                 fontSize: 12,
                 fontWeight: 600,
-                padding: '5px 12px',
+                padding: '6px 14px',
                 borderRadius: 999,
-                background: 'rgba(52,211,153,0.15)',
-                color: '#34D399',
-                border: '1px solid rgba(52,211,153,0.3)',
+                background: 'rgba(124, 58, 237, 0.15)',
+                border: '1px solid var(--color-accent-violet)',
+                color: 'var(--color-foreground)',
               }}
             >
-              <IcCheck size={13} color="#34D399" />
-              {toastMessage}
+              <IcSparkles size={13} color="var(--color-accent-violet)" />
+              <span>{toastMessage}</span>
             </div>
           )}
 
-          {/* Model Selector Pill in Top Right */}
+          {/* Model Selector Dropdown */}
           <div style={{ position: 'relative' }}>
             <button
-              onClick={() => setShowTopModelDropdown(!showTopModelDropdown)}
+              onClick={() => setShowModelDropdown(!showModelDropdown)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                background: 'var(--color-surface-deep)',
+                padding: '7px 12px',
+                borderRadius: 9,
+                background: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
-                borderRadius: 999,
-                padding: '6px 14px',
                 color: 'var(--color-foreground)',
                 fontSize: 13,
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: 'pointer',
-                transition: 'all 0.15s',
+                transition: 'all 0.15s ease',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
             >
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
-              <span>{selectedModel.name}</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: `${selectedModel.badgeColor}25`, color: selectedModel.badgeColor, fontWeight: 700 }}>
-                {selectedModel.provider}
-              </span>
-              <IcChevronDown size={14} style={{ color: 'var(--color-muted)', marginLeft: 2 }} />
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: selectedModel.badgeColor,
+                }}
+              />
+              <span style={{ fontWeight: 600 }}>{selectedModel.name}</span>
+              <IcChevronDown
+                size={13}
+                style={{
+                  transform: showModelDropdown ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.2s',
+                  color: 'var(--color-muted)',
+                }}
+              />
             </button>
 
-            {showTopModelDropdown && (
+            {showModelDropdown && (
               <div
                 style={{
                   position: 'absolute',
-                  top: '115%',
+                  top: '110%',
                   right: 0,
-                  width: 320,
+                  width: 280,
                   background: 'var(--color-card)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 12,
-                  boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
-                  zIndex: 100,
                   padding: 6,
+                  zIndex: 60,
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.25)',
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Select Active Model
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: 'var(--color-muted)',
+                    padding: '6px 10px',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  Select Orchestrator Model
                 </div>
                 {MODELS.map(m => {
-                  const isSelected = m.id === selectedModelId
+                  const active = m.id === selectedModelId
                   return (
                     <div
                       key={m.id}
                       onClick={() => {
                         setSelectedModelId(m.id)
-                        setShowTopModelDropdown(false)
-                        setToastMessage(`Switched engine to ${m.name}`)
-                        setTimeout(() => setToastMessage(null), 2500)
+                        setShowModelDropdown(false)
+                        triggerToast(`Switched orchestrator to ${m.name}`)
                       }}
                       style={{
                         display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 10,
-                        padding: '10px 12px',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 10px',
                         borderRadius: 8,
                         cursor: 'pointer',
-                        background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
-                        border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
-                        marginBottom: 2,
+                        background: active ? 'rgba(124,58,237,0.12)' : 'transparent',
+                        transition: 'background 0.12s',
                       }}
                     >
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
-                          <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: m.badgeColor }} />
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)' }}>{m.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>{m.provider}</div>
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
                       </div>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background: 'var(--color-surface-deep)',
+                          border: '1px solid var(--color-border)',
+                          color: 'var(--color-muted)',
+                        }}
+                      >
+                        {m.tag}
+                      </span>
                     </div>
                   )
                 })}
               </div>
             )}
           </div>
+
+          {/* Reset Workspace */}
+          {hasActiveTask && (
+            <button
+              onClick={handleResetWorkspace}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 12px',
+                borderRadius: 9,
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-foreground)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              <IcPlus size={14} />
+              <span>New Swarm</span>
+            </button>
+          )}
+
+          {/* Run / Pause */}
+          {hasActiveTask && !isSwarmComplete && (
+            <button
+              onClick={() => setIsRunning(!isRunning)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 14px',
+                borderRadius: 9,
+                background: isRunning ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                border: `1px solid ${isRunning ? 'rgba(239, 68, 68, 0.35)' : 'rgba(16, 185, 129, 0.35)'}`,
+                color: isRunning ? '#EF4444' : '#10B981',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {isRunning ? <IcPause size={14} /> : <IcPlay size={14} />}
+              <span>{isRunning ? 'Pause' : 'Resume'}</span>
+            </button>
+          )}
+
+          {/* Speed Toggle */}
+          {hasActiveTask && !isSwarmComplete && (
+            <button
+              onClick={() => setSimulationSpeed(s => (s === 1 ? 2 : s === 2 ? 4 : 1))}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                padding: '6px 10px',
+                borderRadius: 8,
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-foreground)',
+                cursor: 'pointer',
+              }}
+            >
+              {simulationSpeed}x Speed
+            </button>
+          )}
+
+          {/* Export Artifact */}
+          {hasActiveTask && (
+            <button
+              onClick={handleExportJSON}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 12px',
+                borderRadius: 9,
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-foreground)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+              }}
+            >
+              <IcDownload size={14} />
+              <span className="max-sm:hidden">Export</span>
+            </button>
+          )}
         </div>
       </TopBar>
 
-      {/* Main Container with Left History Sidebar & Center Stage */}
-      <div style={{ display: 'flex', height: 'calc(100vh - 65px)', overflow: 'hidden' }}>
-        
-        {/* ═════════════════════════════════════════════════════════════════
-            LEFT HISTORY SIDEBAR (EXACT MATCH TO CHAT PAGE)
-            ═════════════════════════════════════════════════════════════════ */}
+      {/* ─── WORKFLOW CANVAS WORKSPACE ─── */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          minHeight: 0,
+          overflow: 'hidden',
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {/* 1. LEFT SUB-SIDEBAR: SWARM NAVIGATION & PRESETS */}
         <aside
           style={{
-            width: 280,
-            flexShrink: 0,
+            width: 220,
+            background: 'var(--color-surface)',
             borderRight: '1px solid var(--color-border)',
-            background: 'var(--color-surface-deep)',
             display: 'flex',
             flexDirection: 'column',
+            flexShrink: 0,
+            overflow: 'hidden',
           }}
-          className="chat-history-sidebar"
+          className="swarm-nav-sidebar"
         >
-          {/* New Chat Action Button */}
-          <div style={{ padding: '16px 14px 10px' }}>
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--color-border-faint)' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <IcSwarm size={16} color="var(--color-accent-violet)" />
+              <span>Swarm Pipelines</span>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-muted)', padding: '0 8px 6px 8px' }}>
+                Preset Workflows
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {SWARM_TEMPLATES.map(t => (
+                  <div
+                    key={t.id}
+                    onClick={() => handleStartTask(t.prompt, t.modelId)}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                      background: activePrompt === t.prompt ? 'rgba(124, 58, 237, 0.12)' : 'transparent',
+                      border: `1px solid ${activePrompt === t.prompt ? 'var(--color-accent-violet)' : 'transparent'}`,
+                      cursor: 'pointer',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      color: 'var(--color-foreground)',
+                      transition: 'all 0.12s ease',
+                    }}
+                    onMouseEnter={e => {
+                      if (activePrompt !== t.prompt) e.currentTarget.style.background = 'var(--color-card)'
+                    }}
+                    onMouseLeave={e => {
+                      if (activePrompt !== t.prompt) e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <div>{t.title}</div>
+                    <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>{t.category}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-muted)', padding: '0 8px 6px 8px' }}>
+                Swarm Nodes ({nodes.length})
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {nodes.map(n => {
+                  const isSelected = selectedNodeId === n.id
+                  return (
+                    <div
+                      key={n.id}
+                      onClick={() => {
+                        setSelectedNodeId(n.id)
+                        setShowInspector(true)
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: 8,
+                        background: isSelected ? 'var(--color-card)' : 'transparent',
+                        border: `1px solid ${isSelected ? n.color : 'transparent'}`,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: 'var(--color-foreground)' }}>
+                        <span>{n.avatar}</span>
+                        <span>{n.name}</span>
+                      </div>
+                      <StageIndicator stage={n.stage} />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ padding: '12px', borderTop: '1px solid var(--color-border-faint)' }}>
             <button
-              onClick={handleNewChat}
+              onClick={() => handleResetWorkspace()}
               className="pill-primary"
               style={{
                 width: '100%',
+                padding: '8px',
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
-                padding: '10px 14px',
-                fontSize: 13.5,
-                borderRadius: 10,
-                gap: 8,
+                gap: 6,
               }}
             >
-              <IcPlus size={16} />
-              <span>New Swarm</span>
+              <IcPlus size={13} />
+              <span>New Workflow</span>
             </button>
-          </div>
-
-          {/* Search Bar */}
-          <div style={{ padding: '0 14px 12px' }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'var(--color-input-bg)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  padding: '7px 10px 7px 32px',
-                  fontSize: 12,
-                  color: 'var(--color-foreground)',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-              <IcSearch size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-            </div>
-          </div>
-
-          {/* Conversations / Swarms History List */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 16px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              History
-            </div>
-            {filteredHistory.map(item => {
-              const isActive = item.id === activeHistoryId
-              const itemModel = MODELS.find(m => m.id === item.modelId) || selectedModel
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => handleSelectHistory(item)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 10px',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    background: isActive ? 'rgba(124,58,237,0.15)' : 'transparent',
-                    border: isActive ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
-                    marginBottom: 4,
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={e => {
-                    if (!isActive) e.currentTarget.style.background = 'var(--color-hover)'
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  <div style={{ minWidth: 0, flex: 1, marginRight: 8 }}>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        fontWeight: isActive ? 600 : 400,
-                        color: isActive ? 'var(--color-foreground)' : 'var(--color-foreground)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        marginBottom: 3,
-                      }}
-                    >
-                      {item.title}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 11, color: itemModel.badgeColor, fontWeight: 600 }}>{itemModel.name}</span>
-                      <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>• {item.updatedAt}</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={e => handleDeleteHistory(item.id, e)}
-                    title="Delete"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--color-muted)',
-                      cursor: 'pointer',
-                      padding: 4,
-                      borderRadius: 4,
-                      display: 'flex',
-                      alignItems: 'center',
-                      transition: 'color 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
-                  >
-                    <IcTrash size={13} />
-                  </button>
-                </div>
-              )
-            })}
           </div>
         </aside>
 
-        {/* ═════════════════════════════════════════════════════════════════
-            RIGHT STAGE: INITIAL CHAT OR 2-PANE 4-AGENT SPLIT SCREEN
-            ═════════════════════════════════════════════════════════════════ */}
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', background: 'var(--color-background)' }}>
-          <AnimatePresence mode="wait">
-            {!hasStarted ? (
-              /* ===== Empty / Initial Welcome Mascot State (Matches Screenshot) ===== */
-              <motion.div
-                key="welcome-chat"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ flex: 1, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 24px' }}
-              >
-                <div style={{ width: '100%', maxWidth: 680 }}>
-                  
-                  {/* Centered Cute Glowing Ghost Mascot & Title */}
-                  <div style={{ textAlign: 'center', marginBottom: 22 }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 16px' }}>
-                      <MeshGradientSVG size={145} />
-                    </div>
-                    <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px', color: 'var(--color-foreground)' }}>
-                      Welcome to Agent Swarm
-                    </h1>
-                  </div>
-
-                  {/* Prompt Box Card */}
-                  <div className="card-base" style={{ padding: 14, borderRadius: 20, position: 'relative' }}>
-                    
-                    {/* Attached files preview chips if any */}
-                    {attachedFiles.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8, padding: '2px 4px' }}>
-                        {attachedFiles.map((file, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              fontSize: 11.5,
-                              fontWeight: 600,
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              background: 'var(--color-surface)',
-                              border: '1px solid var(--color-border)',
-                              color: 'var(--color-foreground)',
-                            }}
-                          >
-                            <IcPaperclip size={12} style={{ color: 'var(--color-accent-violet)' }} />
-                            <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file}</span>
-                            <button
-                              onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
-                              style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 0, display: 'flex' }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <textarea
-                      value={input}
-                      onChange={e => setInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault()
-                          handleStartTask()
-                        }
-                      }}
-                      placeholder={`Message ${selectedModel.name}... (Shift+Enter for newline)`}
-                      rows={3}
-                      style={{
-                        width: '100%',
-                        background: 'transparent',
-                        border: 'none',
-                        padding: '8px 8px 10px',
-                        fontSize: 14,
-                        color: 'var(--color-foreground)',
-                        outline: 'none',
-                        fontFamily: 'Inter, sans-serif',
-                        resize: 'none',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-
-                    {/* Bottom Toolbar with Mic, Attach File, Model Selector, and Send */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', gap: 10 }}>
-                      
-                      {/* Left Controls: Mic, Paperclip, Model Selector Pill */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {/* Voice input control */}
-                        <button
-                          onClick={() => setIsListening(l => !l)}
-                          title={isListening ? 'Stop voice input' : 'Start voice input'}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 34,
-                            height: 34,
-                            borderRadius: '50%',
-                            background: isListening ? 'rgba(239,68,68,0.15)' : 'var(--color-surface-deep)',
-                            border: `1px solid ${isListening ? 'rgba(239,68,68,0.4)' : 'var(--color-border)'}`,
-                            color: isListening ? '#EF4444' : 'var(--color-muted)',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s',
-                          }}
-                        >
-                          <IcMic size={15} />
-                        </button>
-
-                        {/* File attachment button */}
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={e => {
-                            if (e.target.files && e.target.files.length > 0) {
-                              const names = Array.from(e.target.files).map(f => f.name)
-                              setAttachedFiles(prev => [...prev, ...names])
-                              setToastMessage(`Attached ${names.length} file(s)`)
-                              setTimeout(() => setToastMessage(null), 2500)
-                            }
-                          }}
-                          multiple
-                          style={{ display: 'none' }}
-                        />
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          title="Attach files or datasets"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 34,
-                            height: 34,
-                            borderRadius: '50%',
-                            background: attachedFiles.length > 0 ? 'rgba(124,58,237,0.15)' : 'var(--color-surface-deep)',
-                            border: `1px solid ${attachedFiles.length > 0 ? 'rgba(124,58,237,0.4)' : 'var(--color-border)'}`,
-                            color: attachedFiles.length > 0 ? 'var(--color-accent-violet)' : 'var(--color-muted)',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-foreground)')}
-                          onMouseLeave={e => (e.currentTarget.style.color = attachedFiles.length > 0 ? 'var(--color-accent-violet)' : 'var(--color-muted)')}
-                        >
-                          <IcPaperclip size={15} />
-                        </button>
-
-                        {/* Model Selector Tool Pill */}
-                        <div style={{ position: 'relative' }}>
-                          <button
-                            onClick={() => setShowModelDropdown(!showModelDropdown)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 7,
-                              background: 'var(--color-surface-deep)',
-                              border: '1px solid var(--color-border)',
-                              borderRadius: 999,
-                              padding: '6px 12px',
-                              color: 'var(--color-foreground)',
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              transition: 'all 0.15s',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-deep)')}
-                          >
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: selectedModel.badgeColor }} />
-                            <span>{selectedModel.name}</span>
-                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: `${selectedModel.badgeColor}25`, color: selectedModel.badgeColor, fontWeight: 700 }}>
-                              {selectedModel.provider}
-                            </span>
-                            <IcChevronDown size={13} style={{ color: 'var(--color-muted)', marginLeft: 1 }} />
-                          </button>
-
-                          {showModelDropdown && (
-                            <div
-                              style={{
-                                position: 'absolute',
-                                bottom: '125%',
-                                left: 0,
-                                width: 320,
-                                background: 'var(--color-card)',
-                                border: '1px solid var(--color-border)',
-                                borderRadius: 12,
-                                boxShadow: '0 -10px 32px rgba(0,0,0,0.25)',
-                                zIndex: 100,
-                                padding: 6,
-                              }}
-                            >
-                              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', padding: '8px 10px 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                                Select Active Model
-                              </div>
-                              {MODELS.map(m => {
-                                const isSelected = m.id === selectedModelId
-                                return (
-                                  <div
-                                    key={m.id}
-                                    onClick={() => {
-                                      setSelectedModelId(m.id)
-                                      setShowModelDropdown(false)
-                                    }}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'flex-start',
-                                      gap: 10,
-                                      padding: '10px 12px',
-                                      borderRadius: 8,
-                                      cursor: 'pointer',
-                                      background: isSelected ? 'rgba(124,58,237,0.15)' : 'transparent',
-                                      border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent',
-                                      marginBottom: 2,
-                                      transition: 'background 0.15s',
-                                    }}
-                                    onMouseEnter={e => {
-                                      if (!isSelected) e.currentTarget.style.background = 'var(--color-hover)'
-                                    }}
-                                    onMouseLeave={e => {
-                                      if (!isSelected) e.currentTarget.style.background = 'transparent'
-                                    }}
-                                  >
-                                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: m.badgeColor, marginTop: 4, flexShrink: 0 }} />
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{m.name}</span>
-                                        <span style={{ fontSize: 10, color: m.badgeColor, fontWeight: 600 }}>{m.tag}</span>
-                                      </div>
-                                      <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35, marginTop: 2 }}>{m.description}</div>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Send Button */}
-                      <button
-                        onClick={() => handleStartTask()}
-                        disabled={!input.trim() && attachedFiles.length === 0}
-                        className="pill-primary"
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: 8,
-                          opacity: (!input.trim() && attachedFiles.length === 0) ? 0.35 : 1,
-                          transition: 'opacity 0.15s',
-                        }}
-                      >
-                        <IcSend size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Quick Action Pills matching Chat */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 20 }}>
-                    {QUICK_ACTIONS.map(qa => {
-                      const Icon = qa.icon
-                      return (
-                        <button
-                          key={qa.label}
-                          onClick={() => handleStartTask(qa.prompt)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 7,
-                            padding: '9px 14px',
-                            borderRadius: 999,
-                            background: 'var(--color-card)',
-                            border: '1px solid var(--color-border)',
-                            color: 'var(--color-foreground)',
-                            fontSize: 12.5,
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            transition: 'all 0.15s',
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = 'rgba(124,58,237,0.12)'
-                            e.currentTarget.style.borderColor = 'rgba(124,58,237,0.3)'
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = 'var(--color-card)'
-                            e.currentTarget.style.borderColor = 'var(--color-border)'
-                          }}
-                        >
-                          <Icon size={13} style={{ opacity: 0.7 }} />
-                          <span>{qa.label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                </div>
-              </motion.div>
-            ) : (
-              /* ===== Split Screen 2-Pane View when Swarm is Running ===== */
-              <motion.div
-                key="running-swarm"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35 }}
+        {/* 2. CENTER & BOTTOM: VISUAL CANVAS (TOP) + SPLIT CHAT & EXECUTION LOGS (BOTTOM) */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+            background: 'var(--color-background)',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          {/* ─── TOP HALF: VISUAL NODE WORKFLOW CANVAS ─── */}
+          <div
+            style={{
+              flex: '1 1 50%',
+              minHeight: 280,
+              position: 'relative',
+              background: 'radial-gradient(var(--color-border-faint) 1px, transparent 1px)',
+              backgroundSize: '20px 20px',
+              overflow: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px',
+              boxSizing: 'border-box',
+              borderBottom: '1px solid var(--color-border)',
+            }}
+          >
+            {/* Canvas Header Pills */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 14,
+                left: 18,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                zIndex: 10,
+              }}
+            >
+              <div
                 style={{
-                  flex: 1,
-                  padding: 20,
-                  display: 'grid',
-                  gridTemplateColumns: '380px 1fr',
-                  gap: 18,
-                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'var(--color-card)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 8,
+                  padding: '4px 8px',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--color-foreground)',
                 }}
               >
-                {/* ─────────────────────────────────────────────────────────────
-                    LEFT VERTICAL RECTANGLE: PROMPT & EXECUTION CONTEXT
-                    ───────────────────────────────────────────────────────────── */}
-                <div
-                  className="card-base"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: 0,
-                    background: 'var(--color-card)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Header */}
-                  <div
-                    style={{
-                      padding: '14px 18px',
-                      borderBottom: '1px solid var(--color-border-faint)',
-                      background: 'var(--color-surface)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: globalProgress === 100 ? '#34D399' : '#8B5CF6',
-                          boxShadow: `0 0 8px ${globalProgress === 100 ? '#34D399' : '#8B5CF6'}`,
-                        }}
-                      />
-                      <span style={{ fontSize: 12.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-foreground)' }}>
-                        Task Objective
-                      </span>
-                    </div>
+                <span>Workflows</span>
+                <span style={{ color: 'var(--color-muted)' }}>/</span>
+                <span style={{ color: 'var(--color-accent-violet)' }}>JudgeAI Swarm Core</span>
+              </div>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: '3px 8px',
+                  borderRadius: 999,
+                  background: hasActiveTask && !isSwarmComplete ? 'rgba(124, 58, 237, 0.15)' : isSwarmComplete ? 'rgba(16, 185, 129, 0.15)' : 'var(--color-surface)',
+                  color: hasActiveTask && !isSwarmComplete ? 'var(--color-accent-violet)' : isSwarmComplete ? '#10B981' : 'var(--color-muted)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                {hasActiveTask && !isSwarmComplete ? '● Active Execution' : isSwarmComplete ? '✓ Certified Synthesis' : '○ Standby'}
+              </span>
+            </div>
 
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '3px 8px',
-                        borderRadius: 6,
-                        background: 'rgba(139, 92, 246, 0.15)',
-                        color: 'var(--color-accent-violet)',
-                      }}
-                    >
-                      4 Agents Active
-                    </span>
-                  </div>
+            {/* Visual Node Graph Layout */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 36,
+                position: 'relative',
+                zIndex: 5,
+                flexWrap: 'nowrap',
+              }}
+            >
+              {/* TRIGGER NODE */}
+              <div
+                style={{
+                  width: 170,
+                  padding: '12px 14px',
+                  borderRadius: 14,
+                  background: 'var(--color-card)',
+                  border: `1.5px solid ${hasActiveTask ? '#38BDF8' : 'var(--color-border)'}`,
+                  boxShadow: hasActiveTask ? '0 0 16px rgba(56, 189, 248, 0.15)' : 'none',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    ⚡ TRIGGER
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                  User Task Prompt
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 4 }}>
+                  {hasActiveTask ? (activePrompt.length > 28 ? `${activePrompt.slice(0, 28)}...` : activePrompt) : 'Awaiting prompt input'}
+                </div>
+              </div>
 
-                  {/* Main Scrollable Prompt View & Parameters */}
-                  <div
-                    style={{
-                      flex: 1,
-                      overflowY: 'auto',
-                      padding: '16px 18px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 16,
-                    }}
-                  >
-                    {/* Full Prompt Display Box */}
+              {/* MAIN AGENT NODE (ARCHITECT PRIME) */}
+              <div
+                onClick={() => {
+                  setSelectedNodeId(nodes[0].id)
+                  setShowInspector(true)
+                }}
+                style={{
+                  width: 230,
+                  padding: '16px',
+                  borderRadius: 16,
+                  background: 'var(--color-card)',
+                  border: `2px solid ${selectedNodeId === nodes[0].id ? nodes[0].color : nodes[0].stage === 'done' ? '#10B981' : nodes[0].stage !== 'waiting' ? nodes[0].color : 'var(--color-border)'}`,
+                  boxShadow: nodes[0].stage !== 'waiting' ? `0 0 24px ${nodes[0].color}25` : 'none',
+                  cursor: 'pointer',
+                  position: 'relative',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 16 }}>{nodes[0].avatar}</span>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>
-                        Submitted Prompt
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          lineHeight: 1.55,
-                          fontWeight: 500,
-                          color: 'var(--color-foreground)',
-                          background: 'var(--color-surface)',
-                          padding: '14px 16px',
-                          borderRadius: 10,
-                          border: '1px solid var(--color-border-faint)',
-                          whiteSpace: 'pre-wrap',
-                          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-                        }}
-                      >
-                        {currentPrompt || 'Generate 100 math word problems with step-by-step calculus & algebra proofs.'}
-                      </div>
-                    </div>
-
-                    {/* Swarm Execution Parameters */}
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
-                        Execution Strategy
-                      </div>
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: 8,
-                        }}
-                      >
-                        <div
-                          style={{
-                            background: 'var(--color-surface)',
-                            border: '1px solid var(--color-border-faint)',
-                            borderRadius: 8,
-                            padding: '10px 12px',
-                          }}
-                        >
-                          <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Orchestrator</div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)', marginTop: 2 }}>
-                            {selectedModel.name}
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            background: 'var(--color-surface)',
-                            border: '1px solid var(--color-border-faint)',
-                            borderRadius: 8,
-                            padding: '10px 12px',
-                          }}
-                        >
-                          <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Concurrency</div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent-violet)', marginTop: 2 }}>
-                            4 Parallel Workers
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            background: 'var(--color-surface)',
-                            border: '1px solid var(--color-border-faint)',
-                            borderRadius: 8,
-                            padding: '10px 12px',
-                          }}
-                        >
-                          <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Hallucination Guard</div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#34D399', marginTop: 2 }}>
-                            0% Strict Proof
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            background: 'var(--color-surface)',
-                            border: '1px solid var(--color-border-faint)',
-                            borderRadius: 8,
-                            padding: '10px 12px',
-                          }}
-                        >
-                          <div style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Execution Speed</div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#38BDF8', marginTop: 2 }}>
-                            4.5x Throughput
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Overall Swarm Telemetry */}
-                    <div
-                      style={{
-                        background: 'var(--color-surface)',
-                        border: '1px solid var(--color-border-faint)',
-                        borderRadius: 10,
-                        padding: '12px 14px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                          Overall Task Completion
-                        </span>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: globalProgress === 100 ? '#34D399' : 'var(--color-accent-violet)' }}>
-                          {globalProgress}%
-                        </span>
-                      </div>
-
-                      <div style={{ height: 6, borderRadius: 999, background: 'var(--color-surface-deep)', overflow: 'hidden', marginBottom: 8 }}>
-                        <div
-                          style={{
-                            height: '100%',
-                            width: `${globalProgress}%`,
-                            background: 'linear-gradient(90deg, #8B5CF6, #38BDF8, #34D399)',
-                            transition: 'width 0.4s ease',
-                          }}
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-muted)' }}>
-                        <span>4 Workstreams Active</span>
-                        <span>0% Discrepancies</span>
-                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>{nodes[0].name}</div>
+                      <div style={{ fontSize: 10, color: 'var(--color-muted)' }}>{nodes[0].role}</div>
                     </div>
                   </div>
-
-                  {/* Left Bottom Quick Prompt Input */}
-                  <div
+                  <span
                     style={{
-                      padding: '12px 14px',
-                      borderTop: '1px solid var(--color-border-faint)',
-                      background: 'var(--color-surface)',
+                      fontSize: 9,
+                      fontWeight: 800,
+                      padding: '2px 5px',
+                      borderRadius: 4,
+                      background: 'rgba(124, 58, 237, 0.2)',
+                      color: 'var(--color-accent-violet)',
                     }}
                   >
-                    <form
-                      onSubmit={e => {
-                        e.preventDefault()
-                        if (input.trim()) handleStartTask()
-                      }}
-                      style={{ display: 'flex', gap: 8, alignItems: 'center' }}
-                    >
-                      <input
-                        type="text"
-                        value={input}
-                        onChange={e => setInput(e.target.value)}
-                        placeholder="Refine or dispatch new prompt..."
-                        style={{
-                          flex: 1,
-                          background: 'var(--color-input-bg)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: 8,
-                          padding: '8px 12px',
-                          fontSize: 12.5,
-                          color: 'var(--color-foreground)',
-                          outline: 'none',
-                        }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={!input.trim()}
-                        className="pill-primary"
-                        style={{
-                          padding: '8px 14px',
-                          borderRadius: 8,
-                          opacity: !input.trim() ? 0.4 : 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: input.trim() ? 'pointer' : 'default',
-                        }}
-                      >
-                        <IcSend size={13} />
-                      </button>
-                    </form>
-                  </div>
+                    MAIN
+                  </span>
                 </div>
 
-                {/* ─────────────────────────────────────────────────────────────
-                    RIGHT SQUARE CANVAS: 4 SPECIALIZED AGENTS WORKING IN PARALLEL
-                    ───────────────────────────────────────────────────────────── */}
-                <div
-                  className="card-base"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: 0,
-                    background: 'var(--color-card)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Top Retro Computer Bar */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '14px 20px',
-                      borderBottom: '1px solid var(--color-border-faint)',
-                      background: 'var(--color-surface)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 18 }}>🖥️</span>
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--color-foreground)' }}>
-                          {selectedModel.name} · 4 Parallel Agents Working
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34D399', boxShadow: '0 0 6px #34D399' }} />
-                          Active Stream: 4 Compute Packets in Flight (0% Hallucination Guard)
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <button
-                        onClick={handleExportJSON}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '6px 12px',
-                          borderRadius: 8,
-                          border: '1px solid var(--color-border)',
-                          background: 'var(--color-surface-deep)',
-                          color: 'var(--color-foreground)',
-                          fontSize: 11.5,
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <IcDownload size={13} /> Export JSON
-                      </button>
-
-                      <button
-                        onClick={() => setIsRunning(!isRunning)}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 8,
-                          background: 'var(--color-surface-deep)',
-                          border: '1px solid var(--color-border)',
-                          color: 'var(--color-foreground)',
-                          fontSize: 11.5,
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                        }}
-                      >
-                        {isRunning ? <IcPause size={12} /> : <IcPlay size={12} />}
-                        {isRunning ? 'Pause' : 'Resume'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 2x2 Square Grid of 4 Specialized Agents */}
-                  <div
-                    style={{
-                      flex: 1,
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gridTemplateRows: 'repeat(2, 1fr)',
-                      gap: 14,
-                      padding: 16,
-                      background: 'radial-gradient(ellipse at center, rgba(124, 58, 237, 0.04) 0%, transparent 70%)',
-                      overflowY: 'auto',
-                    }}
-                  >
-                    {agents.map((agent, i) => {
-                      const isSelected = selectedAgent.id === agent.id
-                      return (
-                        <div
-                          key={agent.id}
-                          onClick={() => setSelectedAgent(agent)}
-                          style={{
-                            borderRadius: 14,
-                            background: isSelected ? 'var(--color-surface)' : 'var(--color-card)',
-                            border: `1.5px solid ${isSelected ? agent.color : 'var(--color-border-faint)'}`,
-                            padding: 16,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            boxShadow: isSelected ? `0 0 20px ${agent.color}20` : 'none',
-                          }}
-                        >
-                          {/* Top Header inside Agent Box */}
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div
-                                  style={{
-                                    width: 38,
-                                    height: 38,
-                                    borderRadius: 10,
-                                    background: `${agent.color}15`,
-                                    border: `1px solid ${agent.color}40`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: 18,
-                                  }}
-                                >
-                                  {agent.avatar}
-                                </div>
-
-                                <div>
-                                  <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--color-foreground)' }}>
-                                    {agent.name}
-                                  </div>
-                                  <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>
-                                    {agent.role}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  padding: '3px 8px',
-                                  borderRadius: 6,
-                                  background: `${agent.color}15`,
-                                  color: agent.color,
-                                  border: `1px solid ${agent.color}30`,
-                                }}
-                              >
-                                Agent {i + 1}
-                              </span>
-                            </div>
-
-                            <div
-                              style={{
-                                fontSize: 11.5,
-                                color: 'var(--color-muted)',
-                                lineHeight: 1.45,
-                                marginBottom: 12,
-                                background: 'var(--color-surface-deep)',
-                                padding: '8px 10px',
-                                borderRadius: 8,
-                              }}
-                            >
-                              <span style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>Packet Directive:</span> {agent.assignedPacket}
-                            </div>
-                          </div>
-
-                          {/* Bottom Live Activity Feed & Progress */}
-                          <div>
-                            <div style={{ fontSize: 11, color: 'var(--color-muted)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ animation: 'spin 2s linear infinite' }}>⟳</span>
-                              {agent.logs[agent.logs.length - 1]}
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ flex: 1, height: 6, borderRadius: 999, background: 'var(--color-surface-deep)', overflow: 'hidden' }}>
-                                <div
-                                  style={{
-                                    height: '100%',
-                                    width: `${agent.progress}%`,
-                                    background: agent.color,
-                                    transition: 'width 0.3s ease',
-                                  }}
-                                />
-                              </div>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: agent.color }}>
-                                {agent.progress}%
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Bottom Inspector Drawer for Selected Agent */}
-                  <div
-                    style={{
-                      borderTop: '1px solid var(--color-border-faint)',
-                      background: 'var(--color-surface)',
-                      padding: '12px 18px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 14 }}>{selectedAgent.avatar}</span>
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                          {selectedAgent.name} · Live Packet Output & Telemetry
-                        </span>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {(['packets', 'logs', 'output'] as const).map(tab => (
-                          <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            style={{
-                              padding: '3px 9px',
-                              borderRadius: 6,
-                              border: 'none',
-                              background: activeTab === tab ? 'var(--color-nav-active-bg)' : 'transparent',
-                              color: activeTab === tab ? 'var(--color-accent-violet)' : 'var(--color-muted)',
-                              fontSize: 11,
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            {tab}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  AGENT TOOLS & ENGINES
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {nodes[0].tools.map((t, i) => (
                     <div
+                      key={i}
                       style={{
-                        background: 'var(--color-input-bg)',
-                        borderRadius: 8,
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        background: 'var(--color-surface)',
                         border: '1px solid var(--color-border-faint)',
-                        padding: 10,
-                        maxHeight: 110,
-                        overflowY: 'auto',
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontSize: 11.5,
+                        fontSize: 10.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
                         color: 'var(--color-foreground)',
+                      }}
+                    >
+                      <span>{t.icon}</span>
+                      <span>{t.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, fontWeight: 700, marginBottom: 2 }}>
+                    <span style={{ color: 'var(--color-muted)' }}>{nodes[0].stage.toUpperCase()}</span>
+                    <span style={{ color: nodes[0].stage === 'done' ? '#10B981' : nodes[0].color }}>{nodes[0].progress}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: 3, background: 'var(--color-surface)', borderRadius: 999, overflow: 'hidden' }}>
+                    <div style={{ width: `${nodes[0].progress}%`, height: '100%', background: nodes[0].stage === 'done' ? '#10B981' : nodes[0].color, transition: 'width 0.3s' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* DOWNSTREAM PIPELINE NODES (GENERATOR, GUARD, SYNTHESIS) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {nodes.slice(1).map(n => {
+                  const isSelected = selectedNodeId === n.id
+                  const isDone = n.stage === 'done'
+                  return (
+                    <div
+                      key={n.id}
+                      onClick={() => {
+                        setSelectedNodeId(n.id)
+                        setShowInspector(true)
+                      }}
+                      style={{
+                        width: 210,
+                        padding: '10px 14px',
+                        borderRadius: 12,
+                        background: 'var(--color-card)',
+                        border: `1.5px solid ${isSelected ? n.color : isDone ? '#10B981' : n.stage !== 'waiting' ? n.color : 'var(--color-border)'}`,
+                        boxShadow: n.stage !== 'waiting' ? `0 0 16px ${n.color}20` : 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 14 }}>{n.avatar}</span>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)' }}>{n.name}</div>
+                            <div style={{ fontSize: 9.5, color: 'var(--color-muted)' }}>{n.modelName}</div>
+                          </div>
+                        </div>
+                        <StageIndicator stage={n.stage} />
+                      </div>
+
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, fontWeight: 700, marginBottom: 2 }}>
+                          <span style={{ color: 'var(--color-muted)' }}>{n.stage.toUpperCase()}</span>
+                          <span style={{ color: isDone ? '#10B981' : n.color }}>{n.progress}%</span>
+                        </div>
+                        <div style={{ width: '100%', height: 3, background: 'var(--color-surface)', borderRadius: 999, overflow: 'hidden' }}>
+                          <div style={{ width: `${n.progress}%`, height: '100%', background: isDone ? '#10B981' : n.color, transition: 'width 0.3s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ─── BOTTOM HALF: DUAL-PANEL (AI CHAT + LIVE EXECUTION LOGS) ─── */}
+          <div
+            style={{
+              flex: '1 1 50%',
+              minHeight: 280,
+              display: 'flex',
+              overflow: 'hidden',
+              background: 'var(--color-surface)',
+            }}
+          >
+            {/* BOTTOM-LEFT: AI COLLABORATION CHAT */}
+            <div
+              style={{
+                flex: 1,
+                borderRight: '1px solid var(--color-border)',
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: 0,
+                background: 'var(--color-background)',
+              }}
+            >
+              <div
+                style={{
+                  padding: '8px 14px',
+                  borderBottom: '1px solid var(--color-border)',
+                  background: 'var(--color-card)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                  AI Collaboration Chat
+                </div>
+                <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>
+                  {chatMessages.length} Messages
+                </span>
+              </div>
+
+              {/* Chat Stream */}
+              <div
+                ref={chatContainerRef}
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                }}
+              >
+                {!hasActiveTask && (
+                  <div style={{ textAlign: 'center', color: 'var(--color-muted)', fontSize: 12, padding: '24px 0' }}>
+                    Describe your objective below to start the multi-agent collaboration...
+                  </div>
+                )}
+
+                {chatMessages.map(msg => {
+                  const isUser = msg.sender === 'user'
+                  const isOrch = msg.sender === 'orchestrator'
+                  return (
+                    <div
+                      key={msg.id}
+                      style={{
+                        display: 'flex',
+                        gap: 8,
+                        alignItems: 'flex-start',
+                        fontSize: 12,
                         lineHeight: 1.45,
                       }}
                     >
-                      {activeTab === 'packets' && selectedAgent.assignedPacket}
-                      {activeTab === 'logs' && selectedAgent.logs.join('\n')}
-                      {activeTab === 'output' && selectedAgent.outputSnippet}
+                      <div
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 6,
+                          background: isUser ? 'var(--color-accent-violet)' : isOrch ? 'rgba(124, 58, 237, 0.15)' : `${msg.agentColor}18`,
+                          border: `1px solid ${isUser ? 'var(--color-accent-violet)' : isOrch ? 'var(--color-accent-violet)' : msg.agentColor}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          color: isUser ? '#fff' : 'inherit',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isUser ? '👤' : isOrch ? '⚡' : msg.agentAvatar}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                          <span style={{ fontWeight: 700, color: isUser ? 'var(--color-accent-violet)' : 'var(--color-foreground)' }}>
+                            {isUser ? 'You' : isOrch ? 'Swarm Orchestrator' : msg.agentName}
+                          </span>
+                          <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>{msg.time}</span>
+                        </div>
+                        <div style={{ color: 'var(--color-foreground)' }}>{msg.text}</div>
+                      </div>
                     </div>
-                  </div>
+                  )
+                })}
+              </div>
+
+              {/* Chat Input */}
+              <div
+                style={{
+                  padding: '10px 14px',
+                  background: 'var(--color-card)',
+                  borderTop: '1px solid var(--color-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <input
+                  type="text"
+                  value={inputTask}
+                  onChange={e => setInputTask(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && inputTask.trim()) {
+                      e.preventDefault()
+                      handleStartTask(inputTask)
+                    }
+                  }}
+                  placeholder="Type a task prompt or instruct the swarm..."
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    background: 'var(--color-input-bg)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-foreground)',
+                    fontSize: 12,
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (inputTask.trim()) handleStartTask(inputTask)
+                  }}
+                  disabled={!inputTask.trim()}
+                  className="pill-primary"
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    opacity: inputTask.trim() ? 1 : 0.45,
+                  }}
+                >
+                  <IcSend size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* BOTTOM-RIGHT: LIVE EXECUTION LOGS */}
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: 0,
+                background: 'var(--color-background)',
+              }}
+            >
+              <div
+                style={{
+                  padding: '8px 14px',
+                  borderBottom: '1px solid var(--color-border)',
+                  background: 'var(--color-card)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                  Live Execution Logs
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 10, color: isSwarmComplete ? '#10B981' : '#38BDF8', fontWeight: 600 }}>
+                    {isSwarmComplete ? 'status: completed' : hasActiveTask ? 'status: running' : 'status: idle'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Logs Body */}
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  overflow: 'hidden',
+                  background: '#0B0F19',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 11,
+                  color: '#94A3B8',
+                }}
+              >
+                {/* Node Status Sidebar */}
+                <div
+                  style={{
+                    width: 130,
+                    borderRight: '1px solid rgba(255,255,255,0.1)',
+                    padding: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                  }}
+                >
+                  <div style={{ padding: '4px 6px', borderRadius: 4, background: hasActiveTask ? 'rgba(56, 189, 248, 0.15)' : 'transparent', color: hasActiveTask ? '#38BDF8' : '#64748B', fontSize: 10, fontWeight: 700 }}>
+                    ✓ TRIGGER
+                  </div>
+                  {nodes.map(n => (
+                    <div
+                      key={n.id}
+                      style={{
+                        padding: '4px 6px',
+                        borderRadius: 4,
+                        background: n.stage === 'done' ? 'rgba(16, 185, 129, 0.15)' : n.stage !== 'waiting' ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
+                        color: n.stage === 'done' ? '#10B981' : n.stage !== 'waiting' ? '#C084FC' : '#64748B',
+                        fontSize: 10,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {n.stage === 'done' ? '✓' : n.stage !== 'waiting' ? '⚡' : '○'} {n.name.split(' ')[0].toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Log Stream Output */}
+                <div
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                  }}
+                >
+                  {isSwarmComplete ? (
+                    <div>
+                      <div style={{ color: '#34D399', marginBottom: 4 }}>// Swarm Consensus Achieved: 4/4 Nodes</div>
+                      <div style={{ color: '#E2E8F0' }}>
+                        {JSON.stringify(
+                          {
+                            status: 'SUCCESS',
+                            task: activePrompt,
+                            hallucination_rate: '0.00%',
+                            soundness_score: '99.85%',
+                            consensus: 'VERIFIED',
+                          },
+                          null,
+                          2
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {selectedNode.logs.map((l, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: 6, lineHeight: 1.4 }}>
+                          <span style={{ color: '#64748B' }}>[{l.time}]</span>
+                          <span style={{ color: l.level === 'success' ? '#34D399' : '#F8FAFC' }}>
+                            {l.text}
+                          </span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. RIGHT PANEL: INSPECTOR / PROPERTIES */}
+        {showInspector && (
+          <aside
+            style={{
+              width: 280,
+              background: 'var(--color-surface)',
+              borderLeft: '1px solid var(--color-border)',
+              display: 'flex',
+              flexDirection: 'column',
+              flexShrink: 0,
+              overflow: 'hidden',
+            }}
+            className="swarm-inspector-sidebar"
+          >
+            <div
+              style={{
+                padding: '12px 14px',
+                borderBottom: '1px solid var(--color-border)',
+                background: 'var(--color-card)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)' }}>Properties</span>
+                <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: 700 }}>
+                  ID: {selectedNode.id}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowInspector(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer' }}
+              >
+                <IcX size={14} />
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Node Name */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                  NODE NAME
+                </div>
+                <div style={{ padding: '6px 10px', borderRadius: 6, background: 'var(--color-card)', border: '1px solid var(--color-border)', fontSize: 12, fontWeight: 700, color: 'var(--color-foreground)' }}>
+                  {selectedNode.avatar} {selectedNode.name}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                  DESCRIPTION
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.4, padding: '6px 10px', borderRadius: 6, background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+                  {selectedNode.description}
+                </div>
+              </div>
+
+              {/* Model */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
+                  CHAT MODEL
+                </div>
+                <div style={{ padding: '6px 10px', borderRadius: 6, background: 'var(--color-card)', border: '1px solid var(--color-border)', fontSize: 12, fontWeight: 600, color: 'var(--color-foreground)' }}>
+                  {selectedNode.modelName}
+                </div>
+              </div>
+
+              {/* Telemetry Metrics */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <div style={{ padding: '6px 8px', borderRadius: 6, background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: 9, color: 'var(--color-muted)', fontWeight: 700 }}>SPEED</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-foreground)' }}>{selectedNode.speed}</div>
+                </div>
+                <div style={{ padding: '6px 8px', borderRadius: 6, background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: 9, color: 'var(--color-muted)', fontWeight: 700 }}>HALLUCINATION</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#10B981' }}>{selectedNode.hallucinationRate}</div>
+                </div>
+              </div>
+
+              {/* Sub-Tasks Checklist */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Sub-Tasks Checklist
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {selectedNode.subTasks.map((st, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        padding: '6px 8px',
+                        borderRadius: 6,
+                        background: 'var(--color-card)',
+                        border: '1px solid var(--color-border-faint)',
+                        fontSize: 10.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <span style={{ color: st.done ? '#10B981' : 'var(--color-muted)', fontWeight: 700 }}>
+                        {st.done ? '✓' : '○'}
+                      </span>
+                      <span style={{ color: st.done ? 'var(--color-foreground)' : 'var(--color-muted)' }}>
+                        {st.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Final Output Button */}
+              {isSwarmComplete && (
+                <button
+                  onClick={handleCopyDeliverable}
+                  className="pill-primary"
+                  style={{
+                    padding: '8px',
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    marginTop: 4,
+                  }}
+                >
+                  <IcCopy size={13} />
+                  <span>Copy Final Deliverable</span>
+                </button>
+              )}
+            </div>
+          </aside>
+        )}
       </div>
 
       <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @media(max-width: 1000px) {
+          .swarm-inspector-sidebar {
+            display: none !important;
+          }
+        }
+        @media(max-width: 768px) {
+          .swarm-nav-sidebar {
+            display: none !important;
+          }
         }
       `}</style>
     </div>
   )
+}
+
+function StageIndicator({ stage }: { stage: AgentStage }) {
+  const isDone = stage === 'done'
+  const isWorking = stage === 'working' || stage === 'thinking' || stage === 'verifying' || stage === 'synthesizing'
+
+  const color = isDone
+    ? '#10B981'
+    : isWorking
+    ? '#8B5CF6'
+    : 'var(--color-muted)'
+
+  return (
+    <span
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: '50%',
+        background: color,
+        boxShadow: isWorking ? `0 0 6px ${color}` : 'none',
+      }}
+    />
+  )
+}
+
+function generateFinalMarkdown(prompt: string, orchestrator: string, nodes: SwarmNode[]) {
+  return `# Multi-Agent Swarm Synthesis Deliverable
+**Objective:** ${prompt}
+**Orchestrator:** ${orchestrator}
+**Generated Date:** ${new Date().toUTCString()}
+**Hallucination Rate:** 0.00% (Formally Certified)
+**Soundness Score:** 99.85%
+
+---
+
+## 1. Executive Decomposition
+1. **Architect Prime**: Formulated deterministic scope and boundary parameter DAG.
+2. **Deep Generator**: Computed step-by-step intermediate derivations and reasoning units.
+3. **Citation & Logic Guard**: Certified 0.00% hallucination rate with double-blind formal proofs.
+4. **Synthesis Lead**: Unified verified deliverable artifacts and compiled production schema.
+
+## 2. Derivations & Problem Units
+- **Unit 01**: Parameter bounds verified without assumption leaks.
+- **Unit 02**: Step-by-step calculus word problems and algebraic derivations verified.
+- **Unit 03**: Swarm consensus confirmed 4/4 agreement.
+
+## 3. Checksum
+\`\`\`json
+{
+  "status": "CERTIFIED",
+  "hallucination_rate": "0.00%",
+  "soundness": "99.85%",
+  "verified_by": "JudgeAI Swarm Core"
+}
+\`\`\`
+`
 }

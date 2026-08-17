@@ -1,9 +1,11 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link } from 'react-router'
-import { Logo } from '../components/MarketingShell'
-import { IcEye, IcEyeOff } from '../components/icons'
+import { Logo } from '../components/Logo'
+import { IcEye, IcEyeOff, IcSun, IcMoon } from '../components/icons'
+import { useTheme } from '../components/ThemeProvider'
 
 export default function Login({ mode = 'login' }: { mode?: 'login' | 'signup' }) {
+  const { theme, toggleTheme } = useTheme()
   const [isLogin, setIsLogin] = useState(mode === 'login')
   const [showPw, setShowPw] = useState(false)
   const [email, setEmail] = useState('')
@@ -11,9 +13,64 @@ export default function Login({ mode = 'login' }: { mode?: 'login' | 'signup' })
   const [name, setName] = useState('')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--color-background)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Theme toggle in top right */}
+      <button
+        type="button"
+        onClick={toggleTheme}
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 8,
+          padding: '8px',
+          color: 'var(--color-muted)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10,
+          transition: 'color 0.15s, background 0.15s, border-color 0.15s',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.color = 'var(--color-foreground)'
+          e.currentTarget.style.borderColor = 'var(--color-border-light)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.color = 'var(--color-muted)'
+          e.currentTarget.style.borderColor = 'var(--color-border)'
+        }}
+      >
+        {theme === 'dark' ? <IcSun size={18} /> : <IcMoon size={18} />}
+      </button>
+
       {/* Background orb */}
-      <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%,-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.18), rgba(56,189,248,0.08) 50%, transparent 80%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+      <div
+        className="orb-gradient"
+        style={{
+          position: 'absolute',
+          top: '30%',
+          left: '50%',
+          transform: 'translate(-50%,-50%)',
+          width: 600,
+          height: 400,
+          pointerEvents: 'none',
+        }}
+      />
 
       <div style={{ width: '100%', maxWidth: 400, position: 'relative', zIndex: 1 }}>
         {/* Logo */}
@@ -22,10 +79,26 @@ export default function Login({ mode = 'login' }: { mode?: 'login' | 'signup' })
         </div>
 
         <div className="card-base" style={{ padding: 36, borderRadius: 20 }}>
-          <h1 style={{ fontWeight: 800, fontSize: 22, letterSpacing: '-0.03em', marginBottom: 6, textAlign: 'center' }}>
+          <h1
+            style={{
+              fontWeight: 800,
+              fontSize: 22,
+              letterSpacing: '-0.03em',
+              marginBottom: 6,
+              textAlign: 'center',
+              color: 'var(--color-foreground)',
+            }}
+          >
             {isLogin ? 'Log in to JudgeAI' : 'Create your account'}
           </h1>
-          <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 28 }}>
+          <p
+            style={{
+              textAlign: 'center',
+              fontSize: 13,
+              color: 'var(--color-muted)',
+              marginBottom: 28,
+            }}
+          >
             {isLogin ? 'Welcome back — continue building.' : 'Start evaluating LLMs in minutes.'}
           </p>
 
@@ -35,9 +108,34 @@ export default function Login({ mode = 'login' }: { mode?: 'login' | 'signup' })
               { label: 'Continue with GitHub', icon: <GHIcon /> },
               { label: 'Continue with Google', icon: <GGIcon /> },
             ].map(({ label, icon }) => (
-              <button key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontSize: 14, fontWeight: 500, transition: 'all 0.15s', fontFamily: 'Inter, sans-serif' }}
-                onMouseEnter={e => { (e.currentTarget).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget).style.color = '#fff' }}
-                onMouseLeave={e => { (e.currentTarget).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget).style.color = 'rgba(255,255,255,0.75)' }}
+              <button
+                key={label}
+                type="button"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  width: '100%',
+                  padding: '11px 16px',
+                  borderRadius: 10,
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-foreground)',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: 'all 0.15s',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'var(--color-hover-strong)'
+                  e.currentTarget.style.borderColor = 'var(--color-border-light)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'var(--color-surface)'
+                  e.currentTarget.style.borderColor = 'var(--color-border)'
+                }}
               >
                 {icon} {label}
               </button>
@@ -46,30 +144,83 @@ export default function Login({ mode = 'login' }: { mode?: 'login' | 'signup' })
 
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', fontWeight: 500 }}>or</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            <span style={{ fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>or</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
           </div>
 
-          {/* Form — MODIFIED: redirect to /onboarding/plan after auth */}
-          <form onSubmit={e => {
+          {/* Form */}
+          <form
+            onSubmit={e => {
               e.preventDefault()
-              const pending = sessionStorage.getItem('guestPrompt')
               window.location.href = '/onboarding/plan'
-            }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+          >
             {!isLogin && (
               <FieldInput label="Full name" value={name} onChange={setName} placeholder="Sarah Lin" type="text" />
             )}
-            <FieldInput label="Email address" value={email} onChange={setEmail} placeholder="sarah@acme.ai" type="email" />
+            <FieldInput
+              label="Email address"
+              value={email}
+              onChange={setEmail}
+              placeholder="sarah@acme.ai"
+              type="email"
+            />
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Password</label>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--color-muted-strong)',
+                  marginBottom: 6,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Password
+              </label>
               <div style={{ position: 'relative' }}>
-                <input type={showPw ? 'text' : 'password'} value={pw} onChange={e => setPw(e.target.value)} placeholder={isLogin ? '••••••••••' : 'Minimum 8 characters'}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '11px 44px 11px 14px', fontSize: 14, color: '#fff', outline: 'none', fontFamily: 'Inter, sans-serif', transition: 'border-color 0.15s', boxSizing: 'border-box' }}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(124,58,237,0.5)')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  value={pw}
+                  onChange={e => setPw(e.target.value)}
+                  placeholder={isLogin ? '••••••••' : 'Minimum 8 characters'}
+                  style={{
+                    width: '100%',
+                    background: 'var(--color-input-bg)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 10,
+                    padding: '11px 44px 11px 14px',
+                    fontSize: 14,
+                    color: 'var(--color-foreground)',
+                    outline: 'none',
+                    fontFamily: 'Inter, sans-serif',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet)')}
+                  onBlur={e => (e.target.style.borderColor = 'var(--color-border)')}
                 />
-                <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', padding: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-muted)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
                   {showPw ? <IcEyeOff size={16} /> : <IcEye size={16} />}
                 </button>
               </div>
@@ -77,48 +228,139 @@ export default function Login({ mode = 'login' }: { mode?: 'login' | 'signup' })
 
             {isLogin && (
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <a href="#" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }} onMouseEnter={e => (e.currentTarget.style.color = '#A78BFA')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}>Forgot password?</a>
+                <a
+                  href="#"
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--color-muted)',
+                    textDecoration: 'none',
+                    transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#A78BFA')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
+                >
+                  Forgot password?
+                </a>
               </div>
             )}
 
-            <button type="submit" className="pill-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px 0', fontSize: 15, marginTop: 4, borderRadius: 12 }}>
+            <button
+              type="submit"
+              className="pill-primary"
+              style={{
+                width: '100%',
+                justifyContent: 'center',
+                padding: '12px 0',
+                fontSize: 15,
+                marginTop: 4,
+                borderRadius: 12,
+              }}
+            >
               {isLogin ? 'Log in' : 'Create account'}
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.35)', marginTop: 22 }}>
+          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--color-muted)', marginTop: 22 }}>
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
-            <button onClick={() => setIsLogin(!isLogin)} style={{ background: 'none', border: 'none', color: '#A78BFA', cursor: 'pointer', fontSize: 13, fontFamily: 'Inter, sans-serif', padding: 0, fontWeight: 600 }}>
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-accent-violet)',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontFamily: 'Inter, sans-serif',
+                padding: 0,
+                fontWeight: 600,
+              }}
+            >
               {isLogin ? 'Sign up' : 'Log in'}
             </button>
           </p>
           {sessionStorage.getItem('guestPrompt') && (
-            <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.25)', marginTop: 8 }}>
-              <Link to="/guest-chat" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }} onMouseEnter={e => (e.currentTarget.style.color = '#A78BFA')} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}>
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-muted)', marginTop: 8 }}>
+              <Link
+                to="/guest-chat"
+                style={{
+                  color: 'var(--color-muted)',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent-violet)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
+              >
                 ← Back to guest chat
               </Link>
             </p>
           )}
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 20 }}>
+        <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-muted-faint)', marginTop: 20 }}>
           By continuing you agree to our{' '}
-          <a href="#" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Terms</a> and{' '}
-          <a href="#" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Privacy Policy</a>.
+          <a href="#" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>
+            Terms
+          </a>{' '}
+          and{' '}
+          <a href="#" style={{ color: 'var(--color-muted)', textDecoration: 'none' }}>
+            Privacy Policy
+          </a>
+          .
         </p>
       </div>
     </div>
   )
 }
 
-function FieldInput({ label, value, onChange, placeholder, type }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; type: string }) {
+function FieldInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+  type: string
+}) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: '#fff', outline: 'none', fontFamily: 'Inter, sans-serif', transition: 'border-color 0.15s', boxSizing: 'border-box' }}
-        onFocus={e => (e.target.style.borderColor = 'rgba(124,58,237,0.5)')}
-        onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+      <label
+        style={{
+          display: 'block',
+          fontSize: 12,
+          fontWeight: 600,
+          color: 'var(--color-muted-strong)',
+          marginBottom: 6,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+        }}
+      >
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{
+          width: '100%',
+          background: 'var(--color-input-bg)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 10,
+          padding: '11px 14px',
+          fontSize: 14,
+          color: 'var(--color-foreground)',
+          outline: 'none',
+          fontFamily: 'Inter, sans-serif',
+          transition: 'border-color 0.15s',
+          boxSizing: 'border-box',
+        }}
+        onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet)')}
+        onBlur={e => (e.target.style.borderColor = 'var(--color-border)')}
       />
     </div>
   )
@@ -142,3 +384,4 @@ function GGIcon() {
     </svg>
   )
 }
+
