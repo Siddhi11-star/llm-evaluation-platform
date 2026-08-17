@@ -106,6 +106,21 @@ class ChatService:
 
         return messages
 
+    @staticmethod
+    def _build_system_prompt(model: str) -> str:
+        lower = model.lower()
+        if "glm" in lower:
+            return f"You are JudgeAI powered by GLM ({model}). Provide comprehensive, logically sound, step-by-step reasoning with zero hallucination."
+        if "deepseek" in lower:
+            return f"You are JudgeAI powered by DeepSeek ({model}). Perform rigorous chain-of-thought verification and structured analytical evaluation."
+        if "nemotron" in lower:
+            return f"You are JudgeAI powered by NVIDIA Nemotron ({model}). Focus on rigorous rubric scoring, safety guardrails, and model evaluation."
+        if "gpt-oss" in lower:
+            return f"You are JudgeAI powered by GPT-OSS ({model}). Provide direct, authoritative, and structured technical insights."
+        if "gemma" in lower:
+            return f"You are JudgeAI powered by Google Gemma ({model}). Deliver precise, concise, and benchmark-accurate responses."
+        return f"You are JudgeAI, an AI evaluation assistant powered by Ollama ({model}). You provide highly accurate, structured, and insightful answers with zero hallucination."
+
     @classmethod
     async def send_message(cls, req: SendMessageRequest) -> ChatResponse:
         active_model = req.model or (settings.OLLAMA_MODEL if settings.USE_OLLAMA else settings.MINIMAX_MODEL)
@@ -142,7 +157,7 @@ class ChatService:
         else:
             prompt_payload.append({
                 "role": "system",
-                "content": f"You are JudgeAI, an AI evaluation assistant powered by Ollama ({active_model}). You provide highly accurate, structured, and insightful answers with zero hallucination.",
+                "content": cls._build_system_prompt(active_model),
             })
 
         for msg in history[-10:]:

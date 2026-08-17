@@ -43,21 +43,17 @@ async def send_chat_message(req: SendMessageRequest):
 @router.get("/models")
 async def list_available_models():
     """
-    Lists models available in local Ollama instance.
+    Lists configured Ollama cloud models and locally available models.
     """
     installed = await ollama_client.list_models()
+    cloud_catalog = ollama_client.get_supported_cloud_models()
     return {
         "provider": "ollama",
         "default_model": settings.OLLAMA_MODEL,
         "use_ollama": settings.USE_OLLAMA,
         "ollama_url": settings.OLLAMA_BASE_URL,
-        "models": installed or [
-            {"name": "minimax", "modified_at": "latest", "size": "7B"},
-            {"name": "minimax-m3", "modified_at": "latest", "size": "14B"},
-            {"name": "llama3.3:70b", "modified_at": "latest", "size": "70B"},
-            {"name": "mistral", "modified_at": "latest", "size": "7B"},
-            {"name": "deepseek-r1", "modified_at": "latest", "size": "8B"},
-        ],
+        "cloud_models": cloud_catalog,
+        "installed_local_models": installed,
     }
 
 
