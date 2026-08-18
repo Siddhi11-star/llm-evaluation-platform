@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 import re
@@ -240,13 +241,15 @@ class OllamaClient:
         }
 
         headers = {
-            "Host": "localhost:11434",
             "Content-Type": "application/json",
-            "Origin": "http://localhost:8000",
         }
+        api_key = getattr(settings, "OLLAMA_API_KEY", "") or os.getenv("OLLAMA_API_KEY", "")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
 
+        client_timeout = httpx.Timeout(60.0, connect=3.0)
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=client_timeout) as client:
                 resp = await client.post(url, json=payload, headers=headers)
                 if resp.status_code == 200:
                     data = resp.json()

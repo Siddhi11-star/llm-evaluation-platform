@@ -136,6 +136,7 @@ export default function JudgeConfig() {
   const [isGeneratingResponses, setIsGeneratingResponses] = useState(false)
   const [isJudging, setIsJudging] = useState(false)
   const [judgeResult, setJudgeResult] = useState<JudgeResult | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null)
@@ -159,6 +160,7 @@ export default function JudgeConfig() {
     setResponseA(s.responseA)
     setResponseB(s.responseB)
     setJudgeResult(null)
+    setErrorMessage(null)
     setToastMessage(`Loaded sample: ${s.title}`)
     setTimeout(() => setToastMessage(null), 2500)
   }
@@ -168,6 +170,7 @@ export default function JudgeConfig() {
     setResponseA('')
     setResponseB('')
     setJudgeResult(null)
+    setErrorMessage(null)
   }
 
   const handleGenerateBoth = () => {
@@ -206,7 +209,7 @@ export default function JudgeConfig() {
     }, 1000)
   }
 
-  const handleJudge = () => {
+  const handleJudge = async () => {
     if (!prompt.trim() || !responseA.trim() || !responseB.trim()) {
       alert('Please provide a prompt and responses for both models.')
       return
@@ -214,101 +217,42 @@ export default function JudgeConfig() {
 
     setIsJudging(true)
     setJudgeResult(null)
+    setErrorMessage(null)
 
-    setTimeout(() => {
-      const isALonger = responseA.length >= responseB.length
-      const scoreA = isALonger ? 96 : 88
-      const scoreB = isALonger ? 85 : 94
-      const winnerName = scoreA >= scoreB ? modelA : modelB
-      const winnerKey = scoreA >= scoreB ? 'A' : 'B'
-
-      const factors: FactorScore[] = [
-        {
-          factor: 'accuracy',
-          label: 'Accuracy & Factuality',
-          scoreA: isALonger ? 97 : 89,
-          scoreB: isALonger ? 88 : 95,
-          winner: scoreA >= scoreB ? 'A' : 'B',
-          color: '#38BDF8',
-          rationale: `${winnerName} demonstrated superior factual grounding with zero ambiguous deductions or missing constraints.`,
+    try {
+      const res = await fetch('http://localhost:8002/judge/compare', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          factor: 'relevance',
-          label: 'Prompt Relevance',
-          scoreA: 95,
-          scoreB: 92,
-          winner: 'A',
-          color: '#7C3AED',
-          rationale: 'Both models addressed the prompt directly, but Model A provided more actionable and granular domain guidance.',
-        },
-        {
-          factor: 'reasoning',
-          label: 'Reasoning Depth',
-          scoreA: isALonger ? 96 : 82,
-          scoreB: isALonger ? 81 : 94,
-          winner: scoreA >= scoreB ? 'A' : 'B',
-          color: '#EC4899',
-          rationale: `${winnerName} constructed multi-layered analytical steps rather than high-level surface commentary.`,
-        },
-        {
-          factor: 'clarity',
-          label: 'Clarity & Formatting',
-          scoreA: 94,
-          scoreB: 90,
-          winner: 'A',
-          color: '#FBBF24',
-          rationale: 'Hierarchical markdown headers and bolded highlights enhanced readability significantly.',
-        },
-        {
-          factor: 'safety',
-          label: 'Safety & Compliance',
-          scoreA: 99,
-          scoreB: 99,
-          winner: 'Tie',
-          color: '#34D399',
-          rationale: 'Both models strictly adhered to safety boundaries, tone guidelines, and professional norms.',
-        },
-        {
-          factor: 'hallucination',
-          label: 'Zero-Hallucination Guard',
-          scoreA: isALonger ? 98 : 91,
-          scoreB: isALonger ? 90 : 97,
-          winner: scoreA >= scoreB ? 'A' : 'B',
-          color: '#A78BFA',
-          rationale: `${winnerName} scored 0.0% hallucination rate across all domain entities and mathematical formulas.`,
-        },
-      ]
-
-      setJudgeResult({
-        winnerName,
-        winnerKey,
-        overallA: scoreA,
-        overallB: scoreB,
-        margin: Math.abs(scoreA - scoreB),
-        confidence: 96,
-        verdictSummary: `${winnerName} demonstrated significantly deeper domain reasoning, clearer step-by-step structuring, and concrete actionable redlines. The losing model provided a competent overview but omitted key nuance.`,
-        factors,
-        strengthsA: [
-          'Exhaustive breakdown of edge cases and liability vectors',
-          'Actionable redline clause recommendations',
-          'Clean hierarchical formatting with high readability',
-        ],
-        weaknessesA: [
-          'Slightly higher output token count',
-        ],
-        strengthsB: [
-          'Concise and fast summary of basic points',
-          'Straightforward language',
-        ],
-        weaknessesB: [
-          'Omitted granular technical constraints',
-          'Lacked concrete mitigation recommendations',
-        ],
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          model_a: modelA,
+          model_b: modelB,
+          response_a: responseA.trim(),
+          response_b: responseB.trim(),
+          judge_model: 'gpt-oss:120b-cloud',
+        }),
       })
-      setIsJudging(false)
-      setToastMessage(`Judge evaluation complete! Winner: ${winnerName}`)
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.detail || `Judge server returned status ${res.status}`)
+      }
+
+      const data: JudgeResult = await res.json()
+      setJudgeResult(data)
+      setToastMessage(`Judge evaluation complete! Winner: ${data.winnerName}`)
       setTimeout(() => setToastMessage(null), 3000)
-    }, 1300)
+    } catch (err: any) {
+      console.error('Judge Agent error:', err)
+      const msg = err.message || 'Failed to connect to Judge Agent backend at http://localhost:8002'
+      setErrorMessage(msg)
+      setToastMessage(`Evaluation failed: ${msg}`)
+      setTimeout(() => setToastMessage(null), 4000)
+    } finally {
+      setIsJudging(false)
+    }
   }
 
   const handleExportJSON = () => {
@@ -353,12 +297,12 @@ export default function JudgeConfig() {
                 fontWeight: 600,
                 padding: '5px 12px',
                 borderRadius: 999,
-                background: 'rgba(52,211,153,0.15)',
-                color: '#34D399',
-                border: '1px solid rgba(52,211,153,0.3)',
+                background: errorMessage ? 'rgba(239,68,68,0.15)' : 'rgba(52,211,153,0.15)',
+                color: errorMessage ? '#EF4444' : '#34D399',
+                border: errorMessage ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(52,211,153,0.3)',
               }}
             >
-              <IcCheck size={13} color="#34D399" />
+              {errorMessage ? <span style={{ fontSize: 13 }}>⚠️</span> : <IcCheck size={13} color="#34D399" />}
               {toastMessage}
             </div>
           )}
@@ -623,6 +567,30 @@ export default function JudgeConfig() {
             </button>
           </div>
         </div>
+
+        {/* Error Message Section */}
+        {errorMessage && (
+          <div
+            className="card-base"
+            style={{
+              padding: '16px 20px',
+              marginBottom: 20,
+              borderRadius: 14,
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              color: '#EF4444',
+            }}
+          >
+            <span style={{ fontSize: 20 }}>⚠️</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 13.5 }}>Judge Agent Evaluation Error</div>
+              <div style={{ fontSize: 12.5, color: 'var(--color-muted)', marginTop: 2 }}>{errorMessage}</div>
+            </div>
+          </div>
+        )}
 
         {/* Results Section */}
         {judgeResult && (
