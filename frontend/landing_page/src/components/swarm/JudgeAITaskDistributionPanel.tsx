@@ -1,45 +1,24 @@
 import React, { useState } from 'react'
 import { JudgeAISwarmSession, JudgeAIAgentTask } from './judgeAISwarmData'
-import { IcChevronDown, IcPlus, IcRotate, IcCheck, IcSearch, IcSparkles } from '../icons'
-import { Paperclip, Sparkles, ChevronDown, ChevronRight, MessageSquare } from 'lucide-react'
+import { IcChevronDown } from '../icons'
+import { Paperclip, Sparkles, ChevronDown } from 'lucide-react'
 
 interface JudgeAITaskDistributionPanelProps {
   session: JudgeAISwarmSession
-  selectedTaskIndex: number
-  allSessions: JudgeAISwarmSession[]
-  isExecuting: boolean
+  selectedTaskIndex?: number
   isLightTheme?: boolean
-  onSelectTaskIndex: (index: number) => void
-  onSelectSession: (session: JudgeAISwarmSession) => void
-  onNewSession: () => void
-  onSendMessage: (text: string) => void
-  onToggleChatModal?: () => void
+  onSelectTaskIndex?: (index: number) => void
 }
 
 export const JudgeAITaskDistributionPanel: React.FC<JudgeAITaskDistributionPanelProps> = ({
   session,
-  selectedTaskIndex,
-  allSessions,
-  isExecuting,
+  selectedTaskIndex = 0,
   isLightTheme,
   onSelectTaskIndex,
-  onSelectSession,
-  onNewSession,
-  onSendMessage,
-  onToggleChatModal,
 }) => {
-  const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false)
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false)
   const [hoveredTask, setHoveredTask] = useState<JudgeAIAgentTask | null>(null)
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
-  const [inputText, setInputText] = useState('')
-
-  const handleSend = (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-    if (!inputText.trim()) return
-    onSendMessage(inputText.trim())
-    setInputText('')
-  }
 
   const handleTaskMouseEnter = (task: JudgeAIAgentTask, e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -49,66 +28,14 @@ export const JudgeAITaskDistributionPanel: React.FC<JudgeAITaskDistributionPanel
 
   return (
     <div className="w-full h-full flex flex-col justify-between overflow-hidden bg-[var(--color-background)] text-[var(--color-foreground)] select-none font-sans relative">
-      {/* Top Header of Left Panel */}
+      {/* Top Header */}
       <div className="h-10 px-3.5 border-b border-[var(--color-border)] flex items-center justify-between shrink-0 bg-[var(--color-surface)]">
-        {/* Left: New Swarm + Session Dropdown */}
-        <div className="flex items-center gap-1.5 relative">
-          <button
-            onClick={onNewSession}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-muted)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-hover)] transition-colors border border-[var(--color-border-faint)]"
-            title="Start New Swarm Chat"
-          >
-            <span className="text-xs font-bold">+</span>
-          </button>
-
-          {/* Session Selector Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold text-[var(--color-foreground)] hover:bg-[var(--color-hover)] transition-colors border border-[var(--color-border-faint)]"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              <span className="truncate max-w-[150px]">{session.title}</span>
-              <IcChevronDown className="w-3 h-3 text-[var(--color-muted)]" />
-            </button>
-
-            {isSessionDropdownOpen && (
-              <div
-                className={`absolute top-full left-0 mt-1 w-64 rounded-xl border shadow-2xl p-1 z-50 backdrop-blur-2xl ${
-                  isLightTheme ? 'bg-white border-zinc-200 shadow-xl' : 'bg-[#181622] border-[#2A2638] shadow-2xl'
-                }`}
-              >
-                <div className="text-[9px] font-mono font-bold uppercase text-[var(--color-muted)] px-2 py-1">
-                  Active Swarms
-                </div>
-                {allSessions.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      onSelectSession(s)
-                      setIsSessionDropdownOpen(false)
-                    }}
-                    className={`w-full text-left p-1.5 rounded-lg text-xs transition-colors flex items-center justify-between ${
-                      session.id === s.id
-                        ? 'bg-purple-500/15 text-purple-400 font-semibold'
-                        : 'hover:bg-[var(--color-hover)] text-[var(--color-foreground)]'
-                    }`}
-                  >
-                    <span className="truncate">{s.title}</span>
-                    <span className="text-[9px] text-[var(--color-muted)] font-mono">
-                      {s.tasks.length}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+          <span className="text-xs font-bold text-[var(--color-foreground)] truncate max-w-[200px]">{session.title}</span>
         </div>
-
-        {/* Right: Attachments Pill */}
         <div className="flex items-center gap-1 text-[11px] text-[var(--color-muted)] font-mono px-2 py-0.5 rounded bg-[var(--color-hover)] border border-[var(--color-border-faint)]">
-          <Paperclip className="w-2.5 h-2.5" />
-          <span className="font-semibold text-[var(--color-foreground)]">{session.attachmentsCount}</span>
+          <span className="font-semibold text-purple-400">{session.tasks.length} agents</span>
         </div>
       </div>
 
@@ -149,7 +76,7 @@ export const JudgeAITaskDistributionPanel: React.FC<JudgeAITaskDistributionPanel
               return (
                 <div
                   key={task.id}
-                  onClick={() => onSelectTaskIndex(idx)}
+                  onClick={() => onSelectTaskIndex?.(idx)}
                   onMouseEnter={(e) => handleTaskMouseEnter(task, e)}
                   onMouseLeave={() => setHoveredTask(null)}
                   className={`p-2 rounded-xl cursor-pointer transition-all flex items-center justify-between gap-2 group relative ${
@@ -191,7 +118,7 @@ export const JudgeAITaskDistributionPanel: React.FC<JudgeAITaskDistributionPanel
                     <div className="flex items-center gap-0.5 text-zinc-500 text-[9px] font-mono">
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          task.status === 'Analyzing' || task.status === 'Writing'
+                          task.status === 'running' || task.status === 'thinking'
                             ? 'bg-purple-400 animate-ping'
                             : 'bg-zinc-600'
                         }`}
@@ -234,8 +161,13 @@ export const JudgeAITaskDistributionPanel: React.FC<JudgeAITaskDistributionPanel
           )}
         </div>
 
-        {/* Synthesis Text */}
-        <p className="text-[var(--color-foreground)] text-xs leading-relaxed">{session.synthesisText}</p>
+        {/* Synthesis Node Info */}
+        {session.synthesisNode && (
+          <p className="text-[var(--color-foreground)] text-xs leading-relaxed">
+            <span className="text-purple-400 font-semibold">{session.synthesisNode.avatar} {session.synthesisNode.name}:</span>{' '}
+            {session.synthesisNode.task}
+          </p>
+        )}
 
         {/* File Creation Chip */}
         {session.createdFile && (
@@ -292,47 +224,11 @@ export const JudgeAITaskDistributionPanel: React.FC<JudgeAITaskDistributionPanel
         </div>
       )}
 
-      {/* Bottom Input Dock */}
+      {/* Bottom Info Footer */}
       <div className="p-2.5 border-t border-[var(--color-border)] shrink-0 bg-[var(--color-surface)]">
-        <div className="text-[9px] text-[var(--color-muted)] mb-1 px-1 font-mono">
-          Task executed by JudgeAI Agent Swarm. Follow-ups will route through the orchestrator.
+        <div className="text-[9px] text-[var(--color-muted)] px-1 font-mono">
+          Orchestrated by <span className="text-purple-400">gpt-oss:120b-cloud</span> · Use the follow-up input in Overview tab to re-run the swarm.
         </div>
-
-        <form
-          onSubmit={handleSend}
-          className="flex items-center justify-between p-1 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] focus-within:border-purple-500/50 shadow-inner"
-        >
-          <div className="flex items-center gap-1.5 pl-2">
-            <button
-              type="button"
-              className="text-[var(--color-muted)] hover:text-[var(--color-foreground)] text-xs"
-              title="Add attachment"
-            >
-              +
-            </button>
-            <span className="text-[9px] text-[var(--color-muted)] font-mono">🌐 37 left</span>
-          </div>
-
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Ask follow-up..."
-            className="flex-1 bg-transparent px-2 text-xs outline-none text-[var(--color-foreground)] placeholder:text-[var(--color-muted)]"
-          />
-
-          <div className="flex items-center gap-1.5 pr-1">
-            <span className="text-[9px] text-[var(--color-muted)] font-medium hidden sm:inline">
-              {session.modelName.split(' ')[0]} ▾
-            </span>
-            <button
-              type="submit"
-              className="w-5 h-5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center text-[10px] font-bold hover:scale-105 active:scale-95 transition-transform shadow-md"
-            >
-              •
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   )

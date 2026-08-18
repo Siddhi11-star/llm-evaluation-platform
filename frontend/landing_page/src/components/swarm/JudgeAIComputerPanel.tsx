@@ -140,7 +140,7 @@ export const JudgeAIComputerPanel: React.FC<JudgeAIComputerPanelProps> = ({
               <div className="w-full max-w-sm bg-black/40 border border-[var(--color-border)] rounded-xl p-2.5 text-left font-mono text-[10px] text-[var(--color-muted)] leading-relaxed space-y-1 custom-scrollbar max-h-28 overflow-y-auto">
                 {activeTask.detailInfo.terminalLogs.map((log, lIdx) => (
                   <div key={lIdx} className="truncate">
-                    <span className="text-purple-400">›</span> {log}
+                    <span className="text-purple-400">›</span> {typeof log === 'string' ? log : log.text}
                   </div>
                 ))}
               </div>

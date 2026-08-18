@@ -54,6 +54,7 @@ export default function AgentSwarmPage() {
   const [currentSession, setCurrentSession] = useState<JudgeAISwarmSession>(JUDGEAI_SWARM_SESSIONS[0])
   const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(0)
   const [isExecuting, setIsExecuting] = useState(false)
+  const [loadingStage, setLoadingStage] = useState<string>('')
   const [isChatModalOpen, setIsChatModalOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [followUpInput, setFollowUpInput] = useState('')
@@ -92,71 +93,86 @@ export default function AgentSwarmPage() {
     setIsExecuting(true)
     setScreenMode('active_swarm')
     setActiveTab('overview')
-
-    const chosenModel = modelName || 'minimax-m3:cloud'
+    setLoadingStage('🧠 Orchestrator (gpt-oss:120b-cloud) planning swarm…')
 
     try {
-      // 1. Query the live Flask Agent Swarm Backend
+      // Stage 1: Planning
+      await new Promise((r) => setTimeout(r, 400))
+      setLoadingStage('⚡ Dispatching parallel agents…')
+
+      // Query live Flask Agent Swarm Backend
       const response = await fetch('http://localhost:5002/api/swarm/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: promptText,
-          model: chosenModel,
+          model: modelName || 'gpt-oss:120b-cloud',
         }),
       })
 
       if (response.ok) {
         const liveRun: JudgeAISwarmSession = await response.json()
+        setLoadingStage('✨ Synthesizing results…')
+        await new Promise((r) => setTimeout(r, 300))
+
         setSessions((prev) => [liveRun, ...prev])
         setCurrentSession(liveRun)
         setSelectedTaskIndex(0)
+        if (liveRun.subAgentPods) setSubAgentPods(liveRun.subAgentPods)
         if (liveRun.timelineSteps) setTimelineSteps(liveRun.timelineSteps)
         if (liveRun.deliverable) setDeliverable(liveRun.deliverable)
 
         setIsExecuting(false)
+        setLoadingStage('')
+        const n = liveRun.tasks?.length || 0
         triggerToast(
           liveRun.is_trivial
-            ? '⚡ Triage Short-Circuit: Served direct response in ' + liveRun.elapsedTime
-            : '⚡ Swarm Executed: 4-Agent Parallel consensus ready in ' + liveRun.elapsedTime
+            ? `⚡ Direct Response from gpt-oss:120b-cloud in ${liveRun.elapsedTime}`
+            : `⚡ Swarm Complete: ${n} agents synthesized in ${liveRun.elapsedTime}`
         )
         return
       }
     } catch (err) {
-      console.warn('Flask backend query error, using client-side dynamic fallback:', err)
+      console.warn('Swarm backend unavailable, using client-side fallback:', err)
     }
 
-    // 2. High fidelity fallback generator
-    const synth = generateDynamicSwarmWorkflow(promptText, chosenModel)
+    // Client-side fallback generator
+    setLoadingStage('⚙️ Running client-side swarm simulation…')
+    const synth = generateDynamicSwarmWorkflow(promptText)
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const numAgents = synth.subAgentPods.length
 
     const newSession: JudgeAISwarmSession = {
       id: `swarm-${Date.now()}`,
       title: promptText.length > 38 ? `${promptText.slice(0, 38)}...` : promptText,
-      subtitle: `${chosenModel} · 4-agent parallel decomposition`,
+      subtitle: `gpt-oss:120b-cloud · ${numAgents}-agent parallel swarm`,
+      category: 'Multi-Agent Swarm',
       status: 'completed',
-      modelName: chosenModel,
-      activeAgentsCount: synth.subAgentPods.length,
+      totalTasks: numAgents,
+      activeTaskIndex: 0,
+      attachmentsCount: 0,
+      modelName: `gpt-oss:120b-cloud + ${numAgents} agents`,
+      activeAgentsCount: numAgents,
       startedAt: timeStr,
       progressPercent: 100,
-      synthesisText: synth.synthesisText,
+      synthesisText: synth.deliverable?.content?.slice(0, 120) || '',
       prompt: promptText,
-      delegationLeadText: 'Orchestrator parsed prompt into parallel domain workstreams:',
-      elapsedTime: '184ms',
-      totalTokens: 1340,
-      cost: '$0.0020',
+      delegationLeadText: `Orchestrator (gpt-oss:120b-cloud) decomposed prompt into ${numAgents} parallel agent workstreams:`,
+      elapsedTime: `${(numAgents * 45 + 180)}ms`,
+      totalTokens: numAgents * 350 + 380,
+      cost: `$${((numAgents * 350 + 380) * 0.000002).toFixed(4)}`,
       swarmProgress: 100,
       is_trivial: false,
       orchestrator: {
         name: 'JudgeAI Orchestrator',
         role: 'Boss Orchestrator & Decomposer',
         avatar: '👑',
-        model: chosenModel,
+        model: 'gpt-oss:120b-cloud',
         status: 'completed',
         progress: 100,
         tokens: 380,
         latency: '45ms',
-        task: `Decompose incoming goal: "${promptText.slice(0, 50)}..."`,
+        task: `Decompose incoming goal: "${promptText.slice(0, 50)}..." into ${numAgents} parallel agent workstreams`,
       },
       tasks: synth.subAgentPods.map((p, idx) => ({
         id: `task-${idx + 1}`,
@@ -193,13 +209,13 @@ export default function AgentSwarmPage() {
         },
       })),
       synthesisNode: {
-        name: 'Final Synthesis',
-        role: 'Meta Consensus Compiler',
-        avatar: '⚡',
-        model: chosenModel,
+        name: 'Meta Synthesizer',
+        role: 'Final Response Compiler',
+        avatar: '✨',
+        model: 'gpt-oss:120b-cloud',
         status: 'completed',
         progress: 100,
-        task: 'Synthesize parallel evaluations into final judgment score and telemetry dossier',
+        task: `Synthesized ${numAgents} agent outputs into final unified response`,
       },
       thoughtSteps: synth.thoughtChain.map((tc) => ({
         title: tc.step,
@@ -209,14 +225,15 @@ export default function AgentSwarmPage() {
       })),
       liveLogs: [
         { time: timeStr, agent: 'ORCHESTRATOR', text: `Prompt received: ${promptText.slice(0, 40)}...`, level: 'info' },
-        { time: timeStr, agent: 'ORCHESTRATOR', text: `Created ${synth.subAgentPods.length} parallel worker pods`, level: 'info' },
+        { time: timeStr, agent: 'ORCHESTRATOR', text: `gpt-oss:120b-cloud planning swarm…`, level: 'info' },
+        { time: timeStr, agent: 'ORCHESTRATOR', text: `Dispatched ${numAgents} parallel agent pods`, level: 'info' },
         ...synth.subAgentPods.map((p) => ({
           time: timeStr,
           agent: p.role.split(' ')[0].toUpperCase(),
           text: `Executed ${p.name} tasks with ${p.model}`,
           level: 'info' as const,
         })),
-        { time: timeStr, agent: 'ORCHESTRATOR', text: 'Synthesized final multi-agent evaluation dossier', level: 'success' as const },
+        { time: timeStr, agent: 'ORCHESTRATOR', text: 'Synthesized final multi-agent response', level: 'success' as const },
       ],
       evaluationResult: {
         overallScore: 93.7,
@@ -229,12 +246,12 @@ export default function AgentSwarmPage() {
         },
         confidence: 'High',
         bestModel: {
-          name: chosenModel,
+          name: 'gpt-oss:120b-cloud',
           score: 93.7,
-          cost: '$0.0018',
-          latency: '145ms',
+          cost: `$${((numAgents * 350 + 380) * 0.000002).toFixed(4)}`,
+          latency: `${numAgents * 45 + 180}ms`,
         },
-        summaryVerdict: 'Swarm evaluated multi-agent candidate benchmarks with 93.7 overall composite score and 0.00% hallucination rate.',
+        summaryVerdict: `Swarm deployed ${numAgents} cloud model agents. Synthesized by gpt-oss:120b-cloud orchestrator.`,
       },
       createdFile: {
         name: 'synthesized_output.md',
@@ -252,7 +269,8 @@ export default function AgentSwarmPage() {
 
     setTimeout(() => {
       setIsExecuting(false)
-      triggerToast(`⚡ Deployed JudgeAI Swarm: "${newSession.title}"`)
+      setLoadingStage('')
+      triggerToast(`⚡ Swarm Deployed: ${numAgents} agents — "${newSession.title}"`)
     }, 400)
   }
 
@@ -655,7 +673,8 @@ export default function AgentSwarmPage() {
                     />
 
                     <JudgeAIEvaluationResultCard
-                      session={currentSession}
+                      evaluation={currentSession.evaluationResult}
+                      isTrivial={currentSession.is_trivial}
                       isLightTheme={isLightTheme}
                     />
 
@@ -672,6 +691,8 @@ export default function AgentSwarmPage() {
                 <div className="flex-1 min-h-0 w-full overflow-y-auto custom-scrollbar p-4">
                   <JudgeAITaskDistributionPanel
                     session={currentSession}
+                    selectedTaskIndex={selectedTaskIndex}
+                    onSelectTaskIndex={(idx) => setSelectedTaskIndex(idx)}
                     isLightTheme={isLightTheme}
                   />
                 </div>
@@ -682,8 +703,7 @@ export default function AgentSwarmPage() {
                 <div className="flex-1 min-h-0 w-full overflow-y-auto custom-scrollbar p-4">
                   <SwarmMatrixView
                     pods={subAgentPods}
-                    activePodId={selectedTaskIndex + 1}
-                    onSelectPod={(id) => setSelectedTaskIndex(id - 1)}
+                    isLightTheme={isLightTheme}
                   />
                 </div>
               )}
@@ -691,7 +711,10 @@ export default function AgentSwarmPage() {
               {/* View Tab 4: TIMELINE */}
               {activeTab === 'timeline' && (
                 <div className="flex-1 min-h-0 w-full overflow-y-auto custom-scrollbar p-4">
-                  <SwarmTimelineView steps={timelineSteps} />
+                  <SwarmTimelineView
+                    timelineSteps={timelineSteps}
+                    isLightTheme={isLightTheme}
+                  />
                 </div>
               )}
 
@@ -700,8 +723,7 @@ export default function AgentSwarmPage() {
                 <div className="flex-1 min-h-0 w-full overflow-y-auto custom-scrollbar p-4">
                   <SwarmDeliverablesView
                     deliverable={deliverable}
-                    activeVersion="1.0"
-                    onVersionChange={() => {}}
+                    isLightTheme={isLightTheme}
                   />
                 </div>
               )}

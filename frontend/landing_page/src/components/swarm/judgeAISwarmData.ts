@@ -51,7 +51,9 @@ export interface JudgeAIEvaluationResult {
 export interface JudgeAISwarmSession {
   id: string
   title: string
+  subtitle?: string
   category: string
+  status?: string
   totalTasks: number
   activeTaskIndex: number
   attachmentsCount: number
@@ -62,6 +64,10 @@ export interface JudgeAISwarmSession {
   totalTokens: number
   cost: string
   swarmProgress: number
+  startedAt?: string
+  progressPercent?: number
+  activeAgentsCount?: number
+  synthesisText?: string
   orchestrator: {
     name: string
     role: string
@@ -90,6 +96,7 @@ export interface JudgeAISwarmSession {
   is_trivial?: boolean
   timelineSteps?: any[]
   deliverable?: any
+  subAgentPods?: any[]
 }
 
 export const FEATURED_SWARM_CASES = [
