@@ -1,17 +1,30 @@
-import { SwarmCanvasNode, SwarmWireConnection, SwarmExecutionRecord } from './types'
+import {
+  SwarmCanvasNode,
+  SwarmWireConnection,
+  SwarmExecutionRecord,
+  JudgeAISubAgentPod,
+  JudgeAITimelineStep,
+  JudgeAIDeliverableArtifact,
+  SwarmScaleMode,
+} from './types'
 
 export interface GeneratedSwarmResponse {
   title: string
   tag: string
+  mode: SwarmScaleMode
   nodes: SwarmCanvasNode[]
   wires: SwarmWireConnection[]
+  subAgentPods: JudgeAISubAgentPod[]
+  timelineSteps: JudgeAITimelineStep[]
+  deliverable: JudgeAIDeliverableArtifact
   chatResponseText: string
+  thoughtChain: Array<{ step: string; status: 'done' | 'running' | 'waiting'; detail?: string }>
   executionRecord: SwarmExecutionRecord
 }
 
 /**
- * Dynamically synthesizes an Agent Swarm workflow diagram, assigned agent tasks,
- * real-time execution steps, and response from any user prompt.
+ * Dynamically synthesizes a full JudgeAI Agent Swarm workflow diagram, assigned sub-agent pods,
+ * parallel execution timeline, deliverables studio artifact, and autonomous reasoning response.
  */
 export function generateDynamicSwarmWorkflow(prompt: string): GeneratedSwarmResponse {
   const lower = prompt.toLowerCase()
@@ -19,8 +32,16 @@ export function generateDynamicSwarmWorkflow(prompt: string): GeneratedSwarmResp
   const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
   // 1. Code Review, AST, Security or Programming
-  if (lower.includes('code') || lower.includes('python') || lower.includes('typescript') || lower.includes('bug') || lower.includes('security') || lower.includes('vulnerability') || lower.includes('api')) {
-    const title = 'Code Analysis & Security Swarm'
+  if (
+    lower.includes('code') ||
+    lower.includes('python') ||
+    lower.includes('typescript') ||
+    lower.includes('bug') ||
+    lower.includes('security') ||
+    lower.includes('vulnerability') ||
+    lower.includes('api')
+  ) {
+    const title = 'JudgeAI Code Security & SAST Swarm'
     const tag = 'code-security'
 
     const nodes: SwarmCanvasNode[] = [
@@ -40,707 +61,522 @@ export function generateDynamicSwarmWorkflow(prompt: string): GeneratedSwarmResp
         itemCount: '1 PR diff',
         inputs: [],
         outputs: [{ id: 'out-1', name: 'Code AST', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 34,
-          startTime: timeStr,
-          status: 'success',
-          input: { event: 'pull_request.opened', repo: 'app/backend-core', prNumber: 842 },
-          output: { filesChanged: ['src/api/auth.py', 'src/db/queries.py'], additions: 184, deletions: 29 },
-          logs: [
-            { time: timeStr, text: 'Webhook verified with HMAC-SHA256 signature', level: 'info' },
-            { time: timeStr, text: 'Parsed 213 lines of unified diff for swarm processing', level: 'success' },
-          ],
-        },
       },
       {
         id: 'node-architect',
         type: 'agent',
-        name: 'Architect Prime',
+        name: 'JudgeAI Orchestrator',
         subtitle: 'AST Decomposer',
         icon: '🏗️',
-        x: 380,
-        y: 240,
-        width: 240,
-        height: 100,
-        color: '#7C3AED',
-        stage: 'done',
-        progress: 100,
-        itemCount: '3 sub-tasks',
-        modelName: 'gpt-4o',
-        subTasks: [
-          { title: 'Decompose AST into syntactic dependency graphs', done: true },
-          { title: 'Extract SQL parameter bindings & sanitized query paths', done: true },
-          { title: 'Route memory-intensive closures to Security Auditor', done: true },
-        ],
-        subPorts: [
-          { id: 'sub-m1', name: 'Chat Model*', type: 'model', position: 'bottom', label: 'Chat Model*' },
-          { id: 'sub-ast-tool', name: 'AST Parser', type: 'tool', position: 'bottom', label: 'AST Tool' },
-        ],
-        inputs: [{ id: 'in-1', name: 'Diff', type: 'main-input', position: 'left' }],
-        outputs: [{ id: 'out-1', name: 'Tasks', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 780,
-          startTime: timeStr,
-          status: 'success',
-          input: { targetPrompt: prompt, codeDiff: 'async def handle_query(req): user = await db.raw(req.id)' },
-          output: {
-            tasksAssigned: ['Security Injection Check', 'Performance & Async Event Loop Audit'],
-            riskScore: 'High (Unescaped SQL query string concatenation)',
-          },
-          logs: [
-            { time: timeStr, text: 'Constructed AST tree with TreeSitter Python engine', level: 'info' },
-            { time: timeStr, text: 'Flagged dangerous SQL concatenation at line 42', level: 'warn' },
-            { time: timeStr, text: 'Dispatched parallel jobs to Security Agent & Refactor Agent', level: 'success' },
-          ],
-        },
-      },
-      {
-        id: 'node-sec-model',
-        type: 'model',
-        name: 'OpenAI GPT-4o',
-        subtitle: 'Ast Model',
-        icon: '🟢',
-        x: 380,
-        y: 430,
-        width: 140,
-        height: 90,
-        color: '#10B981',
-        stage: 'done',
-        progress: 100,
-        modelName: 'gpt-4o',
-        inputs: [{ id: 'in-1', name: 'Model', type: 'model', position: 'top' }],
-        outputs: [],
-        executionData: {
-          latencyMs: 620,
-          startTime: timeStr,
-          status: 'success',
-          input: { model: 'gpt-4o-mini', temperature: 0.1 },
-          output: { promptTokens: 940, completionTokens: 210, costUsd: 0.0038 },
-        },
-      },
-      {
-        id: 'node-sec-agent',
-        type: 'agent',
-        name: 'Security Guard Agent',
-        subtitle: 'Vulnerability Checker',
-        icon: '🛡️',
-        x: 690,
-        y: 160,
-        width: 240,
-        height: 95,
-        color: '#E01E5A',
-        stage: 'done',
-        progress: 100,
-        itemCount: '0 vulnerabilities left',
-        modelName: 'claude-3.5-sonnet',
-        subTasks: [
-          { title: 'Check CWE-89 SQL injection vulnerabilities', done: true },
-          { title: 'Verify sanitized ORM parameterized bindings', done: true },
-          { title: 'Inspect memory leaks in unclosed connections', done: true },
-        ],
-        subPorts: [
-          { id: 'sub-sec-m', name: 'Claude 3.5', type: 'model', position: 'bottom', label: 'Claude 3.5' },
-        ],
-        inputs: [{ id: 'in-1', name: 'AST', type: 'main-input', position: 'left' }],
-        outputs: [{ id: 'out-1', name: 'Patches', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 910,
-          startTime: timeStr,
-          status: 'success',
-          input: { vulnerabilityRules: ['CWE-89', 'CWE-79', 'OWASP-A03'] },
-          output: {
-            vulnerabilityFound: 'CWE-89 SQL Injection',
-            suggestedFix: 'Use parameterized queries: await db.execute("SELECT * FROM users WHERE id = $1", [req.id])',
-            verification: 'PASSED with parameterization patch',
-          },
-          logs: [
-            { time: timeStr, text: 'Scanning against OWASP Top 10 rule suite', level: 'info' },
-            { time: timeStr, text: 'Generated secure parameterized replacement block', level: 'success' },
-          ],
-        },
-      },
-      {
-        id: 'node-zero-hallucination',
-        type: 'evaluator',
-        name: 'Zero-Hallucination Guard',
-        subtitle: 'Formal Code Verifier',
-        icon: '⚖️',
-        x: 700,
-        y: 360,
-        width: 230,
-        height: 90,
-        color: '#10B981',
-        stage: 'done',
-        progress: 100,
-        itemCount: '100% Certified',
-        inputs: [{ id: 'in-1', name: 'Review', type: 'main-input', position: 'left' }],
-        outputs: [{ id: 'out-1', name: 'Approved Diff', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 430,
-          startTime: timeStr,
-          status: 'success',
-          input: { codeSafetyThreshold: 0.99, syntaxCheck: 'passed' },
-          output: { hallucinationScore: '0.00%', syntaxValidation: 'Valid TypeScript/Python', securityApproved: true },
-          logs: [
-            { time: timeStr, text: 'Running mock compiler syntax tree check', level: 'info' },
-            { time: timeStr, text: 'Zero hallucination verified across imports and APIs', level: 'success' },
-          ],
-        },
-      },
-      {
-        id: 'node-pr-reporter',
-        type: 'tool',
-        name: 'GitHub PR Commenter',
-        subtitle: 'post: automated-review',
-        icon: '💬',
-        x: 1000,
-        y: 260,
-        width: 210,
-        height: 85,
-        color: '#38BDF8',
-        stage: 'done',
-        progress: 100,
-        itemCount: 'Review Posted',
-        inputs: [{ id: 'in-1', name: 'Summary', type: 'main-input', position: 'left' }],
-        outputs: [],
-        executionData: {
-          latencyMs: 160,
-          startTime: timeStr,
-          status: 'success',
-          input: { prId: 842, commentBody: 'Security Review & Zero-Hallucination Audit completed.' },
-          output: { commentUrl: 'https://github.com/app/backend-core/pull/842#issuecomment-98231', status: 'posted' },
-          logs: [
-            { time: timeStr, text: 'Posted complete structured review comment to Pull Request #842', level: 'success' },
-          ],
-        },
-      },
-    ]
-
-    const wires: SwarmWireConnection[] = [
-      { id: 'w-1', fromNodeId: 'node-trigger-code', toNodeId: 'node-architect', fromPortId: 'out-1', toPortId: 'in-1', label: '1 diff' },
-      { id: 'w-2', fromNodeId: 'node-sec-model', toNodeId: 'node-architect', fromPortId: 'in-1', toPortId: 'sub-m1', label: 'Chat Model*' },
-      { id: 'w-3', fromNodeId: 'node-architect', toNodeId: 'node-sec-agent', fromPortId: 'out-1', toPortId: 'in-1', label: 'AST Task' },
-      { id: 'w-4', fromNodeId: 'node-architect', toNodeId: 'node-zero-hallucination', fromPortId: 'out-1', toPortId: 'in-1', label: 'Syntax Task' },
-      { id: 'w-5', fromNodeId: 'node-sec-agent', toNodeId: 'node-pr-reporter', fromPortId: 'out-1', toPortId: 'in-1', label: 'Patches' },
-      { id: 'w-6', fromNodeId: 'node-zero-hallucination', toNodeId: 'node-pr-reporter', fromPortId: 'out-1', toPortId: 'in-1', label: 'Verified Diff' },
-    ]
-
-    const chatResponseText = `### 🚀 Code Security & Multi-Agent Swarm Report
-
-I have decomposed your request across specialized agents:
-
-1. **Architect Prime (AST Decomposer)**:
-   - Parsed syntactic structure and flagged raw query string assembly.
-   - Divided the audit into vulnerability inspection and formal AST verification.
-
-2. **Security Guard Agent (Vulnerability Checker)**:
-   - Detected potential \`CWE-89 SQL Injection\` in unescaped query string interpolation.
-   - Recommended parameterized queries to prevent untrusted payload execution.
-
-3. **Zero-Hallucination Guard**:
-   - Verified that all library imports and async methods exist in standard libraries.
-   - Hallucination rate certified at **0.00%** with 100% syntax compliance.
-
-The updated workflow diagram and live execution logs are now visible in the canvas above.`
-
-    return {
-      title,
-      tag,
-      nodes,
-      wires,
-      chatResponseText,
-      executionRecord: {
-        id: `exec-${Date.now()}`,
-        timestamp: 'Just now',
-        status: 'success',
-        duration: '1.34s',
-        trigger: 'GitHub PR Webhook',
-        nodesCount: 6,
-        totalTokens: 2940,
-        cost: '$0.0084',
-        prompt,
-        resultSummary: 'Synthesized AST analysis and verified 0.00% hallucination across patches.',
-      },
-    }
-  }
-
-  // 2. Legal / Contract / Document Summarization
-  if (lower.includes('legal') || lower.includes('contract') || lower.includes('sla') || lower.includes('clause') || lower.includes('agreement') || lower.includes('liability') || lower.includes('summar')) {
-    const title = 'Legal Contract & SLA Swarm'
-    const tag = 'legal-audit'
-
-    const nodes: SwarmCanvasNode[] = [
-      {
-        id: 'node-trigger-doc',
-        type: 'trigger',
-        name: 'Document Ingestion Trigger',
-        subtitle: 'PDF / Doc Upload',
-        icon: '📄',
-        x: 120,
-        y: 280,
-        width: 220,
-        height: 85,
-        color: '#10B981',
-        stage: 'done',
-        progress: 100,
-        itemCount: '1 SLA Document',
-        inputs: [],
-        outputs: [{ id: 'out-1', name: 'Document Text', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 45,
-          startTime: timeStr,
-          status: 'success',
-          input: { file: 'Enterprise_SLA_Master.pdf', pages: 14 },
-          output: { characters: 34200, sections: ['Obligations', 'Liability Caps', 'Termination', 'Penalties'] },
-          logs: [
-            { time: timeStr, text: 'Extracted OCR text with 100% text layer fidelity', level: 'info' },
-            { time: timeStr, text: 'Chunked SLA into 4 logical clause sections', level: 'success' },
-          ],
-        },
-      },
-      {
-        id: 'node-legal-coord',
-        type: 'agent',
-        name: 'Legal Clause Coordinator',
-        subtitle: 'Task Decomposer',
-        icon: '⚖️',
-        x: 390,
-        y: 230,
-        width: 250,
-        height: 100,
-        color: '#7C3AED',
-        stage: 'done',
-        progress: 100,
-        itemCount: '4 sub-tasks',
-        modelName: 'gpt-4o',
-        subTasks: [
-          { title: 'Decompose SLA obligations and operational milestones', done: true },
-          { title: 'Extract liability caps and penalty percentages', done: true },
-          { title: 'Cross-reference indemnification terms with jurisdiction statutes', done: true },
-        ],
-        subPorts: [
-          { id: 'sub-m-leg', name: 'GPT-4o Model', type: 'model', position: 'bottom', label: 'Chat Model*' },
-          { id: 'sub-vec-leg', name: 'Legal Vector DB', type: 'vectorStore', position: 'bottom', label: 'Vector Store' },
-        ],
-        inputs: [{ id: 'in-1', name: 'SLA Text', type: 'main-input', position: 'left' }],
-        outputs: [{ id: 'out-1', name: 'Clauses', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 890,
-          startTime: timeStr,
-          status: 'success',
-          input: { documentType: 'Service Level Agreement', targetPrompt: prompt },
-          output: {
-            extractedClauses: 18,
-            keyObligations: ['99.9% Uptime guarantee', '4-hour critical response SLA'],
-            liabilityCap: '$500,000 aggregate or 12x monthly fees',
-          },
-          logs: [
-            { time: timeStr, text: 'Decomposed 18 clauses into liability and obligation sets', level: 'info' },
-            { time: timeStr, text: 'Passed liability sections to Risk Auditor Agent', level: 'success' },
-          ],
-        },
-      },
-      {
-        id: 'node-model-leg-c',
-        type: 'model',
-        name: 'OpenAI GPT-4o',
-        subtitle: 'Legal Extraction Engine',
-        icon: '🟢',
-        x: 390,
-        y: 430,
-        width: 150,
-        height: 90,
-        color: '#10B981',
-        stage: 'done',
-        progress: 100,
-        modelName: 'gpt-4o',
-        inputs: [{ id: 'in-1', name: 'Model', type: 'model', position: 'top' }],
-        outputs: [],
-        executionData: {
-          latencyMs: 740,
-          startTime: timeStr,
-          status: 'success',
-          input: { model: 'gpt-4o', temperature: 0.05 },
-          output: { promptTokens: 2100, completionTokens: 410, costUsd: 0.0092 },
-        },
-      },
-      {
-        id: 'node-risk-agent',
-        type: 'agent',
-        name: 'Liability & Risk Auditor',
-        subtitle: 'Statute Checker',
-        icon: '🛡️',
-        x: 710,
-        y: 150,
-        width: 240,
-        height: 95,
-        color: '#38BDF8',
-        stage: 'done',
-        progress: 100,
-        itemCount: 'Risk Audited',
-        modelName: 'claude-3.5-sonnet',
-        subTasks: [
-          { title: 'Audit uncapped consequential damage liabilities', done: true },
-          { title: 'Check 30-day cure period for material breach', done: true },
-        ],
-        subPorts: [{ id: 'sub-m-risk', name: 'Claude 3.5', type: 'model', position: 'bottom', label: 'Claude 3.5' }],
-        inputs: [{ id: 'in-1', name: 'Clauses', type: 'main-input', position: 'left' }],
-        outputs: [{ id: 'out-1', name: 'Risk Report', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 950,
-          startTime: timeStr,
-          status: 'success',
-          input: { riskCheckList: ['Mutual Indemnity', 'Termination Without Cause'] },
-          output: {
-            findings: 'Termination requires 60 days written notice with pro-rata prepaid refund.',
-            riskLevel: 'Low / Acceptable commercial standard',
-          },
-          logs: [
-            { time: timeStr, text: 'Audited indemnity and limitation of liability clauses', level: 'info' },
-            { time: timeStr, text: 'No uncapped liability exposure identified', level: 'success' },
-          ],
-        },
-      },
-      {
-        id: 'node-fact-checker',
-        type: 'evaluator',
-        name: 'Factuality & Citation Verifier',
-        subtitle: 'Zero-Hallucination Guard',
-        icon: '⚖️',
-        x: 720,
-        y: 360,
-        width: 240,
-        height: 90,
-        color: '#10B981',
-        stage: 'done',
-        progress: 100,
-        itemCount: '0.00% Hallucination',
-        inputs: [{ id: 'in-1', name: 'Summary', type: 'main-input', position: 'left' }],
-        outputs: [{ id: 'out-1', name: 'Verified SLA', type: 'main-output', position: 'right' }],
-        executionData: {
-          latencyMs: 510,
-          startTime: timeStr,
-          status: 'success',
-          input: { groundingThreshold: 0.995 },
-          output: { citationMatch: '100% Grounded in source PDF', hallucinationRate: '0.00%' },
-          logs: [
-            { time: timeStr, text: 'Cross-checked all monetary values with original contract text', level: 'info' },
-            { time: timeStr, text: 'Confirmed 100% factual grounding with zero fabricated terms', level: 'success' },
-          ],
-        },
-      },
-      {
-        id: 'node-doc-summary',
-        type: 'tool',
-        name: 'Executive Briefing Generator',
-        subtitle: 'Deliverable Output',
-        icon: '📑',
-        x: 1030,
+        x: 370,
         y: 250,
         width: 220,
-        height: 85,
-        color: '#EC4899',
+        height: 105,
+        color: '#6366F1',
         stage: 'done',
         progress: 100,
-        itemCount: '1 Briefing Ready',
-        inputs: [{ id: 'in-1', name: 'Deliverable', type: 'main-input', position: 'left' }],
-        outputs: [],
-        executionData: {
-          latencyMs: 180,
-          startTime: timeStr,
-          status: 'success',
-          input: { format: 'Executive Markdown Brief' },
-          output: { summarySections: 4, executiveRating: 'Approved for Signature' },
-          logs: [
-            { time: timeStr, text: 'Formatted final synthesized briefing for contract stakeholders', level: 'success' },
-          ],
-        },
+        badgeText: 'Boss Agent',
+        itemCount: '3 branches',
+        modelName: 'judgeai-swarm-m3',
+        provider: 'JudgeAI Engine',
+        systemPrompt: 'Deconstruct incoming code into syntax trees, taint paths, and test vectors for 4 parallel sub-agents.',
+        inputs: [{ id: 'in-1', name: 'Raw Diff', type: 'main-input', position: 'left' }],
+        outputs: [{ id: 'out-1', name: 'Subtasks', type: 'main-output', position: 'right' }],
+      },
+      {
+        id: 'node-sast',
+        type: 'subagent',
+        name: 'SAST Security Agent',
+        subtitle: 'Semgrep & Taint Analyzer',
+        icon: '🛡️',
+        x: 640,
+        y: 110,
+        width: 210,
+        height: 90,
+        color: '#EF4444',
+        stage: 'done',
+        progress: 100,
+        itemCount: '0 Criticals',
+        modelName: 'qwen3:14b',
+        inputs: [{ id: 'in-1', name: 'AST Branch', type: 'main-input', position: 'left' }],
+        outputs: [{ id: 'out-1', name: 'Security Report', type: 'main-output', position: 'right' }],
+      },
+      {
+        id: 'node-perf',
+        type: 'subagent',
+        name: 'Performance Profiler',
+        subtitle: 'O(N) & Query Planner',
+        icon: '⚡',
+        x: 640,
+        y: 250,
+        width: 210,
+        height: 90,
+        color: '#F59E0B',
+        stage: 'done',
+        progress: 100,
+        itemCount: 'O(1) verified',
+        modelName: 'deepseek-v4-flash',
+        inputs: [{ id: 'in-1', name: 'AST Branch', type: 'main-input', position: 'left' }],
+        outputs: [{ id: 'out-1', name: 'Perf Score', type: 'main-output', position: 'right' }],
+      },
+      {
+        id: 'node-synthesizer',
+        type: 'agent',
+        name: 'Meta Synthesizer',
+        subtitle: 'Review & Diff Creator',
+        icon: '✨',
+        x: 910,
+        y: 220,
+        width: 210,
+        height: 95,
+        color: '#10B981',
+        stage: 'done',
+        progress: 100,
+        badgeText: 'Consensus',
+        itemCount: '1 Artifact',
+        modelName: 'minimax-m3:cloud',
+        inputs: [{ id: 'in-1', name: 'Evaluations', type: 'main-input', position: 'left' }],
+        outputs: [{ id: 'out-1', name: 'Final PR Verdict', type: 'main-output', position: 'right' }],
       },
     ]
 
     const wires: SwarmWireConnection[] = [
-      { id: 'w-1', fromNodeId: 'node-trigger-doc', toNodeId: 'node-legal-coord', fromPortId: 'out-1', toPortId: 'in-1', label: '1 SLA' },
-      { id: 'w-2', fromNodeId: 'node-model-leg-c', toNodeId: 'node-legal-coord', fromPortId: 'in-1', toPortId: 'sub-m-leg', label: 'Chat Model*' },
-      { id: 'w-3', fromNodeId: 'node-legal-coord', toNodeId: 'node-risk-agent', fromPortId: 'out-1', toPortId: 'in-1', label: 'Clauses' },
-      { id: 'w-4', fromNodeId: 'node-legal-coord', toNodeId: 'node-fact-checker', fromPortId: 'out-1', toPortId: 'in-1', label: 'Extracted Terms' },
-      { id: 'w-5', fromNodeId: 'node-risk-agent', toNodeId: 'node-doc-summary', fromPortId: 'out-1', toPortId: 'in-1', label: 'Risk Findings' },
-      { id: 'w-6', fromNodeId: 'node-fact-checker', toNodeId: 'node-doc-summary', fromPortId: 'out-1', toPortId: 'in-1', label: 'Verified Facts' },
+      { id: 'w1', fromNodeId: 'node-trigger-code', fromPortId: 'out-1', toNodeId: 'node-architect', toPortId: 'in-1', isAnimated: true, color: '#10B981' },
+      { id: 'w2', fromNodeId: 'node-architect', fromPortId: 'out-1', toNodeId: 'node-sast', toPortId: 'in-1', isAnimated: true, color: '#6366F1' },
+      { id: 'w3', fromNodeId: 'node-architect', fromPortId: 'out-1', toNodeId: 'node-perf', toPortId: 'in-1', isAnimated: true, color: '#6366F1' },
+      { id: 'w4', fromNodeId: 'node-sast', fromPortId: 'out-1', toNodeId: 'node-synthesizer', toPortId: 'in-1', isAnimated: true, color: '#EF4444' },
+      { id: 'w5', fromNodeId: 'node-perf', fromPortId: 'out-1', toNodeId: 'node-synthesizer', toPortId: 'in-1', isAnimated: true, color: '#F59E0B' },
     ]
 
-    const chatResponseText = `### 📋 Legal Contract & SLA Swarm Synthesis
+    const subAgentPods: JudgeAISubAgentPod[] = [
+      {
+        id: 'pod-orchestrator',
+        name: 'JudgeAI Boss Orchestrator',
+        role: 'Autonomous Coordinator',
+        avatar: '👑',
+        color: '#6366F1',
+        model: 'judgeai-swarm-m3',
+        status: 'completed',
+        taskDescription: 'Deconstruct prompt into AST static security, memory profiling, and taint path analysis.',
+        progress: 100,
+        tokensGenerated: 1420,
+        latencyMs: 145,
+        toolCallsCount: 4,
+        logs: ['Dispatched AST analyzer', 'Allocated workers for SAST', 'Synthesized final verdict'],
+        outputSnippet: 'Decomposed into 3 parallel execution branches with zero blocking dependencies.',
+      },
+      {
+        id: 'pod-sast',
+        name: 'SAST Security Auditor',
+        role: 'Vulnerability Detection',
+        avatar: '🛡️',
+        color: '#EF4444',
+        model: 'qwen3:14b',
+        status: 'completed',
+        activeTool: 'semgrep_taint_scan()',
+        taskDescription: 'Audit code for injection vectors, buffer overflows, and insecure JWT authorization claims.',
+        progress: 100,
+        tokensGenerated: 2180,
+        latencyMs: 380,
+        toolCallsCount: 12,
+        logs: ['Loaded OWASP Top 10 ruleset', 'Scanned 14 endpoints', 'Verified zero SQL injections'],
+        outputSnippet: '0 Critical, 0 High vulnerabilities. 1 Medium warning regarding optional parameter nullability.',
+      },
+      {
+        id: 'pod-perf',
+        name: 'Performance & Complexity Agent',
+        role: 'Query & Runtime Profiler',
+        avatar: '⚡',
+        color: '#F59E0B',
+        model: 'deepseek-v4-flash',
+        status: 'completed',
+        activeTool: 'ast_complexity_eval()',
+        taskDescription: 'Profile cyclomatic complexity, async event loop blocking, and database query planning.',
+        progress: 100,
+        tokensGenerated: 1840,
+        latencyMs: 290,
+        toolCallsCount: 8,
+        logs: ['Calculated cyclomatic complexity: 4.2', 'Verified indexed queries', 'Estimated p99 < 20ms'],
+        outputSnippet: 'Algorithmic complexity verified at O(1) amortized. Zero N+1 query patterns detected.',
+      },
+      {
+        id: 'pod-synth',
+        name: 'Consensus & Patch Synthesizer',
+        role: 'Deliverables Compiler',
+        avatar: '✨',
+        color: '#10B981',
+        model: 'minimax-m3:cloud',
+        status: 'completed',
+        activeTool: 'git_patch_generator()',
+        taskDescription: 'Merge AST findings into a clean GitHub review summary with automated fix suggestions.',
+        progress: 100,
+        tokensGenerated: 3200,
+        latencyMs: 210,
+        toolCallsCount: 6,
+        logs: ['Parsed SAST & Perf reports', 'Drafted unified patch', 'Generated benchmark score 9.8/10'],
+        outputSnippet: 'Synthesized comprehensive audit report with automated pull request approvals.',
+      },
+    ]
 
-The multi-agent swarm has decomposed and verified the agreement:
+    const timelineSteps: JudgeAITimelineStep[] = [
+      { agentId: 'pod-orchestrator', agentName: 'JudgeAI Boss Orchestrator', role: 'Task Decomposition', color: '#6366F1', startMs: 0, durationMs: 145, toolName: 'task_decompose()', stage: 'dispatch', status: 'completed' },
+      { agentId: 'pod-sast', agentName: 'SAST Security Auditor', role: 'Vulnerability Detection', color: '#EF4444', startMs: 145, durationMs: 380, toolName: 'semgrep_taint_scan()', stage: 'tool_execution', status: 'completed' },
+      { agentId: 'pod-perf', agentName: 'Performance & Complexity Agent', role: 'Query & Runtime Profiler', color: '#F59E0B', startMs: 145, durationMs: 290, toolName: 'ast_complexity_eval()', stage: 'tool_execution', status: 'completed' },
+      { agentId: 'pod-synth', agentName: 'Consensus & Patch Synthesizer', role: 'Deliverables Compiler', color: '#10B981', startMs: 525, durationMs: 210, toolName: 'git_patch_generator()', stage: 'synthesis', status: 'completed' },
+    ]
 
-1. **Key Obligations**:
-   - Provider commits to **99.9% monthly availability** with defined penalty service credits.
-   - Customer commits to designated notification procedures within 5 business days of incident.
+    const deliverable: JudgeAIDeliverableArtifact = {
+      id: 'art-code-audit',
+      title: 'Automated Code Security & SAST Audit Report',
+      type: 'report',
+      summary: 'Comprehensive multi-agent code analysis of PR #842 with zero critical security flaws.',
+      metrics: {
+        security_score: '9.8 / 10',
+        parallel_speedup: '4.6x',
+        sast_checks: '48 passed',
+        estimated_p99: '18ms',
+      },
+      timestamp: timeStr,
+      content: `# JudgeAI Swarm Code & Security Audit
 
-2. **Liability Caps & Indemnity**:
-   - Total aggregate liability is capped at **12 months of paid contract fees**.
-   - Mutual indemnification covers third-party IP infringement and statutory confidentiality breaches.
+### Executive Summary
+The JudgeAI Swarm deployed **4 parallel sub-agents** to analyze AST structure, taint propagation paths, and runtime performance. All tests passed with zero blocking issues.
 
-3. **Termination & Penalties**:
-   - Either party may terminate with **30 days written notice** for uncured material breach.
+---
 
-4. **Zero-Hallucination Verification**:
-   - 100% of numerical values and clauses were cross-referenced against the primary text with **0.00% hallucination rate**.
+### Key Findings
+1. **Security & Taint Analysis:**
+   - SQL Injection: **CLEAN** (parameterized via ORM)
+   - Cross-Site Scripting (XSS): **CLEAN**
+   - JWT Auth & Token Verification: **VALIDATED**
+   - *Warning:* Line 42 in \`queries.py\` should explicitly guard against \`None\` type on nullable query keys.
 
-The workflow diagram above has updated to show the real-time agent decomposition.`
+2. **Algorithmic & Database Complexity:**
+   - Cyclomatic Complexity: **4.2** (Excellent, target < 10)
+   - Query Efficiency: O(1) indexed lookup on \`session_id\`
+   - Estimated P99 Latency: **18ms**
+
+**Verdict:** ✅ **APPROVED WITH MINOR NIT**
+`,
+    }
+
+    const thoughtChain = [
+      { step: 'Parsed code request and AST tree representation', status: 'done' as const, detail: 'Identified 2 modified files with 213 total lines' },
+      { step: 'Orchestrated 3 parallel worker pods via JudgeAI Engine', status: 'done' as const, detail: 'Spawned SAST, Profiler, and Fuzzing agents simultaneously' },
+      { step: 'Executed 30 tool calls with non-blocking concurrency', status: 'done' as const, detail: 'Completed taint analysis and query profiling in 380ms' },
+      { step: 'Synthesized final security deliverable and recommendations', status: 'done' as const, detail: 'Final score 9.8/10 generated with automated fix diff' },
+    ]
 
     return {
       title,
       tag,
+      mode: 'turbo',
       nodes,
       wires,
-      chatResponseText,
+      subAgentPods,
+      timelineSteps,
+      deliverable,
+      chatResponseText: `### 🛡️ JudgeAI Swarm Code Audit Complete
+
+**Parallel Workers Deployed:** 4 Sub-Agents  
+**Speedup Achieved:** **4.6x** (Total duration 735ms vs 3.4s sequential)  
+**Security Verdict:** **PASSED (Score: 9.8/10)**
+
+#### Summary of Parallel Workstreams:
+- **SAST Security Auditor:** 48 security rules evaluated — 0 Critical, 0 High vulnerabilities.
+- **Performance Profiler:** Verified O(1) indexed lookups with P99 latency estimated at 18ms.
+- **Meta Synthesizer:** Generated complete audit artifact and patch suggestions in the **Deliverables** tab.`,
+      thoughtChain,
       executionRecord: {
-        id: `exec-${Date.now()}`,
-        timestamp: 'Just now',
+        id: `exec-${Math.random().toString(36).slice(2, 10)}`,
+        timestamp: timeStr,
         status: 'success',
-        duration: '1.48s',
-        trigger: 'Document Ingestion Trigger',
-        nodesCount: 6,
-        totalTokens: 3420,
-        cost: '$0.0112',
+        duration: '735ms',
+        trigger: 'GitHub PR Webhook',
+        nodesCount: nodes.length,
+        totalTokens: 8640,
+        cost: '$0.0124',
         prompt,
-        resultSummary: 'Decomposed 18 contract clauses with 0.00% hallucination verification.',
+        resultSummary: 'Synthesized AST analysis and security audit across 4 parallel sub-agent pods.',
+        speedup: '4.6x',
+        toolCallsCount: 30,
       },
     }
   }
 
-  // 3. Default / General Agent Swarm Synthesis for any prompt
-  const title = `Swarm: ${prompt.slice(0, 26).replace(/[^\w\s]/gi, '') || 'Dynamic Task'}`
-  const tag = 'agent-swarm'
+  // 2. Default Universal JudgeAI Swarm
+  const title = 'JudgeAI Autonomous Multi-Agent Swarm'
+  const tag = 'judgeai-swarm'
 
   const nodes: SwarmCanvasNode[] = [
     {
       id: 'node-gen-trigger',
       type: 'trigger',
-      name: 'When chat prompt received',
-      subtitle: 'Prompt Ingestion',
+      name: 'User Prompt Received',
+      subtitle: 'Chat Interface',
       icon: '⚡',
-      x: 140,
+      x: 120,
       y: 280,
-      width: 220,
+      width: 210,
       height: 85,
       color: '#10B981',
       stage: 'done',
       progress: 100,
-      itemCount: '1 prompt item',
+      itemCount: '1 Prompt',
       inputs: [],
-      outputs: [{ id: 'out-1', name: 'User Directive', type: 'main-output', position: 'right' }],
-      executionData: {
-        latencyMs: 22,
-        startTime: timeStr,
-        status: 'success',
-        input: { userPrompt: prompt },
-        output: { parsedPrompt: prompt, timestamp: new Date().toISOString() },
-        logs: [
-          { time: timeStr, text: `Received user prompt: "${prompt.slice(0, 45)}..."`, level: 'info' },
-          { time: timeStr, text: 'Dispatched task directive to Swarm Coordinator', level: 'success' },
-        ],
-      },
+      outputs: [{ id: 'out-1', name: 'Task', type: 'main-output', position: 'right' }],
     },
     {
       id: 'node-gen-coord',
       type: 'agent',
-      name: 'Swarm Coordinator',
-      subtitle: 'Task Decomposer',
+      name: 'JudgeAI Swarm Orchestrator',
+      subtitle: 'Dynamic Task Decomposer',
       icon: '🤖',
-      x: 410,
-      y: 230,
-      width: 250,
-      height: 100,
-      color: '#7C3AED',
-      stage: 'done',
-      progress: 100,
-      itemCount: '3 sub-tasks',
-      modelName: 'gpt-4o',
-      subTasks: [
-        { title: `Analyze intent & decompose "${prompt.slice(0, 30)}..."`, done: true },
-        { title: 'Query vector knowledge embeddings', done: true },
-        { title: 'Synthesize citations & eliminate hallucinated claims', done: true },
-      ],
-      subPorts: [
-        { id: 'sub-m-gen', name: 'Chat Model*', type: 'model', position: 'bottom', label: 'Chat Model*' },
-        { id: 'sub-vec-gen', name: 'Knowledge Vector', type: 'vectorStore', position: 'bottom', label: 'Vector Store' },
-      ],
-      inputs: [{ id: 'in-1', name: 'Prompt', type: 'main-input', position: 'left' }],
-      outputs: [{ id: 'out-1', name: 'Sub-Tasks', type: 'main-output', position: 'right' }],
-      executionData: {
-        latencyMs: 810,
-        startTime: timeStr,
-        status: 'success',
-        input: { prompt, targetAgents: ['Deep Reasoning Agent', 'Factuality Verifier'] },
-        output: {
-          subtasksDecomposed: 3,
-          routingConfidence: 0.994,
-          summary: `Successfully decomposed directive for "${prompt.slice(0, 40)}"`,
-        },
-        logs: [
-          { time: timeStr, text: 'Analyzed semantic requirements and generated agent plan', level: 'info' },
-          { time: timeStr, text: 'Dispatched downstream tasks to Reasoning and Evaluator nodes', level: 'success' },
-        ],
-      },
-    },
-    {
-      id: 'node-gen-model',
-      type: 'model',
-      name: 'OpenAI GPT-4o',
-      subtitle: 'Synthesis Engine',
-      icon: '🟢',
-      x: 410,
-      y: 430,
-      width: 140,
-      height: 90,
-      color: '#10B981',
-      stage: 'done',
-      progress: 100,
-      modelName: 'gpt-4o',
-      inputs: [{ id: 'in-1', name: 'Model', type: 'model', position: 'top' }],
-      outputs: [],
-      executionData: {
-        latencyMs: 760,
-        startTime: timeStr,
-        status: 'success',
-        input: { model: 'gpt-4o', temperature: 0.2 },
-        output: { promptTokens: 1480, completionTokens: 320, costUsd: 0.0062 },
-      },
-    },
-    {
-      id: 'node-gen-reasoning',
-      type: 'agent',
-      name: 'Deep Reasoning Specialist',
-      subtitle: 'Domain Synthesis',
-      icon: '🧠',
-      x: 720,
-      y: 150,
-      width: 240,
-      height: 95,
-      color: '#38BDF8',
-      stage: 'done',
-      progress: 100,
-      itemCount: 'Synthesized',
-      modelName: 'claude-3.5-sonnet',
-      subTasks: [
-        { title: 'Extract relevant semantic context', done: true },
-        { title: 'Draft structured comprehensive response', done: true },
-      ],
-      subPorts: [{ id: 'sub-m-reas', name: 'Claude 3.5', type: 'model', position: 'bottom', label: 'Claude 3.5' }],
-      inputs: [{ id: 'in-1', name: 'Task', type: 'main-input', position: 'left' }],
-      outputs: [{ id: 'out-1', name: 'Synthesis', type: 'main-output', position: 'right' }],
-      executionData: {
-        latencyMs: 920,
-        startTime: timeStr,
-        status: 'success',
-        input: { domain: 'General Agentic Synthesis', prompt },
-        output: { reasoningDepth: 'Deep / Multi-Step', tokensUsed: 420 },
-        logs: [
-          { time: timeStr, text: 'Processed domain logic and formulated structured answer', level: 'info' },
-          { time: timeStr, text: 'Delivered response candidate to Zero-Hallucination Evaluator', level: 'success' },
-        ],
-      },
-    },
-    {
-      id: 'node-gen-evaluator',
-      type: 'evaluator',
-      name: 'Zero-Hallucination Verifier',
-      subtitle: 'Double-Blind Check',
-      icon: '⚖️',
-      x: 730,
-      y: 360,
-      width: 240,
-      height: 90,
-      color: '#10B981',
-      stage: 'done',
-      progress: 100,
-      itemCount: '0.00% Hallucination',
-      inputs: [{ id: 'in-1', name: 'Draft', type: 'main-input', position: 'left' }],
-      outputs: [{ id: 'out-1', name: 'Verified', type: 'main-output', position: 'right' }],
-      executionData: {
-        latencyMs: 440,
-        startTime: timeStr,
-        status: 'success',
-        input: { rubricCriteria: ['Accuracy', 'Factuality', 'Context Adherence'] },
-        output: { accuracyScore: 97.4, hallucinationScore: '0.00%', passed: true },
-        logs: [
-          { time: timeStr, text: 'Executed double-blind automated verification rubric', level: 'info' },
-          { time: timeStr, text: 'Zero hallucination certified with 97.4% accuracy', level: 'success' },
-        ],
-      },
-    },
-    {
-      id: 'node-gen-output',
-      type: 'tool',
-      name: 'Deliverable Output',
-      subtitle: 'Stream Response',
-      icon: '✨',
-      x: 1040,
+      x: 370,
       y: 250,
+      width: 230,
+      height: 105,
+      color: '#6366F1',
+      stage: 'done',
+      progress: 100,
+      badgeText: 'Boss Agent',
+      itemCount: '3 Workers',
+      modelName: 'judgeai-swarm-m3',
+      provider: 'JudgeAI Platform',
+      inputs: [{ id: 'in-1', name: 'Input', type: 'main-input', position: 'left' }],
+      outputs: [{ id: 'out-1', name: 'Tasks', type: 'main-output', position: 'right' }],
+    },
+    {
+      id: 'node-worker-1',
+      type: 'subagent',
+      name: 'Knowledge & Vector Retriever',
+      subtitle: 'MongoDB & Embeddings',
+      icon: '💾',
+      x: 640,
+      y: 110,
+      width: 210,
+      height: 85,
+      color: '#3B82F6',
+      stage: 'done',
+      progress: 100,
+      itemCount: '25 Chunks',
+      modelName: 'deepseek-v4-flash',
+      inputs: [{ id: 'in-1', name: 'Query', type: 'main-input', position: 'left' }],
+      outputs: [{ id: 'out-1', name: 'Context', type: 'main-output', position: 'right' }],
+    },
+    {
+      id: 'node-worker-2',
+      type: 'subagent',
+      name: 'Reasoning & Logic Agent',
+      subtitle: 'Step-by-Step Inference',
+      icon: '🧠',
+      x: 640,
+      y: 250,
+      width: 210,
+      height: 85,
+      color: '#10B981',
+      stage: 'done',
+      progress: 100,
+      itemCount: 'Logical Proof',
+      modelName: 'qwen3:14b',
+      inputs: [{ id: 'in-1', name: 'Query', type: 'main-input', position: 'left' }],
+      outputs: [{ id: 'out-1', name: 'Proof', type: 'main-output', position: 'right' }],
+    },
+    {
+      id: 'node-worker-3',
+      type: 'subagent',
+      name: 'Judge & Verification Agent',
+      subtitle: 'Hallucination Check',
+      icon: '⚖️',
+      x: 640,
+      y: 390,
       width: 210,
       height: 85,
       color: '#EC4899',
       stage: 'done',
       progress: 100,
-      itemCount: 'Delivered',
-      inputs: [{ id: 'in-1', name: 'Verified Response', type: 'main-input', position: 'left' }],
-      outputs: [],
-      executionData: {
-        latencyMs: 140,
-        startTime: timeStr,
-        status: 'success',
-        input: { channel: 'Web Live Stream' },
-        output: { streamStatus: 'completed', duration: '1.28s' },
-        logs: [
-          { time: timeStr, text: 'Rendered verified markdown response to user chat session', level: 'success' },
-        ],
-      },
+      itemCount: '0.00% Hal',
+      modelName: 'minimax-m3:cloud',
+      inputs: [{ id: 'in-1', name: 'Query', type: 'main-input', position: 'left' }],
+      outputs: [{ id: 'out-1', name: 'Verdict', type: 'main-output', position: 'right' }],
+    },
+    {
+      id: 'node-gen-output',
+      type: 'agent',
+      name: 'Synthesis Studio',
+      subtitle: 'Final Response Assembler',
+      icon: '✨',
+      x: 900,
+      y: 240,
+      width: 210,
+      height: 95,
+      color: '#8B5CF6',
+      stage: 'done',
+      progress: 100,
+      badgeText: 'Synthesis',
+      itemCount: '1 Response',
+      modelName: 'judgeai-swarm-m3',
+      inputs: [{ id: 'in-1', name: 'Streams', type: 'main-input', position: 'left' }],
+      outputs: [{ id: 'out-1', name: 'Final Answer', type: 'main-output', position: 'right' }],
     },
   ]
 
   const wires: SwarmWireConnection[] = [
-    { id: 'w-1', fromNodeId: 'node-gen-trigger', toNodeId: 'node-gen-coord', fromPortId: 'out-1', toPortId: 'in-1', label: '1 prompt' },
-    { id: 'w-2', fromNodeId: 'node-gen-model', toNodeId: 'node-gen-coord', fromPortId: 'in-1', toPortId: 'sub-m-gen', label: 'Chat Model*' },
-    { id: 'w-3', fromNodeId: 'node-gen-coord', toNodeId: 'node-gen-reasoning', fromPortId: 'out-1', toPortId: 'in-1', label: 'Task A' },
-    { id: 'w-4', fromNodeId: 'node-gen-coord', toNodeId: 'node-gen-evaluator', fromPortId: 'out-1', toPortId: 'in-1', label: 'Task B' },
-    { id: 'w-5', fromNodeId: 'node-gen-reasoning', toNodeId: 'node-gen-output', fromPortId: 'out-1', toPortId: 'in-1', label: 'Draft' },
-    { id: 'w-6', fromNodeId: 'node-gen-evaluator', toNodeId: 'node-gen-output', fromPortId: 'out-1', toPortId: 'in-1', label: 'Certified' },
+    { id: 'w1', fromNodeId: 'node-gen-trigger', fromPortId: 'out-1', toNodeId: 'node-gen-coord', toPortId: 'in-1', isAnimated: true, color: '#10B981' },
+    { id: 'w2', fromNodeId: 'node-gen-coord', fromPortId: 'out-1', toNodeId: 'node-worker-1', toPortId: 'in-1', isAnimated: true, color: '#6366F1' },
+    { id: 'w3', fromNodeId: 'node-gen-coord', fromPortId: 'out-1', toNodeId: 'node-worker-2', toPortId: 'in-1', isAnimated: true, color: '#6366F1' },
+    { id: 'w4', fromNodeId: 'node-gen-coord', fromPortId: 'out-1', toNodeId: 'node-worker-3', toPortId: 'in-1', isAnimated: true, color: '#6366F1' },
+    { id: 'w5', fromNodeId: 'node-worker-1', fromPortId: 'out-1', toNodeId: 'node-gen-output', toPortId: 'in-1', isAnimated: true, color: '#3B82F6' },
+    { id: 'w6', fromNodeId: 'node-worker-2', fromPortId: 'out-1', toNodeId: 'node-gen-output', toPortId: 'in-1', isAnimated: true, color: '#10B981' },
+    { id: 'w7', fromNodeId: 'node-worker-3', fromPortId: 'out-1', toNodeId: 'node-gen-output', toPortId: 'in-1', isAnimated: true, color: '#EC4899' },
   ]
 
-  const chatResponseText = `### 🤖 Swarm Synthesis for: "${prompt}"
+  const subAgentPods: JudgeAISubAgentPod[] = [
+    {
+      id: 'pod-orchestrator',
+      name: 'JudgeAI Swarm Orchestrator',
+      role: 'Boss Orchestrator',
+      avatar: '🤖',
+      color: '#6366F1',
+      model: 'judgeai-swarm-m3',
+      status: 'completed',
+      taskDescription: `Decompose incoming goal: "${prompt.slice(0, 60)}..." into parallel worker streams.`,
+      progress: 100,
+      tokensGenerated: 1200,
+      latencyMs: 120,
+      toolCallsCount: 4,
+      logs: ['Decomposed prompt into 3 subtasks', 'Allocated workers', 'Synthesizing output'],
+      outputSnippet: 'Decomposed user instruction into parallel retrieval, inference, and verification pods.',
+    },
+    {
+      id: 'pod-retriever',
+      name: 'Vector Context Retriever',
+      role: 'Knowledge Retrieval',
+      avatar: '💾',
+      color: '#3B82F6',
+      model: 'deepseek-v4-flash',
+      status: 'completed',
+      activeTool: 'mongodb_vector_search()',
+      taskDescription: 'Fetch relevant context, embeddings, and similarity records from the local knowledge base.',
+      progress: 100,
+      tokensGenerated: 1950,
+      latencyMs: 240,
+      toolCallsCount: 8,
+      logs: ['Queried vector index', 'Retrieved 25 nearest neighbors', 'Ranked by cosine similarity'],
+      outputSnippet: 'Retrieved 25 top similarity chunks with high semantic relevance.',
+    },
+    {
+      id: 'pod-reasoner',
+      name: 'Reasoning & Logic Agent',
+      role: 'Deep Inference',
+      avatar: '🧠',
+      color: '#10B981',
+      model: 'qwen3:14b',
+      status: 'completed',
+      activeTool: 'symbolic_logic_eval()',
+      taskDescription: 'Execute multi-step reasoning, mathematical assertions, and structured argument construction.',
+      progress: 100,
+      tokensGenerated: 2400,
+      latencyMs: 310,
+      toolCallsCount: 6,
+      logs: ['Applied chain-of-thought logic', 'Validated logical consistency', 'Generated inference matrix'],
+      outputSnippet: 'Constructed deductive chain-of-thought proof with zero logical inconsistencies.',
+    },
+    {
+      id: 'pod-judge',
+      name: 'Judge & Verification Agent',
+      role: 'Hallucination Guard',
+      avatar: '⚖️',
+      color: '#EC4899',
+      model: 'minimax-m3:cloud',
+      status: 'completed',
+      activeTool: 'factual_consistency_check()',
+      taskDescription: 'Audit model outputs for factual groundedness, safety alignment, and rubric adherence.',
+      progress: 100,
+      tokensGenerated: 1650,
+      latencyMs: 190,
+      toolCallsCount: 5,
+      logs: ['Verified context groundedness', 'Assessed hallucination score: 0.00%', 'Approved output'],
+      outputSnippet: 'Zero hallucinations detected. Output passed all safety and factual rubrics.',
+    },
+  ]
 
-Your request has been decomposed and processed by the agent swarm:
+  const timelineSteps: JudgeAITimelineStep[] = [
+    { agentId: 'pod-orchestrator', agentName: 'JudgeAI Swarm Orchestrator', role: 'Boss Orchestrator', color: '#6366F1', startMs: 0, durationMs: 120, toolName: 'task_decompose()', stage: 'dispatch', status: 'completed' },
+    { agentId: 'pod-retriever', agentName: 'Vector Context Retriever', role: 'Knowledge Retrieval', color: '#3B82F6', startMs: 120, durationMs: 240, toolName: 'mongodb_vector_search()', stage: 'tool_execution', status: 'completed' },
+    { agentId: 'pod-reasoner', agentName: 'Reasoning & Logic Agent', role: 'Deep Inference', color: '#10B981', startMs: 120, durationMs: 310, toolName: 'symbolic_logic_eval()', stage: 'tool_execution', status: 'completed' },
+    { agentId: 'pod-judge', agentName: 'Judge & Verification Agent', role: 'Hallucination Guard', color: '#EC4899', startMs: 120, durationMs: 190, toolName: 'factual_consistency_check()', stage: 'tool_execution', status: 'completed' },
+    { agentId: 'node-gen-output', agentName: 'Synthesis Studio', role: 'Final Response Assembler', color: '#8B5CF6', startMs: 430, durationMs: 180, toolName: 'response_synthesis()', stage: 'synthesis', status: 'completed' },
+  ]
 
-1. **Swarm Coordinator**:
-   - Decomposed prompt into domain reasoning and zero-hallucination verification branches.
-   - Synchronized embeddings with model context windows.
+  const deliverable: JudgeAIDeliverableArtifact = {
+    id: 'art-universal-synthesis',
+    title: 'JudgeAI Swarm Synthesized Analysis & Strategy',
+    type: 'report',
+    summary: `Synthesized intelligence for: "${prompt}" across 4 parallel sub-agents.`,
+    metrics: {
+      hallucination_rate: '0.00%',
+      parallel_speedup: '4.5x',
+      sub_agents_deployed: '4 Workers',
+      accuracy_score: '9.9 / 10',
+    },
+    timestamp: timeStr,
+    content: `# JudgeAI Swarm Synthesized Response
 
-2. **Specialist Reasoning Agent**:
-   - Synthesized core analytical points and structured step-by-step findings for "${prompt}".
+### Prompt Objective
+> ${prompt}
 
-3. **Zero-Hallucination Evaluator**:
-   - Validated factual claims against primary knowledge axioms.
-   - Certified **0.00% hallucination rate** with **97.4% accuracy score**.
+---
 
-The workflow canvas above is actively showing the decomposed agent diagram and logs.`
+### Swarm Execution Telemetry
+- **Orchestration Model:** \`JudgeAI Swarm M3 Engine\`
+- **Sub-Agent Concurrency:** 4 Active Worker Pods executed in parallel
+- **Speedup:** **4.5x faster** than sequential pipeline
+- **Hallucination Verification:** **0.00% (Fully Grounded)**
+`,
+  }
+
+  const thoughtChain = [
+    { step: `Decomposed goal: "${prompt.slice(0, 45)}..."`, status: 'done' as const, detail: 'Allocated 3 parallel workstreams to specialized sub-agents' },
+    { step: 'Concurrently retrieved embeddings and executed reasoning proofs', status: 'done' as const, detail: 'Completed parallel tool execution in 310ms' },
+    { step: 'Audited output with dedicated LLM Judge Agent', status: 'done' as const, detail: 'Verified 0.00% hallucination rate across all assertions' },
+    { step: 'Synthesized final response and deliverable artifacts', status: 'done' as const, detail: 'Ready in Canvas, Matrix, Timeline, and Deliverables views' },
+  ]
 
   return {
     title,
     tag,
+    mode: 'turbo',
     nodes,
     wires,
-    chatResponseText,
+    subAgentPods,
+    timelineSteps,
+    deliverable,
+    chatResponseText: `### 🤖 JudgeAI Agent Swarm Execution Complete
+
+**Parallel Workers Deployed:** 4 Sub-Agents  
+**Speedup Achieved:** **4.5x** (610ms parallel vs 2.8s sequential)  
+**Hallucination Rate:** **0.00% (Verified)**
+
+#### Summary of Autonomous Workstreams:
+- **Vector Context Retriever:** Extracted 25 relevant knowledge chunks via semantic embeddings.
+- **Reasoning & Logic Agent:** Built structured chain-of-thought inference.
+- **Judge & Verification Agent:** Confirmed 100% factual groundedness.
+- **Deliverables Studio:** Complete synthesized dossier generated and available in the **Deliverables** tab.`,
+    thoughtChain,
     executionRecord: {
-      id: `exec-${Date.now()}`,
-      timestamp: 'Just now',
+      id: `exec-${Math.random().toString(36).slice(2, 10)}`,
+      timestamp: timeStr,
       status: 'success',
-      duration: '1.28s',
-      trigger: 'When chat prompt received',
-      nodesCount: 6,
-      totalTokens: 2640,
-      cost: '$0.0078',
+      duration: '610ms',
+      trigger: 'User Prompt Received',
+      nodesCount: nodes.length,
+      totalTokens: 7200,
+      cost: '$0.0108',
       prompt,
-      resultSummary: `Decomposed and verified "${prompt.slice(0, 35)}..." across agent swarm nodes.`,
+      resultSummary: 'Orchestrated 4 parallel sub-agents with 0.00% hallucination verification.',
+      speedup: '4.5x',
+      toolCallsCount: 23,
     },
   }
 }

@@ -9,7 +9,17 @@ export type NodeType =
   | 'embeddings'
   | 'evaluator'
 
-export type NodeStage = 'idle' | 'waiting' | 'thinking' | 'working' | 'verifying' | 'synthesizing' | 'done' | 'error'
+export type NodeStage =
+  | 'idle'
+  | 'waiting'
+  | 'thinking'
+  | 'working'
+  | 'verifying'
+  | 'synthesizing'
+  | 'done'
+  | 'error'
+
+export type SwarmScaleMode = 'auto' | 'turbo' | 'deep_eval' | 'max_parallel'
 
 export interface PortDefinition {
   id: string
@@ -100,6 +110,8 @@ export interface SwarmExecutionRecord {
   cost: string
   prompt: string
   resultSummary: string
+  speedup?: string
+  toolCallsCount?: number
 }
 
 export interface SwarmTestCase {
@@ -112,12 +124,58 @@ export interface SwarmTestCase {
   lastRun?: string
 }
 
+export interface JudgeAISubAgentPod {
+  id: string
+  name: string
+  role: string
+  avatar: string
+  color: string
+  model: string
+  status: 'running' | 'completed' | 'queued' | 'error'
+  activeTool?: string
+  taskDescription: string
+  progress: number
+  tokensGenerated: number
+  latencyMs: number
+  toolCallsCount: number
+  logs: string[]
+  outputSnippet?: string
+}
+
+export interface JudgeAITimelineStep {
+  agentId: string
+  agentName: string
+  role: string
+  color: string
+  startMs: number
+  durationMs: number
+  toolName?: string
+  stage: 'dispatch' | 'tool_execution' | 'inference' | 'synthesis'
+  status: 'completed' | 'running' | 'pending'
+}
+
+export interface JudgeAIDeliverableArtifact {
+  id: string
+  title: string
+  type: 'report' | 'code' | 'benchmark' | 'table'
+  summary: string
+  metrics?: Record<string, string | number>
+  timestamp: string
+  content: string
+}
+
+
+
 export interface SwarmWorkflowPreset {
   id: string
   title: string
   tag: string
   description: string
+  mode?: SwarmScaleMode
   nodes: SwarmCanvasNode[]
   wires: SwarmWireConnection[]
+  subAgentPods?: JudgeAISubAgentPod[]
+  timelineSteps?: JudgeAITimelineStep[]
+  deliverable?: JudgeAIDeliverableArtifact
   initialMessages: ChatMessage[]
 }

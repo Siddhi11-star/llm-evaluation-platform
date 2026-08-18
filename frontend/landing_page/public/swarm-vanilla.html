@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JudgeAI Autonomous Swarm Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0a14;
+      --card-bg: #14121e;
+      --card-deep: #0e0d16;
+      --border: #2a2638;
+      --border-faint: #1f1c2b;
+      --text: #f4f4f6;
+      --text-muted: #8e8a9f;
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139, 92, 246, 0.25);
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --pink: #ec4899;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    header {
+      height: 56px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(20, 18, 30, 0.8);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--purple);
+      text-transform: uppercase;
+    }
+    .container {
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    /* Input Hero */
+    .input-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      line-height: 1.5;
+    }
+    .input-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-faint);
+      padding-top: 12px;
+      margin-top: 8px;
+    }
+    .btn-send {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      border: none;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-send:hover { opacity: 0.9; transform: translateY(-1px); }
+    /* Quick Pills */
+    .pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      background: var(--card-deep);
+      border: 1px solid var(--border-faint);
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pill:hover { border-color: var(--purple); color: var(--text); }
+    /* Telemetry Bar */
+    .telemetry-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .tele-item { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+    .tele-item strong { color: var(--text); }
+    /* Topology Centerpiece */
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) { .grid-layout { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--purple);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    /* Topology nodes */
+    .topology-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+    }
+    .node {
+      width: 100%;
+      max-width: 360px;
+      background: var(--card-deep);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .node:hover, .node.active {
+      border-color: var(--purple);
+      box-shadow: 0 0 20px var(--purple-glow);
+    }
+    .node-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .node-title { font-weight: 700; font-size: 13px; }
+    .node-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-faint);
+    }
+    .worker-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+    @media (max-width: 600px) { .worker-row { grid-template-columns: 1fr; } }
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--emerald);
+    }
+    .status-skipped { color: var(--text-muted); }
+    /* Rubric Breakdown */
+    .rubric-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .rubric-card {
+      background: var(--card-deep);
+      border: 1px solid var(--border-faint);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .rubric-name { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); text-transform: uppercase; }
+    .rubric-val { font-size: 16px; font-weight: 800; color: var(--text); margin: 4px 0; }
+    /* Leaderboard */
+    .best-model-box {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    /* Dossier */
+    .dossier-box {
+      background: var(--card-deep);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+      max-height: 250px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>👑</span>
+      <span>JudgeAI Swarm</span>
+      <span class="badge">Parallel Multi-Agent</span>
+    </div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--emerald);">
+      ● Backend: Flask /api/swarm/run
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Prompt Input Hero -->
+    <div class="input-box">
+      <textarea id="promptInput" rows="2" placeholder="Ask JudgeAI Swarm anything... (e.g. 'Compare Qwen3 14B vs Llama 3.3 70B' or 'hi')"></textarea>
+      <div class="input-toolbar">
+        <div class="pills-row">
+          <button class="pill" onclick="setQuery('hi')">👋 "hi" (Trivial Triage)</button>
+          <button class="pill" onclick="setQuery('Compare Qwen3 14B vs Llama 3.3 70B across reasoning and accuracy')">⚖️ LLM Benchmark</button>
+          <button class="pill" onclick="setQuery('Audit code security for SQL injection and AST taint vectors')">🛡️ Code Security</button>
+        </div>
+        <button id="sendBtn" class="btn-send" onclick="submitSwarm()">
+          <span>Execute Swarm</span>
+          <span>⚡</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Telemetry Bar -->
+    <div class="telemetry-bar">
+      <div class="tele-item">Mode: <strong id="modeLabel">Substantive Swarm</strong></div>
+      <div class="tele-item">Reconciled Latency: <strong id="latencyLabel">184ms</strong></div>
+      <div class="tele-item">Total Tokens: <strong id="tokensLabel">1,340</strong></div>
+      <div class="tele-item">Cost: <strong id="costLabel" style="color: var(--emerald);">$0.0020</strong></div>
+      <div class="tele-item">Status: <strong id="statusLabel" style="color: var(--emerald);">Completed ✓</strong></div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid-layout">
+      <!-- Left Column: Swarm Execution Output & Synthesis -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚡ Swarm Execution Output & Synthesis</span>
+          <span id="topologySubtitle" style="color: var(--purple); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: none;">minimax-m3:cloud</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 8px;">
+          <!-- Orchestrator / Direct Response Card -->
+          <div style="background: var(--card-deep); border: 1px solid var(--border); border-radius: 14px; padding: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--purple);">👑 Orchestrator Response</span>
+              <span class="status-badge" id="orchBadge">✓ Completed</span>
+            </div>
+            <div id="orchTaskText" style="font-size: 12px; color: var(--text); line-height: 1.6; white-space: pre-wrap;">
+              Goal decomposed into parallel worker execution streams.
+            </div>
+            <div class="node-meta" style="margin-top: 10px;">
+              <span>Model: <strong id="orchModel">minimax-m3:cloud</strong></span>
+              <span id="orchLatency">184ms · 1,340 tokens</span>
+            </div>
+          </div>
+
+          <!-- Synthesized Multi-Agent Dossier -->
+          <div style="background: var(--card-deep); border: 1px solid var(--border); border-radius: 14px; padding: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--emerald);">📄 Executive Synthesis Dossier</span>
+              <span style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);" id="dossierTimestamp">Just now</span>
+            </div>
+            <div id="dossierContent" style="font-size: 12px; line-height: 1.6; max-height: 280px; overflow-y: auto; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; color: var(--text);">
+              Running execution...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Final Swarm Result & Output -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Result Card -->
+        <div class="card">
+          <div class="card-title">
+            <span>Final Swarm Result</span>
+            <span class="badge" id="confidenceBadge">Confidence: High</span>
+          </div>
+
+          <div id="rubricContainer">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <span style="font-size: 12px; color: var(--text-muted);">Multi-Agent Composite Score</span>
+              <span style="font-size: 22px; font-weight: 800; color: var(--emerald);" id="overallScoreVal">93.7 / 100</span>
+            </div>
+
+            <div class="rubric-grid">
+              <div class="rubric-card">
+                <div class="rubric-name">Accuracy</div>
+                <div class="rubric-val" id="scoreAcc">94.8</div>
+              </div>
+              <div class="rubric-card">
+                <div class="rubric-name">Reasoning</div>
+                <div class="rubric-val" id="scoreReas">93.5</div>
+              </div>
+              <div class="rubric-card">
+                <div class="rubric-name">Grounding</div>
+                <div class="rubric-val" id="scoreGround">96.5</div>
+              </div>
+              <div class="rubric-card">
+                <div class="rubric-name">Safety</div>
+                <div class="rubric-val" id="scoreSafe">99.0</div>
+              </div>
+              <div class="rubric-card">
+                <div class="rubric-name">Consistency</div>
+                <div class="rubric-val" id="scoreConsist">91.5</div>
+              </div>
+            </div>
+
+            <!-- Best Model -->
+            <div class="best-model-box" id="bestModelBox">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">🏆</span>
+                <div>
+                  <div style="font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--purple); font-weight: 700;">BEST PERFORMING MODEL</div>
+                  <div style="font-size: 13px; font-weight: 700;" id="bestModelName">glm-5.2:cloud</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
+                <div>Score: <strong id="bestModelScore" style="color: var(--emerald);">93.7</strong></div>
+                <div>Cost: <strong id="bestModelCost">$0.0018</strong></div>
+                <div>Latency: <strong id="bestModelLatency" style="color: var(--purple);">64ms</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trivial skipped banner -->
+          <div id="trivialBanner" style="display: none; padding: 14px; background: rgba(139, 92, 246, 0.08); border-radius: 12px; font-size: 12px; line-height: 1.5; color: var(--text-muted);">
+            <strong style="color: var(--text);">Triage Short-Circuit Active:</strong> Conversational greeting detected. Direct orchestrator reply returned with 0 worker compute overhead. Rubric scoring bypassed.
+          </div>
+        </div>
+
+        <!-- Output Dossier -->
+        <div class="card">
+          <div class="card-title">
+            <span>Executive Output Dossier</span>
+            <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);" id="dossierTimestamp">Just now</span>
+          </div>
+          <div class="dossier-box" id="dossierContent">Running execution...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSession = null;
+
+    function setQuery(text) {
+      document.getElementById('promptInput').value = text;
+      submitSwarm();
+    }
+
+    async function submitSwarm() {
+      const prompt = document.getElementById('promptInput').value.trim();
+      if (!prompt) return;
+
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span>Running...</span>';
+
+      try {
+        const res = await fetch('http://localhost:5002/api/swarm/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt, model: 'minimax-m3:cloud' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          renderSession(data);
+        }
+      } catch (err) {
+        console.error('API call failed:', err);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<span>Execute Swarm</span> <span>⚡</span>';
+      }
+    }
+
+    function renderSession(s) {
+      currentSession = s;
+
+      // Telemetry
+      document.getElementById('modeLabel').innerText = s.is_trivial ? 'Triage (Short-Circuit)' : 'Parallel Swarm (4-Agent)';
+      document.getElementById('latencyLabel').innerText = s.elapsedTime;
+      document.getElementById('tokensLabel').innerText = Number(s.totalTokens).toLocaleString();
+      document.getElementById('costLabel').innerText = s.cost;
+      document.getElementById('statusLabel').innerText = 'Completed ✓';
+
+      // Orchestrator
+      document.getElementById('orchModel').innerText = s.orchestrator.model;
+      document.getElementById('orchLatency').innerText = s.orchestrator.latency + ' · ' + s.orchestrator.tokens + ' tok';
+      document.getElementById('orchTaskText').innerText = s.orchestrator.task;
+
+      // Workers & Synthesis
+      if (s.is_trivial) {
+        document.getElementById('orchBadge').innerText = '✓ Direct Reply';
+        document.getElementById('w1Badge').innerText = '○ Skipped';
+        document.getElementById('w2Badge').innerText = '○ Skipped';
+        document.getElementById('w3Badge').innerText = '○ Skipped';
+        document.getElementById('synthBadge').innerText = '○ Skipped';
+
+        document.getElementById('rubricContainer').style.display = 'none';
+        document.getElementById('trivialBanner').style.display = 'block';
+        document.getElementById('confidenceBadge').innerText = 'Triage Direct Reply';
+      } else {
+        document.getElementById('orchBadge').innerText = '✓ Completed';
+        document.getElementById('w1Badge').innerText = '✓ ' + (s.tasks[0]?.latencyMs || 64) + 'ms';
+        document.getElementById('w2Badge').innerText = '✓ ' + (s.tasks[1]?.latencyMs || 45) + 'ms';
+        document.getElementById('w3Badge').innerText = '✓ ' + (s.tasks[2]?.latencyMs || 72) + 'ms';
+        document.getElementById('synthBadge').innerText = '✓ Meta Ready';
+
+        document.getElementById('w1Model').innerText = s.tasks[0]?.model || 'glm-5.2:cloud';
+        document.getElementById('w2Model').innerText = s.tasks[1]?.model || 'deepseek-v4-pro:cloud';
+        document.getElementById('w3Model').innerText = s.tasks[2]?.model || 'nemotron-3-super:cloud';
+        document.getElementById('synthModel').innerText = s.synthesisNode.model;
+
+        document.getElementById('rubricContainer').style.display = 'block';
+        document.getElementById('trivialBanner').style.display = 'none';
+
+        if (s.evaluationResult) {
+          document.getElementById('overallScoreVal').innerText = s.evaluationResult.overallScore + ' / 100';
+          document.getElementById('scoreAcc').innerText = s.evaluationResult.criteria.accuracy;
+          document.getElementById('scoreReas').innerText = s.evaluationResult.criteria.reasoning;
+          document.getElementById('scoreGround').innerText = s.evaluationResult.criteria.groundedness;
+          document.getElementById('scoreSafe').innerText = s.evaluationResult.criteria.safety;
+          document.getElementById('scoreConsist').innerText = s.evaluationResult.criteria.consistency;
+          document.getElementById('confidenceBadge').innerText = 'Confidence: ' + s.evaluationResult.confidence;
+
+          document.getElementById('bestModelName').innerText = s.evaluationResult.bestModel.name;
+          document.getElementById('bestModelScore').innerText = s.evaluationResult.bestModel.score;
+          document.getElementById('bestModelCost').innerText = s.evaluationResult.bestModel.cost;
+          document.getElementById('bestModelLatency').innerText = s.evaluationResult.bestModel.latency;
+        }
+      }
+
+      // Dossier
+      if (s.deliverable) {
+        document.getElementById('dossierContent').innerText = s.deliverable.content;
+        document.getElementById('dossierTimestamp').innerText = s.deliverable.timestamp;
+      }
+    }
+
+    // Run initial demo query
+    window.onload = () => {
+      document.getElementById('promptInput').value = "Compare Qwen3 14B vs Llama 3.3 70B across reasoning and accuracy";
+      submitSwarm();
+    };
+  </script>
+</body>
+</html>

@@ -10,7 +10,9 @@
     "format": "oxfmt"
   },
   "dependencies": {
+    "@radix-ui/react-avatar": "^1.2.6",
     "@radix-ui/react-select": "^2.3.7",
+    "ai": "^7.0.66",
     "clsx": "^2.1.1",
     "framer-motion": "^13.1.0",
     "lucide-react": "^1.31.0",

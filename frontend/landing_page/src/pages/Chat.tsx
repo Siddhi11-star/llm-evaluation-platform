@@ -1397,10 +1397,10 @@ export default function ChatPage() {
                   style={{
                     background: 'var(--color-card, #14121E)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 22,
-                    padding: '16px 18px 14px',
+                    borderRadius: 18,
+                    padding: '12px 16px 10px',
                     position: 'relative',
-                    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+                    boxShadow: '0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04)',
                     backdropFilter: 'blur(20px)',
                   }}
                 >
@@ -1416,7 +1416,7 @@ export default function ChatPage() {
 
                   {/* Attached Files / Photos Preview Chips */}
                   {attachedFiles.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingBottom: 10, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 10 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingBottom: 8, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 8 }}>
                       {attachedFiles.map((file, idx) => (
                         <div
                           key={idx}
@@ -1427,14 +1427,14 @@ export default function ChatPage() {
                             background: 'rgba(255, 255, 255, 0.07)',
                             border: '1px solid rgba(255, 255, 255, 0.12)',
                             borderRadius: 8,
-                            padding: '4px 8px',
+                            padding: '3px 8px',
                             fontSize: 12,
                             color: 'var(--color-foreground)',
                             maxWidth: 240,
                           }}
                         >
                           {file.type.startsWith('image/') ? (
-                            <img src={file.url || file.content} alt={file.name} style={{ width: 22, height: 22, objectFit: 'cover', borderRadius: 4 }} />
+                            <img src={file.url || file.content} alt={file.name} style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: 4 }} />
                           ) : (
                             <span style={{ fontSize: 13 }}>📄</span>
                           )}
@@ -1475,23 +1475,25 @@ export default function ChatPage() {
                       }
                     }}
                     placeholder={isListening ? "🎙️ Listening... Speak now" : "Ask anything..."}
-                    rows={2}
+                    rows={1}
                     style={{
                       width: '100%',
                       background: 'transparent',
                       border: 'none',
-                      padding: '4px 2px 8px',
-                      fontSize: 15,
+                      padding: '2px 2px 4px',
+                      fontSize: 14.5,
                       color: 'var(--color-foreground)',
                       outline: 'none',
                       fontFamily: 'Inter, sans-serif',
                       resize: 'none',
+                      minHeight: 38,
+                      maxHeight: 120,
                       boxSizing: 'border-box',
                     }}
                   />
 
                   {/* Bottom Toolbar: Model on left | + and Mic/Send on right */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 2 }}>
                     {/* Left: Model Selector Capsule + Parameter / Effort Filter Button */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative' }}>
                       {/* Model Selector Button */}
@@ -1987,16 +1989,16 @@ export default function ChatPage() {
           </div>
 
           {/* Bottom Message Input Box */}
-          <div style={{ borderTop: '1px solid var(--color-border)', padding: '16px 24px', background: 'var(--color-background)' }}>
+          <div style={{ borderTop: '1px solid var(--color-border)', padding: '10px 24px 10px', background: 'var(--color-background)', flexShrink: 0 }}>
             <div style={{ maxWidth: 800, margin: '0 auto' }}>
               <div
                 style={{
                   background: 'var(--color-card, #14121E)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 22,
-                  padding: '16px 18px 14px',
+                  borderRadius: 18,
+                  padding: '10px 14px 8px',
                   position: 'relative',
-                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04)',
                   backdropFilter: 'blur(20px)',
                 }}
               >
@@ -2012,7 +2014,7 @@ export default function ChatPage() {
 
                 {/* Attached Files / Photos Preview Chips */}
                 {attachedFiles.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingBottom: 10, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 10 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingBottom: 8, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: 8 }}>
                     {attachedFiles.map((file, idx) => (
                       <div
                         key={idx}
@@ -2023,14 +2025,14 @@ export default function ChatPage() {
                           background: 'rgba(255, 255, 255, 0.07)',
                           border: '1px solid rgba(255, 255, 255, 0.12)',
                           borderRadius: 8,
-                          padding: '4px 8px',
+                          padding: '3px 8px',
                           fontSize: 12,
                           color: 'var(--color-foreground)',
                           maxWidth: 240,
                         }}
                       >
                         {file.type.startsWith('image/') ? (
-                          <img src={file.url || file.content} alt={file.name} style={{ width: 22, height: 22, objectFit: 'cover', borderRadius: 4 }} />
+                          <img src={file.url || file.content} alt={file.name} style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: 4 }} />
                         ) : (
                           <span style={{ fontSize: 13 }}>📄</span>
                         )}
@@ -2071,23 +2073,25 @@ export default function ChatPage() {
                     }
                   }}
                   placeholder={isListening ? "🎙️ Listening... Speak now" : "Ask anything..."}
-                  rows={2}
+                  rows={1}
                   style={{
                     width: '100%',
                     background: 'transparent',
                     border: 'none',
-                    padding: '4px 2px 8px',
-                    fontSize: 15,
+                    padding: '2px 2px 4px',
+                    fontSize: 14.5,
                     color: 'var(--color-foreground)',
                     outline: 'none',
                     fontFamily: 'Inter, sans-serif',
                     resize: 'none',
+                    minHeight: 36,
+                    maxHeight: 120,
                     boxSizing: 'border-box',
                   }}
                 />
 
                 {/* Bottom Toolbar: Model on left | + and Mic/Send on right */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 2 }}>
                   {/* Left: Model Selector Capsule + Parameter / Effort Filter Button */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative', flexWrap: 'nowrap' }}>
                     <button
