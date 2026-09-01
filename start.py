@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Unified launcher for JudgeAI:
+Unified cross-platform launcher for JudgeAI:
 - Chat Backend Service (FastAPI / MiniMax / Ollama) on http://localhost:8000
+- Evaluations Service (FastAPI / 6 Judge Rubrics) on http://localhost:8001
+- Pairwise Judge Agent Service (FastAPI) on http://localhost:8002
+- Advisor Agent Service (FastAPI / Model Consultant) on http://localhost:8003
 - Agent Swarm Service (FastAPI / Multi-Agent) on http://localhost:5002
 - Frontend Web App (Vite + React) on http://localhost:5173
 """
@@ -15,6 +18,9 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent
 CHAT_DIR = ROOT_DIR / "backend" / "chat"
+EVALS_DIR = ROOT_DIR / "backend" / "evaluations"
+JUDGE_DIR = ROOT_DIR / "backend" / "judge_agent"
+ADVISOR_DIR = ROOT_DIR / "backend" / "advisor_agent"
 SWARM_DIR = ROOT_DIR / "backend" / "agent_swarm"
 FRONTEND_DIR = ROOT_DIR / "frontend" / "landing_page"
 
@@ -71,7 +77,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     print("\033[1;36m" + "=" * 60)
-    print("    ⚖️  JudgeAI Evaluation & Multi-Agent Swarm System      ")
+    print("    ⚖️  JudgeAI Evaluation, Multi-Agent & Swarm System      ")
     print("=" * 60 + "\033[0m\n")
 
     check_and_setup_venv()
@@ -79,23 +85,24 @@ def main():
 
     uvicorn_cmd = str(UVICORN_EXE) if UVICORN_EXE.exists() else "uvicorn"
 
-    # 1. Start Chat Backend
-    print("\033[1;34m[*] Launching Chat Backend (Port 8000)...\033[0m")
-    p_chat = subprocess.Popen(
-        [uvicorn_cmd, "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
-        cwd=str(CHAT_DIR),
-    )
-    processes.append(p_chat)
+    # Define all backend services
+    services = [
+        ("Chat Backend", CHAT_DIR, 8000),
+        ("Evaluations Service", EVALS_DIR, 8001),
+        ("Judge Agent Service", JUDGE_DIR, 8002),
+        ("Advisor Agent Service", ADVISOR_DIR, 8003),
+        ("Agent Swarm Service", SWARM_DIR, 5002),
+    ]
 
-    # 2. Start Swarm Backend
-    print("\033[1;34m[*] Launching Agent Swarm Service (Port 5002)...\033[0m")
-    p_swarm = subprocess.Popen(
-        [uvicorn_cmd, "main:app", "--host", "0.0.0.0", "--port", "5002", "--reload"],
-        cwd=str(SWARM_DIR),
-    )
-    processes.append(p_swarm)
+    for name, sdir, port in services:
+        print(f"\033[1;34m[*] Launching {name} (Port {port})...\033[0m")
+        p = subprocess.Popen(
+            [uvicorn_cmd, "main:app", "--host", "0.0.0.0", "--port", str(port), "--reload"],
+            cwd=str(sdir),
+        )
+        processes.append(p)
 
-    # 3. Start Frontend
+    # Launch Frontend
     print("\033[1;34m[*] Launching Frontend Dev Server...\033[0m")
     p_frontend = subprocess.Popen(
         [NPM_CMD, "run", "dev"],
@@ -104,11 +111,14 @@ def main():
     processes.append(p_frontend)
 
     print("\n\033[1;32m" + "=" * 60)
-    print("  🚀 All Services are Running!")
+    print("  🚀 All 6 Services are Running!")
     print("=" * 60 + "\033[0m")
-    print("  🌐 \033[1mFrontend:\033[0m     http://localhost:5173 (or Vite allocated port)")
-    print("  💬 \033[1mChat API:\033[0m     http://localhost:8000 (Swagger: http://localhost:8000/docs)")
-    print("  🐝 \033[1mSwarm API:\033[0m    http://localhost:5002 (Swagger: http://localhost:5002/docs)")
+    print("  🌐 \033[1mFrontend:\033[0m     http://localhost:5173")
+    print("  💬 \033[1mChat API:\033[0m     http://localhost:8000 (Docs: http://localhost:8000/docs)")
+    print("  📊 \033[1mEvals API:\033[0m    http://localhost:8001 (Docs: http://localhost:8001/docs)")
+    print("  ⚖️  \033[1mJudge API:\033[0m    http://localhost:8002 (Docs: http://localhost:8002/docs)")
+    print("  💡 \033[1mAdvisor API:\033[0m  http://localhost:8003 (Docs: http://localhost:8003/docs)")
+    print("  🐝 \033[1mSwarm API:\033[0m    http://localhost:5002 (Docs: http://localhost:5002/docs)")
     print("=" * 60)
     print("\033[1;33mPress Ctrl+C to terminate all services.\033[0m\n")
 

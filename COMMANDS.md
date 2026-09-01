@@ -1,10 +1,10 @@
-# 🚀 Project Run & Execution Guide
+# 🚀 JudgeAI — Complete Run & Execution Guide
 
-This document contains all the commands to start and run the **JudgeAI Evaluation & Swarm System** (Frontend, Chat Backend, and Agent Swarm Backend).
+This document contains all instructions and commands to start and run the combined **JudgeAI Evaluation, Multi-Agent Swarm, and Consultant System**.
 
 ---
 
-## ⚡ Option 1: Run Everything Together (Single Command)
+## ⚡ Option 1: Run All Services Together (Single Command)
 
 Open a terminal at the root directory of the project:
 
@@ -25,7 +25,7 @@ Then run either script:
 python3 start.py
 ```
 
-> **Note:** Press <kbd>Ctrl</kbd> + <kbd>C</kbd> in that terminal to stop all running services simultaneously.
+> **Note:** Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to stop all running services simultaneously.
 
 ---
 
@@ -33,62 +33,72 @@ python3 start.py
 
 If you want dedicated terminal tabs for each service:
 
-### 📟 Terminal 1 — Chat Backend (FastAPI / MiniMax & Ollama)
-```bash
-cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/backend/chat
-./venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-* **Local URL:** [http://localhost:8000](http://localhost:8000)
-* **Interactive API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
-* **Health Check:** [http://localhost:8000/chat/health](http://localhost:8000/chat/health)
-
----
-
-### 📟 Terminal 2 — Agent Swarm Backend (FastAPI / Multi-Agent)
-```bash
-cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/backend/agent_swarm
-../chat/venv/bin/uvicorn main:app --host 0.0.0.0 --port 5002 --reload
-```
-* **Local URL:** [http://localhost:5002](http://localhost:5002)
-* **Interactive API Docs:** [http://localhost:5002/docs](http://localhost:5002/docs)
-* **Swarm Info:** [http://localhost:5002/](http://localhost:5002/)
-
----
-
-### 📟 Terminal 3 — Frontend Dashboard (Vite + React)
+### 📟 Terminal 1 — Frontend Dashboard & Web App (React + Vite)
 ```bash
 cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/frontend/landing_page
 npm run dev
 ```
-* **Web App URL:** [http://localhost:5173](http://localhost:5173) (or the port Vite outputs)
+* **Local Web App:** [http://localhost:5173](http://localhost:5173) (or assigned port)
 
 ---
 
-## 📦 First-Time Setup & Dependency Installation (If Needed)
-
-If you ever clone the project fresh or rebuild virtual environments:
-
-### 1. Backend Python Virtual Environment
+### 📟 Terminal 2 — Chat Backend (FastAPI / MiniMax & Ollama)
 ```bash
 cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/backend/chat
-python3 -m venv venv
-./venv/bin/pip install -r requirements.txt
-./venv/bin/pip install -r ../agent_swarm/requirements.txt
+./venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
-
-### 2. Frontend Dependencies
-```bash
-cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/frontend/landing_page
-npm install
-```
+* **API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Health Check:** [http://localhost:8000/chat/health](http://localhost:8000/chat/health)
 
 ---
 
-## 📋 Quick Service Reference Summary
+### 📟 Terminal 3 — Evaluation Agent Service (FastAPI / 6 Rubrics)
+```bash
+cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/backend/evaluations
+../chat/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+```
+* **API Docs:** [http://localhost:8001/docs](http://localhost:8001/docs)
+* **Health Check:** [http://localhost:8001/evaluations/health](http://localhost:8001/evaluations/health)
 
-| Service | Port | Directory | Command |
+---
+
+### 📟 Terminal 4 — Pairwise Judge Agent Service (FastAPI)
+```bash
+cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/backend/judge_agent
+../chat/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+```
+* **API Docs:** [http://localhost:8002/docs](http://localhost:8002/docs)
+* **Health Check:** [http://localhost:8002/judge/health](http://localhost:8002/judge/health)
+
+---
+
+### 📟 Terminal 5 — Advisor Agent Service (FastAPI / Model Consultant)
+```bash
+cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/backend/advisor_agent
+../chat/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+```
+* **API Docs:** [http://localhost:8003/docs](http://localhost:8003/docs)
+* **Health Check:** [http://localhost:8003/advisor/health](http://localhost:8003/advisor/health)
+
+---
+
+### 📟 Terminal 6 — Agent Swarm Service (FastAPI / Multi-Agent Swarm)
+```bash
+cd /Users/hitarthsaparia/Desktop/llm-judge-eval-system/backend/agent_swarm
+../chat/venv/bin/uvicorn main:app --host 0.0.0.0 --port 5002 --reload
+```
+* **API Docs:** [http://localhost:5002/docs](http://localhost:5002/docs)
+* **Health Check:** [http://localhost:5002/api/swarm/health](http://localhost:5002/api/swarm/health)
+
+---
+
+## 📋 Microservices Architecture Summary
+
+| Service | Port | Directory | Description |
 | :--- | :--- | :--- | :--- |
-| **All Services** | — | `/` | `./start.sh` |
-| **Frontend UI** | `5173` | `frontend/landing_page` | `npm run dev` |
-| **Chat Backend** | `8000` | `backend/chat` | `./venv/bin/uvicorn main:app --port 8000 --reload` |
-| **Agent Swarm** | `5002` | `backend/agent_swarm` | `../chat/venv/bin/uvicorn main:app --port 5002 --reload` |
+| **Frontend** | `5173` | `frontend/landing_page` | Unified React Dashboard & Landing Page |
+| **Chat Backend** | `8000` | `backend/chat` | AI Chat with MiniMax M3, Ollama & Memory |
+| **Evaluations** | `8001` | `backend/evaluations` | Multi-Criteria Evaluation Pipeline (6 Rubrics) |
+| **Judge Agent** | `8002` | `backend/judge_agent` | Pairwise Model Output Comparison |
+| **Advisor Agent** | `8003` | `backend/advisor_agent` | Model & Tool Recommendation Consultant |
+| **Agent Swarm** | `5002` | `backend/agent_swarm` | Multi-Agent Swarm Orchestrator (`gpt-oss:120b`) |
