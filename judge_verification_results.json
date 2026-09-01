@@ -1,24 +1,24 @@
 [
   {
     "case_id": "Case 1: Clearly correct A vs clearly wrong B",
-    "elapsed_sec": 16.97,
+    "elapsed_sec": 14.38,
     "result": {
       "winnerName": "Claude 3.5 Sonnet",
       "winnerKey": "A",
-      "overallA": 93,
-      "overallB": 28,
-      "margin": 65,
-      "confidence": 96,
-      "verdictSummary": "Model A wins by providing correct, concise Python code to check palindrome numbers, whereas Model B responded with unrelated even/odd checking code.",
+      "overallA": 95,
+      "overallB": 45,
+      "margin": 50,
+      "confidence": 92,
+      "verdictSummary": "Model A wins because it correctly implements Python code to check palindrome numbers, directly addressing the prompt, whereas Model B provides unrelated even/odd logic.",
       "factors": [
         {
           "factor": "accuracy",
           "label": "Accuracy & Factuality",
-          "scoreA": 96,
-          "scoreB": 5,
+          "scoreA": 95,
+          "scoreB": 10,
           "winner": "A",
           "color": "#38BDF8",
-          "rationale": "Response A correctly implements a palindrome check with accurate logic and syntax, fulfilling the request. Response B provides unrelated even/odd code, failing the task."
+          "rationale": "Response A correctly implements palindrome checking logic in Python, while Response B provides unrelated even/odd code, failing the task."
         },
         {
           "factor": "relevance",
@@ -27,25 +27,25 @@
           "scoreB": 5,
           "winner": "A",
           "color": "#7C3AED",
-          "rationale": "Response A directly provides Python code to check if a number is a palindrome, fulfilling the prompt. Response B offers unrelated even/odd checking code, ignoring the request."
+          "rationale": "Response A directly provides Python code to check palindrome numbers, fulfilling the request. Response B gives unrelated even/odd checking code, ignoring the palindrome requirement."
         },
         {
           "factor": "reasoning",
           "label": "Reasoning Depth",
-          "scoreA": 78,
-          "scoreB": 10,
+          "scoreA": 88,
+          "scoreB": 20,
           "winner": "A",
           "color": "#EC4899",
-          "rationale": "Response A directly implements palindrome checking with a concise rationale for handling negatives, showing appropriate reasoning for the task, while Response B is unrelated to palindromes and offers no relevant reasoning."
+          "rationale": "Response A correctly implements palindrome checking with clear logic and handles edge cases, showing sound reasoning. Response B is unrelated to the task, offering no relevant reasoning."
         },
         {
           "factor": "clarity",
           "label": "Clarity & Formatting",
-          "scoreA": 88,
-          "scoreB": 30,
+          "scoreA": 90,
+          "scoreB": 20,
           "winner": "A",
           "color": "#FBBF24",
-          "rationale": "Response A presents concise, well-structured Python code directly addressing the palindrome task, making it clear and easy to read. Response B, while syntactically clear, is unrelated to the request and lacks any formatting cues, resulting in lower clarity."
+          "rationale": "Response A presents clean, concise, well-structured Python code directly addressing the palindrome task, while Response B is unrelated and offers no clarity for the requested functionality."
         },
         {
           "factor": "safety",
@@ -54,34 +54,34 @@
           "scoreB": 100,
           "winner": "Tie",
           "color": "#34D399",
-          "rationale": "Both responses contain only harmless Python code with no unsafe operations, harmful instructions, or policy violations."
+          "rationale": "Both responses contain only harmless Python code with no unsafe operations, harmful instructions, or policy violations, thus they are equally safe."
         },
         {
           "factor": "hallucination",
           "label": "Hallucination / Grounding",
-          "scoreA": 96,
-          "scoreB": 12,
-          "winner": "A",
+          "scoreA": 100,
+          "scoreB": 100,
+          "winner": "Tie",
           "color": "#A78BFA",
-          "rationale": "Response A provides correct, factual Python code for checking palindrome numbers with no invented concepts. Response B offers unrelated even/odd code, failing to address the request and thus not grounded in the required solution."
+          "rationale": "Both responses contain accurate, factual Python code without invented methods or false claims; they are fully grounded in reality."
         }
       ],
       "strengthsA": [
-        "Implements accurate palindrome check, handling negative numbers.",
-        "Clear and well\u2011formatted Python code.",
-        "Directly addresses the user request."
+        "Accurately checks palindrome numbers using string reversal",
+        "Handles negative inputs appropriately",
+        "Clear, concise, and well\u2011formatted code"
       ],
       "weaknessesA": [
-        "Provides minimal explanation or comments.",
-        "No example of handling user input."
+        "No explanation or docstring for the function",
+        "Does not demonstrate usage with user input"
       ],
       "strengthsB": [
-        "Code is syntactically correct and simple.",
-        "Uses standard input handling."
+        "Code is syntactically correct and runs without errors"
       ],
       "weaknessesB": [
-        "Irrelevant to the palindrome task.",
-        "Incorrect logic for the requested problem."
+        "Irrelevant to the requested palindrome task",
+        "Fails to implement any palindrome checking logic",
+        "Provides incorrect functionality (even/odd check) for the prompt"
       ],
       "judge_model_used": "gpt-oss:120b-cloud",
       "provider": "ollama"
@@ -89,15 +89,15 @@
   },
   {
     "case_id": "Case 2: Clearly wrong A vs clearly correct B",
-    "elapsed_sec": 16.09,
+    "elapsed_sec": 14.28,
     "result": {
       "winnerName": "Claude 3.5 Sonnet",
       "winnerKey": "B",
-      "overallA": 30,
-      "overallB": 94,
+      "overallA": 29,
+      "overallB": 93,
       "margin": 64,
       "confidence": 96,
-      "verdictSummary": "Model B wins decisively by providing correct, well-structured Python code that computes factorials, while Model A fails to address the task.",
+      "verdictSummary": "Model B wins because it provides a correct, robust factorial implementation with proper edge\u2011case handling and clear formatting, while Model A returns unrelated and incorrect code.",
       "factors": [
         {
           "factor": "accuracy",
@@ -106,16 +106,16 @@
           "scoreB": 96,
           "winner": "B",
           "color": "#38BDF8",
-          "rationale": "Response A does not compute a factorial at all, returning an unrelated palindrome check, making it grossly inaccurate. Response B correctly implements factorial calculation with proper error handling and correct output."
+          "rationale": "Response A does not compute factorial at all, returning a palindrome check, making it incorrect. Response B provides a correct, robust factorial implementation handling edge cases."
         },
         {
           "factor": "relevance",
           "label": "Prompt Relevance",
           "scoreA": 5,
-          "scoreB": 96,
+          "scoreB": 95,
           "winner": "B",
           "color": "#7C3AED",
-          "rationale": "Response A does not implement factorial calculation and instead checks for a palindrome, ignoring the prompt. Response B provides correct, complete Python code that computes the factorial of a non-negative integer, directly fulfilling the request."
+          "rationale": "Response A does not compute a factorial and is unrelated to the request, while Response B provides correct, focused Python code that calculates the factorial of a non-negative integer."
         },
         {
           "factor": "reasoning",
@@ -124,7 +124,7 @@
           "scoreB": 90,
           "winner": "B",
           "color": "#EC4899",
-          "rationale": "Response A provides no logical explanation and implements incorrect functionality, showing no depth. Response B correctly implements factorial with input validation, base cases, and an iterative algorithm, demonstrating clear and sound reasoning."
+          "rationale": "Response A offers no logical explanation and implements an unrelated palindrome check, showing no depth. Response B presents a clear, correct algorithm with edge\u2011case handling and iterative computation, demonstrating solid reasoning."
         },
         {
           "factor": "clarity",
@@ -133,7 +133,7 @@
           "scoreB": 80,
           "winner": "B",
           "color": "#FBBF24",
-          "rationale": "Response B presents well-indented, multi-line code with clear structure and comments, making it readable, whereas Response A is a single line without markdown formatting or explanatory spacing, reducing clarity."
+          "rationale": "Response B presents well\u2011indented, multi\u2011line code with clear structure and comments, making it readable, whereas Response A is a single unformatted line lacking proper formatting and readability."
         },
         {
           "factor": "safety",
@@ -142,33 +142,33 @@
           "scoreB": 100,
           "winner": "Tie",
           "color": "#34D399",
-          "rationale": "Both responses contain only harmless Python code with no unsafe operations, malicious instructions, or policy violations; they are equally safe."
+          "rationale": "Both responses contain only harmless Python code with no unsafe operations, dangerous advice, or policy violations; they are fully compliant and safe."
         },
         {
           "factor": "hallucination",
           "label": "Hallucination / Grounding",
-          "scoreA": 20,
+          "scoreA": 15,
           "scoreB": 95,
           "winner": "B",
           "color": "#A78BFA",
-          "rationale": "Response A provides unrelated, incorrect code that does not compute a factorial, showing a lack of grounding in the factual definition of factorial. Response B correctly implements factorial with proper checks and logic, fully grounded in established knowledge."
+          "rationale": "Response A provides an unrelated palindrome check instead of a factorial algorithm, showing a factual error, while Response B correctly implements factorial calculation with proper error handling."
         }
       ],
       "strengthsA": [
-        "Code is safe and non\u2011malicious."
+        "Code is syntactically valid Python"
       ],
       "weaknessesA": [
-        "Does not compute factorial; implements unrelated palindrome check.",
-        "Incorrect and irrelevant to the prompt.",
-        "Lacks explanation, proper formatting, and reasoning."
+        "Does not compute factorial at all",
+        "Logic is unrelated to the prompt",
+        "Lacks proper formatting and explanation"
       ],
       "strengthsB": [
-        "Accurately implements factorial with input validation and base cases.",
-        "Clear, well\u2011indented code with comments and example usage.",
-        "Demonstrates solid reasoning and complete solution."
+        "Correctly implements factorial with error handling",
+        "Handles edge cases (n\u202f=\u202f0,\u202f1 and negative inputs)",
+        "Well\u2011formatted, readable code with an example"
       ],
       "weaknessesB": [
-        "Could include a docstring or markdown formatting for better presentation."
+        "Could include a docstring or comments explaining the algorithm"
       ],
       "judge_model_used": "gpt-oss:120b-cloud",
       "provider": "ollama"
@@ -176,15 +176,15 @@
   },
   {
     "case_id": "Case 3: Both correct but different styles/depth",
-    "elapsed_sec": 22.27,
+    "elapsed_sec": 16.12,
     "result": {
       "winnerName": "DeepSeek V3",
       "winnerKey": "B",
-      "overallA": 94,
-      "overallB": 95,
+      "overallA": 91,
+      "overallB": 92,
       "margin": 1,
       "confidence": 64,
-      "verdictSummary": "Model B wins for providing deeper algorithmic reasoning, despite Model A being slightly clearer in presentation.",
+      "verdictSummary": "Model B (DeepSeek V3) wins because it provides deeper reasoning about the optimization (local set binding) despite slightly less clear formatting.",
       "factors": [
         {
           "factor": "accuracy",
@@ -193,164 +193,73 @@
           "scoreB": 95,
           "winner": "Tie",
           "color": "#38BDF8",
-          "rationale": "Both responses provide correct, efficient O(N) solutions for string deduplication preserving order; the code is syntactically valid and factually accurate for the given use case."
+          "rationale": "Both responses provide correct, order-preserving deduplication implementations; the code in each is syntactically valid and logically accurate, with no factual errors."
         },
         {
           "factor": "relevance",
           "label": "Prompt Relevance",
-          "scoreA": 94,
-          "scoreB": 94,
+          "scoreA": 95,
+          "scoreB": 95,
           "winner": "Tie",
           "color": "#7C3AED",
-          "rationale": "Both responses directly provide optimized deduplication code that preserves order and include complexity notes, fully addressing the prompt without extraneous information."
+          "rationale": "Both responses directly provide optimized Python deduplication functions that preserve order, fully addressing the prompt without extraneous content."
         },
         {
           "factor": "reasoning",
           "label": "Reasoning Depth",
-          "scoreA": 82,
-          "scoreB": 90,
+          "scoreA": 75,
+          "scoreB": 82,
           "winner": "B",
           "color": "#EC4899",
-          "rationale": "Response B explains the set\u2011lookup mechanism, constant\u2011time checks, and the micro\u2011optimisation of binding the add method, showing deeper algorithmic insight, while Response A only notes using dict.fromkeys without elaborating on its behavior."
+          "rationale": "Both give concise explanations, but Response B delves into a specific optimization (local method binding) and clarifies constant-time set lookups, showing slightly deeper reasoning than Response A's brief mention of dict.fromkeys."
         },
         {
           "factor": "clarity",
           "label": "Clarity & Formatting",
-          "scoreA": 92,
-          "scoreB": 84,
-          "winner": "A",
-          "color": "#FBBF24",
-          "rationale": "Both responses are concise and use similar plain formatting, but Response A presents a simpler, more immediately understandable solution with clear comments and neatly separated sections, making it clearer than the more technical wording of Response B."
-        },
-        {
-          "factor": "safety",
-          "label": "Safety & Compliance",
-          "scoreA": 100,
-          "scoreB": 100,
-          "winner": "Tie",
-          "color": "#34D399",
-          "rationale": "Both responses provide safe, standard Python code without any unsafe operations, harmful advice, or policy violations."
-        },
-        {
-          "factor": "hallucination",
-          "label": "Hallucination / Grounding",
-          "scoreA": 100,
-          "scoreB": 100,
-          "winner": "Tie",
-          "color": "#A78BFA",
-          "rationale": "Both responses use only standard Python features and correctly describe their behavior and complexity without fabricating methods or facts."
-        }
-      ],
-      "strengthsA": [
-        "Provides a concise, easy\u2011to\u2011read solution using dict.fromkeys.",
-        "Clearly comments on time and space complexity.",
-        "Preserves order with minimal code."
-      ],
-      "weaknessesA": [
-        "Lacks deeper explanation of why dict.fromkeys works.",
-        "Does not mention micro\u2011optimisations or alternative approaches."
-      ],
-      "strengthsB": [
-        "Explains set\u2011lookup O(1) behavior and the micro\u2011optimisation of binding seen.add.",
-        "Demonstrates deeper algorithmic insight.",
-        "Preserves order while using a list comprehension."
-      ],
-      "weaknessesB": [
-        "Formatting and wording are more technical, reducing immediate clarity.",
-        "Less straightforward for readers unfamiliar with the add\u2011binding trick."
-      ],
-      "judge_model_used": "gpt-oss:120b-cloud",
-      "provider": "ollama"
-    }
-  },
-  {
-    "case_id": "Case 3: Both correct but different styles/depth",
-    "error": "'charmap' codec can't encode character '\\u2011' in position 78: character maps to <undefined>"
-  },
-  {
-    "case_id": "Case 4: Both partially correct / flawed edge cases",
-    "elapsed_sec": 21.91,
-    "result": {
-      "winnerName": "Llama 3.3 70B",
-      "winnerKey": "A",
-      "overallA": 93,
-      "overallB": 75,
-      "margin": 18,
-      "confidence": 86,
-      "verdictSummary": "Model A wins by providing a fully accurate and safe IPv4 validation function with proper numeric checks, while Model B fails on non\u2011numeric inputs.",
-      "factors": [
-        {
-          "factor": "accuracy",
-          "label": "Accuracy & Factuality",
-          "scoreA": 95,
-          "scoreB": 30,
-          "winner": "A",
-          "color": "#38BDF8",
-          "rationale": "Response A correctly validates each octet with digit checks and range, safely returning False for invalid inputs. Response B lacks digit validation, causing ValueError on non-numeric parts, making it inaccurate."
-        },
-        {
-          "factor": "relevance",
-          "label": "Prompt Relevance",
-          "scoreA": 98,
-          "scoreB": 85,
-          "winner": "A",
-          "color": "#7C3AED",
-          "rationale": "Both provide a Python function, but A correctly checks that each part is numeric before range testing, fully meeting the validation requirement, whereas B omits the digit check and can raise an error on non\u2011numeric input."
-        },
-        {
-          "factor": "reasoning",
-          "label": "Reasoning Depth",
-          "scoreA": 78,
-          "scoreB": 62,
-          "winner": "A",
-          "color": "#EC4899",
-          "rationale": "Response A adds a digit check to prevent non-numeric parts from causing errors, showing more thorough handling of edge cases, whereas Response B omits this safety check, making its reasoning shallower."
-        },
-        {
-          "factor": "clarity",
-          "label": "Clarity & Formatting",
-          "scoreA": 90,
+          "scoreA": 85,
           "scoreB": 80,
           "winner": "A",
           "color": "#FBBF24",
-          "rationale": "Both responses lack markdown code fences, but Response A uses a clearer multi-line structure and includes an explicit digit check, making it more readable, whereas Response B condenses logic into a single line."
+          "rationale": "Both responses are concise and use clear comments, but A's simpler code and straightforward bullet list make its formatting marginally clearer than B's more complex one-liner."
         },
         {
           "factor": "safety",
           "label": "Safety & Compliance",
           "scoreA": 98,
-          "scoreB": 95,
-          "winner": "A",
+          "scoreB": 98,
+          "winner": "Tie",
           "color": "#34D399",
-          "rationale": "Both functions are safe and contain no harmful code, but Response A adds a digit check before conversion, avoiding runtime errors and making it marginally safer."
+          "rationale": "Both responses provide safe, self\u2011contained Python code without any unsafe operations, harmful advice, or policy violations, and each adheres to best practices for the task."
         },
         {
           "factor": "hallucination",
           "label": "Hallucination / Grounding",
-          "scoreA": 98,
-          "scoreB": 98,
+          "scoreA": 95,
+          "scoreB": 95,
           "winner": "Tie",
           "color": "#A78BFA",
-          "rationale": "Both responses are fully grounded in real Python syntax and standard library usage, with no invented methods or false claims."
+          "rationale": "Both responses provide correct, well\u2011known Python idioms for order\u2011preserving deduplication without fabricating any APIs or facts."
         }
       ],
       "strengthsA": [
-        "Accurately validates format and numeric range with digit checks",
-        "Prevents runtime errors by ensuring parts are numeric",
-        "Clear, readable multi\u2011line code structure"
+        "Uses dict.fromkeys for O(N) deduplication with order preservation",
+        "Very concise and easy\u2011to\u2011read code",
+        "Clear comment explaining the approach"
       ],
       "weaknessesA": [
-        "Lacks markdown code fences in presentation",
-        "No explicit handling of leading zeros or documentation"
+        "Provides less insight into performance nuances",
+        "Does not mention alternative set\u2011based optimization",
+        "Reasoning depth is lower than Model B"
       ],
       "strengthsB": [
-        "Concise one\u2011line implementation",
-        "Correctly validates basic IPv4 format for numeric strings"
+        "Explains optimization using a set with local method binding for speed",
+        "Maintains order while achieving O(N) time",
+        "Shows deeper reasoning about constant\u2011time lookups"
       ],
       "weaknessesB": [
-        "Missing digit validation leading to ValueError on non\u2011numeric parts",
-        "Less robust handling of edge cases",
-        "Condensed format reduces readability"
+        "One\u2011liner list comprehension can be harder to read",
+        "Formatting is slightly less clear than Model A",
+        "No explicit comment about order preservation"
       ],
       "judge_model_used": "gpt-oss:120b-cloud",
       "provider": "ollama"
@@ -358,64 +267,149 @@
   },
   {
     "case_id": "Case 4: Both partially correct / flawed edge cases",
-    "error": "'charmap' codec can't encode character '\\u2011' in position 143: character maps to <undefined>"
+    "elapsed_sec": 16.64,
+    "result": {
+      "winnerName": "Llama 3.3 70B",
+      "winnerKey": "A",
+      "overallA": 89,
+      "overallB": 78,
+      "margin": 11,
+      "confidence": 80,
+      "verdictSummary": "Model A wins because it safely validates both the numeric nature and range of each octet, avoiding errors, while Model B omits the digit check and can raise exceptions on invalid input.",
+      "factors": [
+        {
+          "factor": "accuracy",
+          "label": "Accuracy & Factuality",
+          "scoreA": 95,
+          "scoreB": 55,
+          "winner": "A",
+          "color": "#38BDF8",
+          "rationale": "Response A correctly validates each octet's numeric nature and range, handling non\u2011numeric parts safely. Response B omits the digit check, causing a ValueError on invalid strings instead of returning False, making it less accurate."
+        },
+        {
+          "factor": "relevance",
+          "label": "Prompt Relevance",
+          "scoreA": 95,
+          "scoreB": 88,
+          "winner": "A",
+          "color": "#7C3AED",
+          "rationale": "Both responses provide a Python function for IPv4 validation, but A includes proper digit checks and safely returns False for invalid parts, fully meeting the prompt, while B omits digit validation and may raise errors, making it slightly less relevant."
+        },
+        {
+          "factor": "reasoning",
+          "label": "Reasoning Depth",
+          "scoreA": 55,
+          "scoreB": 45,
+          "winner": "A",
+          "color": "#EC4899",
+          "rationale": "Both answers give only a brief code snippet without any explanatory reasoning; however, Response A includes an extra digit\u2011check, showing slightly deeper consideration of edge cases."
+        },
+        {
+          "factor": "clarity",
+          "label": "Clarity & Formatting",
+          "scoreA": 85,
+          "scoreB": 80,
+          "winner": "A",
+          "color": "#FBBF24",
+          "rationale": "Both responses lack markdown code fences, but A's explicit conditional and spacing make the logic clearer and more readable than B's compact one-liner."
+        },
+        {
+          "factor": "safety",
+          "label": "Safety & Compliance",
+          "scoreA": 100,
+          "scoreB": 100,
+          "winner": "Tie",
+          "color": "#34D399",
+          "rationale": "Both responses provide simple, self-contained Python code without unsafe operations, external dependencies, or policy violations; they are equally safe and compliant."
+        },
+        {
+          "factor": "hallucination",
+          "label": "Hallucination / Grounding",
+          "scoreA": 95,
+          "scoreB": 95,
+          "winner": "Tie",
+          "color": "#A78BFA",
+          "rationale": "Both responses use only built\u2011in Python features and contain no invented libraries or false claims, thus are fully grounded; neither exhibits hallucination."
+        }
+      ],
+      "strengthsA": [
+        "Validates that each octet consists of digits before converting",
+        "Returns False for any malformed input without raising errors",
+        "Clear and readable code structure"
+      ],
+      "weaknessesA": [
+        "Lacks explanatory comments or docstring",
+        "Does not use markdown code fences for formatting"
+      ],
+      "strengthsB": [
+        "Concise one\u2011liner implementation",
+        "Correctly checks octet range"
+      ],
+      "weaknessesB": [
+        "Missing digit validation leads to ValueError on non\u2011numeric input",
+        "Less robust handling of malformed strings",
+        "Compact style reduces readability"
+      ],
+      "judge_model_used": "gpt-oss:120b-cloud",
+      "provider": "ollama"
+    }
   },
   {
     "case_id": "Case 5: Completely unrelated response",
-    "elapsed_sec": 21.69,
+    "elapsed_sec": 15.46,
     "result": {
       "winnerName": "Claude 3.5 Sonnet",
       "winnerKey": "A",
-      "overallA": 93,
+      "overallA": 94,
       "overallB": 25,
-      "margin": 68,
-      "confidence": 99,
-      "verdictSummary": "Model A wins decisively by providing correct, well\u2011formatted merge sort code that directly addresses the prompt, whereas Model B gives unrelated content.",
+      "margin": 69,
+      "confidence": 96,
+      "verdictSummary": "Model A wins because it delivers a correct, well\u2011formatted merge sort implementation that directly fulfills the prompt, while Model B provides unrelated content and no code.",
       "factors": [
         {
           "factor": "accuracy",
           "label": "Accuracy & Factuality",
           "scoreA": 96,
-          "scoreB": 12,
+          "scoreB": 0,
           "winner": "A",
           "color": "#38BDF8",
-          "rationale": "Response A provides a correct, fully functional merge sort implementation, accurately fulfilling the request. Response B does not address the task at all, offering unrelated facts despite being factually correct."
+          "rationale": "Response A correctly implements a functional merge sort in Python, meeting the prompt with accurate and syntactically valid code. Response B does not address the task at all, providing unrelated facts."
         },
         {
           "factor": "relevance",
           "label": "Prompt Relevance",
-          "scoreA": 98,
+          "scoreA": 95,
           "scoreB": 5,
           "winner": "A",
           "color": "#7C3AED",
-          "rationale": "Response A directly provides correct merge sort Python code, fully addressing the prompt, while Response B is unrelated filler about France and Python history."
+          "rationale": "Response A directly provides a correct merge sort implementation in Python, fully addressing the prompt, while Response B is unrelated trivia and does not answer the request."
         },
         {
           "factor": "reasoning",
           "label": "Reasoning Depth",
-          "scoreA": 80,
-          "scoreB": 10,
+          "scoreA": 90,
+          "scoreB": 5,
           "winner": "A",
           "color": "#EC4899",
-          "rationale": "Response A supplies a correct, fully functional merge sort implementation, demonstrating algorithmic reasoning, while Response B is unrelated and offers no reasoning about sorting."
+          "rationale": "Response A provides a complete, correct implementation of merge sort, demonstrating clear algorithmic reasoning, while Response B is unrelated and offers no reasoning about the requested task."
         },
         {
           "factor": "clarity",
           "label": "Clarity & Formatting",
-          "scoreA": 90,
-          "scoreB": 10,
+          "scoreA": 85,
+          "scoreB": 30,
           "winner": "A",
           "color": "#FBBF24",
-          "rationale": "Response A presents concise, well\u2011indented Python code that directly fulfills the task, making it clear and easy to read. Response B is off\u2011topic and provides no relevant code, resulting in poor clarity and formatting."
+          "rationale": "Response A presents well\u2011indented, readable code that directly addresses the prompt, while Response B offers unrelated sentences with no clear structure or formatting for the requested code."
         },
         {
           "factor": "safety",
           "label": "Safety & Compliance",
-          "scoreA": 98,
-          "scoreB": 97,
-          "winner": "A",
+          "scoreA": 100,
+          "scoreB": 100,
+          "winner": "Tie",
           "color": "#34D399",
-          "rationale": "Both responses contain no unsafe code or harmful advice, but Response A correctly fulfills the request with safe merge sort code, while Response B is irrelevant yet still safe."
+          "rationale": "Both responses contain no unsafe code, harmful instructions, or policy violations; they are safe and compliant."
         },
         {
           "factor": "hallucination",
@@ -424,30 +418,28 @@
           "scoreB": 5,
           "winner": "A",
           "color": "#A78BFA",
-          "rationale": "Response A correctly provides a functional merge sort implementation with no hallucinations. Response B is unrelated to the prompt, offering irrelevant facts, thus heavily ungrounded."
+          "rationale": "Response A provides a correct, fully grounded merge sort implementation with no invented elements. Response B is unrelated to the task, offering irrelevant facts instead of code, thus failing the grounding criterion."
         }
       ],
       "strengthsA": [
-        "Accurate and complete merge sort implementation",
-        "Clear, well\u2011indented Python code",
-        "Fully relevant to the user's request"
+        "Accurate and functional merge sort implementation in Python.",
+        "Clear, well\u2011indented code that is easy to read.",
+        "Demonstrates proper algorithmic reasoning and completeness."
       ],
       "weaknessesA": [
-        "Could include brief usage example or comment"
+        "Could include brief comments or example usage for clarity.",
+        "No explicit handling of edge cases beyond empty or single\u2011element lists."
       ],
       "strengthsB": [
-        "Factually correct statements"
+        "Content is safe and free of policy violations."
       ],
       "weaknessesB": [
-        "Irrelevant to the prompt",
-        "No code or reasoning provided"
+        "Fails to address the task; provides unrelated trivia.",
+        "No code or reasoning related to merge sort.",
+        "Lacks relevance, clarity, and usefulness for the prompt."
       ],
       "judge_model_used": "gpt-oss:120b-cloud",
       "provider": "ollama"
     }
-  },
-  {
-    "case_id": "Case 5: Completely unrelated response",
-    "error": "'charmap' codec can't encode character '\\u2011' in position 62: character maps to <undefined>"
   }
 ]
