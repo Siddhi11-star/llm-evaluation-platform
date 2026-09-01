@@ -711,10 +711,10 @@ function ModelSelectorMenu({
         ...positionStyles,
         width: 320,
         maxWidth: '92vw',
-        background: '#14121E',
-        border: '1px solid rgba(255, 255, 255, 0.14)',
+        background: 'var(--color-dropdown-bg, #14121E)',
+        border: '1px solid var(--color-dropdown-border, var(--color-border))',
         borderRadius: 16,
-        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.06)',
+        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.35)',
         zIndex: 99999,
         padding: '6px',
         display: 'flex',
@@ -754,15 +754,15 @@ function ModelSelectorMenu({
                   padding: '6px 10px',
                   borderRadius: 10,
                   cursor: 'pointer',
-                  background: isSelected ? 'rgba(124, 58, 237, 0.22)' : 'transparent',
-                  border: isSelected ? '1px solid rgba(124, 58, 237, 0.45)' : '1px solid transparent',
+                  background: isSelected ? 'rgba(124, 58, 237, 0.18)' : 'transparent',
+                  border: isSelected ? '1px solid rgba(124, 58, 237, 0.35)' : '1px solid transparent',
                   marginBottom: 3,
                   boxSizing: 'border-box',
                   transition: 'all 0.12s ease',
                   scrollSnapAlign: 'start',
                 }}
                 onMouseEnter={e => {
-                  if (!isSelected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
+                  if (!isSelected) e.currentTarget.style.background = 'var(--color-dropdown-hover, var(--color-hover))'
                 }}
                 onMouseLeave={e => {
                   if (!isSelected) e.currentTarget.style.background = 'transparent'

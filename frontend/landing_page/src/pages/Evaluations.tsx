@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { TopBar, PageContent } from '../components/AppShell'
 import { useSettings } from '../components/ThemeProvider'
+import { History } from 'lucide-react'
 import {
   IcSearch,
   IcChevronRight,
@@ -297,7 +298,6 @@ function SearchableModelDropdown({
     color: '#8B5CF6',
   }
 
-  // Filter models based on search query
   const filteredModels = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return MODELS
@@ -310,7 +310,6 @@ function SearchableModelDropdown({
     )
   }, [search])
 
-  // Close when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -323,7 +322,6 @@ function SearchableModelDropdown({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  // Auto-focus search input when opened
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => searchInputRef.current?.focus(), 50)
@@ -334,7 +332,6 @@ function SearchableModelDropdown({
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
-      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -343,10 +340,10 @@ function SearchableModelDropdown({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'var(--color-input-bg, #ffffff)',
+          background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
           border: isOpen ? '1px solid var(--color-accent-violet, #7C3AED)' : '1px solid var(--color-border)',
-          borderRadius: 10,
-          padding: '10px 14px',
+          borderRadius: 12,
+          padding: '12px 16px',
           fontSize: 13,
           color: 'var(--color-foreground)',
           cursor: 'pointer',
@@ -367,7 +364,7 @@ function SearchableModelDropdown({
             }}
           />
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <span style={{ fontWeight: 600, color: 'var(--color-foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontWeight: 700, color: 'var(--color-foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {selectedModel.name}
             </span>
             <span style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.2 }}>
@@ -376,16 +373,16 @@ function SearchableModelDropdown({
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span
             style={{
               fontSize: 10.5,
-              padding: '2px 7px',
+              padding: '2px 8px',
               borderRadius: 6,
-              background: 'var(--color-surface-deep)',
+              background: 'var(--color-surface, rgba(255,255,255,0.04))',
               border: '1px solid var(--color-border)',
-              color: 'var(--color-muted-stronger)',
-              fontWeight: 600,
+              color: 'var(--color-muted)',
+              fontWeight: 700,
             }}
           >
             {selectedModel.category || 'LLM'}
@@ -401,7 +398,6 @@ function SearchableModelDropdown({
         </div>
       </button>
 
-      {/* Floating Search Popover Dropdown */}
       {isOpen && (
         <div
           style={{
@@ -410,21 +406,20 @@ function SearchableModelDropdown({
             left: 0,
             right: 0,
             zIndex: 100,
-            background: 'var(--color-surface, #ffffff)',
-            border: '1px solid var(--color-border-light, rgba(140, 140, 140, 0.25))',
-            borderRadius: 12,
-            boxShadow: '0 16px 36px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1)',
+            background: 'var(--color-dropdown-bg, #14131F)',
+            border: '1px solid var(--color-dropdown-border, var(--color-border))',
+            borderRadius: 14,
+            boxShadow: '0 16px 36px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.2)',
             backdropFilter: 'blur(20px)',
             overflow: 'hidden',
             animation: 'dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          {/* Search Input Header */}
           <div
             style={{
-              padding: '10px 12px',
+              padding: '12px 14px',
               borderBottom: '1px solid var(--color-border)',
-              background: 'var(--color-surface-deep)',
+              background: 'var(--color-surface-deep, var(--color-surface))',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
@@ -436,13 +431,13 @@ function SearchableModelDropdown({
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Type to search any model or provider..."
+              placeholder="Search target model or provider..."
               style={{
                 width: '100%',
                 background: 'transparent',
                 border: 'none',
                 outline: 'none',
-                fontSize: 12.5,
+                fontSize: 13,
                 color: 'var(--color-foreground)',
                 fontFamily: 'Inter, sans-serif',
               }}
@@ -465,12 +460,11 @@ function SearchableModelDropdown({
             )}
           </div>
 
-          {/* Model Options List */}
-          <div style={{ maxHeight: 250, overflowY: 'auto', padding: '6px' }}>
+          <div style={{ maxHeight: 240, overflowY: 'auto', padding: '6px' }}>
             {filteredModels.length === 0 ? (
               <div style={{ padding: '14px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 8 }}>
-                  No default model found matching "{search}"
+                  No model found matching "{search}"
                 </div>
                 <button
                   type="button"
@@ -486,10 +480,10 @@ function SearchableModelDropdown({
                     border: '1px solid rgba(124, 58, 237, 0.35)',
                     color: 'var(--color-accent-violet, #7C3AED)',
                     cursor: 'pointer',
-                    fontWeight: 600,
+                    fontWeight: 700,
                   }}
                 >
-                  Use Custom Model: <span style={{ fontWeight: 700 }}>"{search}"</span>
+                  Use Custom: "{search}"
                 </button>
               </div>
             ) : (
@@ -506,15 +500,15 @@ function SearchableModelDropdown({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '9px 12px',
+                      padding: '10px 12px',
                       borderRadius: 8,
-                      background: isSelected ? 'rgba(124, 58, 237, 0.12)' : 'transparent',
-                      border: isSelected ? '1px solid rgba(124, 58, 237, 0.3)' : '1px solid transparent',
+                      background: isSelected ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
+                      border: isSelected ? '1px solid rgba(124, 58, 237, 0.35)' : '1px solid transparent',
                       cursor: 'pointer',
                       transition: 'all 0.12s ease',
                     }}
                     onMouseEnter={e => {
-                      if (!isSelected) e.currentTarget.style.background = 'var(--color-hover)'
+                      if (!isSelected) e.currentTarget.style.background = 'var(--color-dropdown-hover, var(--color-hover))'
                     }}
                     onMouseLeave={e => {
                       if (!isSelected) e.currentTarget.style.background = 'transparent'
@@ -534,7 +528,7 @@ function SearchableModelDropdown({
                         <span
                           style={{
                             fontSize: 13,
-                            fontWeight: isSelected ? 700 : 500,
+                            fontWeight: isSelected ? 700 : 600,
                             color: isSelected ? 'var(--color-accent-violet, #7C3AED)' : 'var(--color-foreground)',
                           }}
                         >
@@ -551,11 +545,12 @@ function SearchableModelDropdown({
                         <span
                           style={{
                             fontSize: 10,
-                            padding: '1px 6px',
+                            padding: '2px 6px',
                             borderRadius: 4,
-                            background: 'var(--color-surface-deep)',
+                            background: 'var(--color-surface, rgba(255,255,255,0.04))',
                             border: '1px solid var(--color-border)',
                             color: 'var(--color-muted)',
+                            fontWeight: 600,
                           }}
                         >
                           {m.category}
@@ -588,22 +583,20 @@ function PolishedScoreGauge({ score, status }: { score: number; status: 'Passed'
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 20,
-        padding: '16px 20px',
-        borderRadius: 14,
+        gap: 22,
+        padding: '18px 24px',
+        borderRadius: 16,
         background: isPassed
-          ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.08) 0%, rgba(56, 189, 248, 0.04) 100%)'
-          : 'linear-gradient(135deg, rgba(248, 113, 113, 0.1) 0%, rgba(251, 191, 36, 0.04) 100%)',
-        border: `1px solid ${isPassed ? 'rgba(52, 211, 153, 0.3)' : 'rgba(248, 113, 113, 0.3)'}`,
+          ? 'linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(56, 189, 248, 0.04) 100%)'
+          : 'linear-gradient(135deg, rgba(248, 113, 113, 0.12) 0%, rgba(251, 191, 36, 0.04) 100%)',
+        border: `1px solid ${isPassed ? 'rgba(52, 211, 153, 0.35)' : 'rgba(248, 113, 113, 0.35)'}`,
         boxShadow: isPassed
-          ? '0 8px 24px rgba(52, 211, 153, 0.12)'
-          : '0 8px 24px rgba(248, 113, 113, 0.12)',
+          ? '0 8px 28px rgba(52, 211, 153, 0.15)'
+          : '0 8px 28px rgba(248, 113, 113, 0.15)',
       }}
     >
-      {/* SVG Radial Gauge */}
       <div style={{ position: 'relative', width: 96, height: 96, flexShrink: 0 }}>
         <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
-          {/* Background Track */}
           <circle
             cx="48"
             cy="48"
@@ -612,7 +605,6 @@ function PolishedScoreGauge({ score, status }: { score: number; status: 'Passed'
             stroke="var(--color-border-light, rgba(255, 255, 255, 0.1))"
             strokeWidth="7"
           />
-          {/* Progress Stroke */}
           <circle
             cx="48"
             cy="48"
@@ -629,7 +621,6 @@ function PolishedScoreGauge({ score, status }: { score: number; status: 'Passed'
           />
         </svg>
 
-        {/* Inner Score Number */}
         <div
           style={{
             position: 'absolute',
@@ -650,7 +641,6 @@ function PolishedScoreGauge({ score, status }: { score: number; status: 'Passed'
         </div>
       </div>
 
-      {/* Status & Verdict Information */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span
@@ -663,7 +653,7 @@ function PolishedScoreGauge({ score, status }: { score: number; status: 'Passed'
               background: isPassed ? 'rgba(52, 211, 153, 0.18)' : 'rgba(248, 113, 113, 0.18)',
               border: `1.5px solid ${isPassed ? '#34D399' : '#F87171'}`,
               color: isPassed ? '#34D399' : '#F87171',
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: 800,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
@@ -678,7 +668,7 @@ function PolishedScoreGauge({ score, status }: { score: number; status: 'Passed'
           </span>
         </div>
 
-        <div style={{ fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+        <div style={{ fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.45 }}>
           {isPassed
             ? 'All 6 judge consensus thresholds achieved with zero safety violations.'
             : 'Fails quality threshold or guardrail verification. Inspect rubric breakdown below.'}
@@ -713,10 +703,10 @@ function JudgeScoreCard({ rubric }: { rubric: RubricScore }) {
   return (
     <div
       style={{
-        background: 'var(--color-surface-deep)',
+        background: 'var(--color-card, #13111C)',
         border: '1px solid var(--color-border)',
-        borderRadius: 12,
-        padding: '16px',
+        borderRadius: 14,
+        padding: '18px',
         display: 'flex',
         flexDirection: 'column',
         gap: 12,
@@ -725,7 +715,7 @@ function JudgeScoreCard({ rubric }: { rubric: RubricScore }) {
       onMouseEnter={e => {
         e.currentTarget.style.borderColor = `${rubric.color}66`
         e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = `0 6px 20px ${rubric.color}15`
+        e.currentTarget.style.boxShadow = `0 8px 24px ${rubric.color}15`
       }}
       onMouseLeave={e => {
         e.currentTarget.style.borderColor = 'var(--color-border)'
@@ -733,14 +723,13 @@ function JudgeScoreCard({ rubric }: { rubric: RubricScore }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* Top Row: Icon, Title & Score Badge */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
+              width: 36,
+              height: 36,
+              borderRadius: 10,
               background: `${rubric.color}15`,
               border: `1px solid ${rubric.color}33`,
               display: 'flex',
@@ -752,16 +741,15 @@ function JudgeScoreCard({ rubric }: { rubric: RubricScore }) {
             {getJudgeIcon(rubric.key)}
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-foreground)' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-foreground)' }}>
               {rubric.label}
             </div>
-            <div style={{ fontSize: 10.5, color: 'var(--color-muted)', fontWeight: 500 }}>
+            <div style={{ fontSize: 10.5, color: 'var(--color-muted)', fontWeight: 600 }}>
               Weight {rubric.weight.toFixed(1)}x • {rubric.judge_model_used || 'gpt-oss:120b-cloud'}
             </div>
           </div>
         </div>
 
-        {/* Score Number Pill */}
         <div
           style={{
             display: 'flex',
@@ -778,7 +766,6 @@ function JudgeScoreCard({ rubric }: { rubric: RubricScore }) {
         </div>
       </div>
 
-      {/* Progress Bar */}
       <div style={{ height: 6, background: 'var(--color-border)', borderRadius: 3, overflow: 'hidden' }}>
         <div
           style={{
@@ -792,16 +779,16 @@ function JudgeScoreCard({ rubric }: { rubric: RubricScore }) {
         />
       </div>
 
-      {/* Reasoning Output */}
       <div
         style={{
-          fontSize: 11.5,
-          color: 'var(--color-muted-stronger)',
-          lineHeight: 1.45,
-          background: 'var(--color-card)',
-          padding: '8px 10px',
-          borderRadius: 8,
+          fontSize: 12,
+          color: 'var(--color-foreground)',
+          lineHeight: 1.5,
+          background: 'var(--color-surface, rgba(255,255,255,0.02))',
+          padding: '10px 12px',
+          borderRadius: 10,
           border: '1px solid var(--color-border-faint)',
+          opacity: 0.9,
         }}
       >
         {rubric.reasoning}
@@ -824,7 +811,7 @@ function ScoreBadge({ score }: { score: number }) {
         background: `${color}18`,
         border: `1px solid ${color}44`,
         fontSize: 12,
-        fontWeight: 700,
+        fontWeight: 800,
         color,
       }}
     >
@@ -846,7 +833,7 @@ function StatusPill({ status }: { status: string }) {
         background: passed ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)',
         border: `1px solid ${passed ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.25)'}`,
         fontSize: 11,
-        fontWeight: 600,
+        fontWeight: 700,
         color: passed ? '#34D399' : '#F87171',
       }}
     >
@@ -855,25 +842,173 @@ function StatusPill({ status }: { status: string }) {
   )
 }
 
+// ─── Evaluation Splash Screen Component ───────────────────────────────────────
+
+function EvaluationSplashScreen() {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'var(--color-background)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Background Radial Glow */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '48%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 600,
+          height: 600,
+          background: 'radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(56, 189, 248, 0.08) 45%, transparent 70%)',
+          filter: 'blur(40px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      {/* Central Card */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          animation: 'evalSplashFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        }}
+      >
+        {/* Prominent Hero Illustration */}
+        <div style={{ position: 'relative', marginBottom: 20 }}>
+          <img
+            src="/evaluation-illustration.png"
+            alt="JudgeAI Evaluation Agent"
+            style={{
+              width: 320,
+              maxWidth: '85vw',
+              height: 'auto',
+              filter: 'drop-shadow(0 20px 45px rgba(124, 58, 237, 0.35))',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              animation: 'evalFloat 3s ease-in-out infinite',
+            }}
+          />
+        </div>
+
+        {/* Title & Badge */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 12px',
+            borderRadius: 999,
+            background: 'rgba(124,58,237,0.12)',
+            border: '1px solid rgba(124,58,237,0.25)',
+            color: '#7C3AED',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: 12,
+          }}
+        >
+          <IcSparkles size={12} /> 6-Rubric Consensus Engine
+        </div>
+
+        <h1
+          style={{
+            margin: '0 0 8px',
+            fontSize: 'clamp(28px, 4.5vw, 38px)',
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            color: 'var(--color-foreground)',
+            lineHeight: 1.15,
+          }}
+        >
+          Evaluation Agent
+        </h1>
+
+        <p
+          style={{
+            margin: '0 0 28px',
+            fontSize: 'clamp(13px, 2vw, 15px)',
+            color: 'var(--color-muted)',
+            maxWidth: 440,
+            lineHeight: 1.5,
+            fontWeight: 500,
+          }}
+        >
+          Analyzing and evaluating AI responses across 6 core rubrics…
+        </p>
+
+        {/* Polished Loading Bar */}
+        <div
+          style={{
+            width: 220,
+            height: 5,
+            background: 'var(--color-border-light, rgba(0,0,0,0.08))',
+            borderRadius: 999,
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, #7C3AED, #38BDF8, #A78BFA)',
+              borderRadius: 999,
+              animation: 'evalProgress 3s linear forwards',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Component: Evaluations ─────────────────────────────────────────────
 
 export default function Evaluations() {
+  // Splash state — visible for ~3 seconds on first mount
+  const [showSplash, setShowSplash] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [])
+
   const navigate = useNavigate()
   const { profile } = useSettings()
   const currentUserEmail = profile?.email || 'sarah@judgeai.dev'
 
   const [runs, setRuns] = useState<EvalRunItem[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
-  const [showWorkspace, setShowWorkspace] = useState(true)
+  const [viewMode, setViewMode] = useState<'workspace' | 'history'>('workspace')
 
-  // Form State for New Evaluation (Task Name is automatically derived from prompt)
+  // Form State for New Evaluation
   const [promptText, setPromptText] = useState(PROMPT_TEMPLATES[0].prompt)
   const [taskName, setTaskName] = useState(() => generateTaskName(PROMPT_TEMPLATES[0].prompt))
   const [selectedModel, setSelectedModel] = useState('claude-3.5-sonnet')
   const [modelOutputText, setModelOutputText] = useState(PROMPT_TEMPLATES[0].output)
   const [copiedReport, setCopiedReport] = useState(false)
 
-  // Automatically synchronize task name whenever prompt text changes
+  // Synchronize task name whenever prompt text changes
   useEffect(() => {
     if (promptText.trim()) {
       setTaskName(generateTaskName(promptText))
@@ -904,7 +1039,7 @@ export default function Evaluations() {
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 8
 
-  // Load persistent evaluation runs from backend for the authenticated user
+  // Load persistent evaluation runs from backend
   const fetchHistory = useCallback(async () => {
     setLoadingHistory(true)
     try {
@@ -986,7 +1121,6 @@ export default function Evaluations() {
         'X-User-Id': currentUserEmail,
       }
 
-      // Attempt primary backend URL (port 8001)
       try {
         res = await fetch(`${DEFAULT_API_BASE}/evaluations/run`, {
           method: 'POST',
@@ -997,7 +1131,6 @@ export default function Evaluations() {
         networkError = err
       }
 
-      // If port 8001 was unreachable, attempt fallback to port 8000
       if (!res || !res.ok) {
         try {
           const fallbackRes = await fetch('http://localhost:8000/evaluations/run', {
@@ -1064,7 +1197,6 @@ export default function Evaluations() {
     }
   }
 
-  // Handle Copy Report
   const handleCopyReport = () => {
     if (!activeResult) return
     const report = `JudgeAI Evaluation Report: ${activeResult.task}\nTarget Model: ${activeResult.model}\nOverall Composite Score: ${activeResult.compositeScore}/100 (${activeResult.status})\n\nRubric Breakdown:\n${activeResult.rubrics.map(r => `- ${r.label}: ${r.score}/100 -> ${r.reasoning}`).join('\n')}`
@@ -1073,7 +1205,6 @@ export default function Evaluations() {
     setTimeout(() => setCopiedReport(false), 2000)
   }
 
-  // Filtered evaluation history
   const filtered = useMemo(() => {
     return runs.filter(r => {
       if (query && !r.task.toLowerCase().includes(query.toLowerCase()) && !r.id.includes(query)) return false
@@ -1099,568 +1230,642 @@ export default function Evaluations() {
 
   return (
     <>
-      <TopBar title="Evaluations Workspace">
-        <button
-          onClick={() => setShowWorkspace(!showWorkspace)}
-          className="pill-primary"
-          style={{ fontSize: 13, padding: '8px 16px', gap: 6, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+      {/* 3-Second Initial Splash Screen */}
+      {showSplash && <EvaluationSplashScreen />}
+
+      {/* Main Evaluations Workspace */}
+      <div
+        style={{
+          opacity: showSplash ? 0 : 1,
+          transition: 'opacity 0.45s ease-in-out',
+          pointerEvents: showSplash ? 'none' : 'auto',
+          minHeight: '100%',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* TopBar Header with Free Illustration, Title, Subtitle & Action Controls */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 24px',
+            borderBottom: '1px solid var(--color-border)',
+            flexWrap: 'wrap',
+            gap: 16,
+            background: 'var(--color-surface-subtle, transparent)',
+          }}
         >
-          <IcPlus size={14} /> {showWorkspace ? 'Hide Form' : 'New Evaluation'}
-        </button>
-      </TopBar>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 500px' }}>
+            {/* Free Evaluation Illustration with Glow */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  width: 105,
+                  height: 70,
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(124,58,237,0.45) 0%, rgba(56,189,248,0.25) 60%, transparent 80%)',
+                  filter: 'blur(16px)',
+                  pointerEvents: 'none',
+                }}
+              />
+              <img
+                src="/evaluation-illustration.png"
+                alt="Evaluation Agent"
+                style={{
+                  height: 82,
+                  width: 'auto',
+                  maxWidth: 135,
+                  objectFit: 'contain',
+                  position: 'relative',
+                  filter: 'drop-shadow(0 8px 20px rgba(124,58,237,0.5))',
+                }}
+              />
+            </div>
 
-      <PageContent>
-        {/* Workspace Runner Area */}
-        {showWorkspace && (
-          <div
-            className="card-base"
-            style={{
-              padding: 24,
-              marginBottom: 28,
-              borderRadius: 16,
-              background: 'linear-gradient(180deg, rgba(124,58,237,0.06) 0%, var(--color-card) 100%)',
-              border: '1px solid rgba(124,58,237,0.25)',
-            }}
-          >
-            {/* Header with Title & Quick Preset Templates */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #7C3AED, #38BDF8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <IcSparkles size={18} style={{ color: '#fff' }} />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--color-foreground)' }}>
-                    Run New Model Evaluation
-                  </h3>
-                  <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-                    Evaluate prompts & model outputs across 6 core multi-agent quality rubrics powered by <span style={{ fontWeight: 600, color: 'var(--color-accent-violet, #7C3AED)' }}>gpt-oss:120b-cloud</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Template Selectors */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-muted)', marginRight: 2 }}>Presets:</span>
-                {PROMPT_TEMPLATES.map((tmpl, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setPromptText(tmpl.prompt)
-                      setModelOutputText(tmpl.output)
-                      setEvalError(null)
-                    }}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-foreground)', fontFamily: "'Inter', sans-serif" }}>
+                  {viewMode === 'history' ? 'Evaluation History' : 'Run New Model Evaluation'}
+                </h1>
+                {viewMode === 'workspace' && (
+                  <span
                     style={{
-                      fontSize: 11,
-                      padding: '5px 11px',
-                      borderRadius: 7,
-                      background: 'var(--color-surface-deep)',
-                      border: '1px solid var(--color-border)',
-                      color: 'var(--color-muted-stronger)',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background = 'rgba(124,58,237,0.15)'
-                      e.currentTarget.style.borderColor = 'rgba(124,58,237,0.35)'
-                      e.currentTarget.style.color = 'var(--color-foreground)'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = 'var(--color-surface-deep)'
-                      e.currentTarget.style.borderColor = 'var(--color-border)'
-                      e.currentTarget.style.color = 'var(--color-muted-stronger)'
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      background: 'rgba(124,58,237,0.15)',
+                      color: 'var(--color-accent-violet, #7C3AED)',
+                      border: '1px solid rgba(124,58,237,0.3)',
+                      fontFamily: "'Inter', sans-serif",
                     }}
                   >
-                    {tmpl.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Top Inputs: Task Name (Auto-Generated) & Searchable Model Dropdown */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1.4fr) minmax(240px, 1fr)', gap: 16, marginBottom: 18 }}>
-              {/* Task Title (Auto-Generated from Prompt) */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Evaluation Task Name
-                  </label>
-                  <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--color-accent-violet, #7C3AED)', background: 'rgba(124,58,237,0.1)', padding: '1px 7px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <IcSparkles size={11} /> Auto-Generated
+                    Eval v1.0
                   </span>
-                </div>
-                <input
-                  type="text"
-                  value={taskName}
-                  readOnly
-                  placeholder="Auto-generated from Prompt / Task Input..."
-                  style={{
-                    width: '100%',
-                    background: 'var(--color-input-bg)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 10,
-                    padding: '11px 14px',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--color-foreground)',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    cursor: 'default',
-                  }}
-                />
+                )}
               </div>
-
-              {/* Searchable Model Selector */}
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                  Select Target Model
-                </label>
-                <SearchableModelDropdown
-                  selectedModelId={selectedModel}
-                  onSelect={id => setSelectedModel(id)}
-                />
-              </div>
+              <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--color-muted)', lineHeight: 1.4, maxWidth: 780, fontFamily: "'Inter', sans-serif" }}>
+                {viewMode === 'history'
+                  ? 'Review, search, and reload previous model evaluations and qualitative scores.'
+                  : <>Evaluate prompts & model outputs across 6 core multi-agent quality rubrics powered by <span style={{ fontWeight: 700, color: 'var(--color-accent-violet, #7C3AED)' }}>gpt-oss:120b-cloud</span></>}
+              </p>
             </div>
+          </div>
 
-            {/* SEPARATED TEXT AREAS: Prompt / Task Input & Model Output */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, marginBottom: 20 }}>
-              {/* Text Area 1: Prompt / Task Input */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Prompt / Task Input
-                  </label>
-                  <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
-                    {promptText.length} chars
-                  </span>
-                </div>
-                <textarea
-                  value={promptText}
-                  onChange={e => setPromptText(e.target.value)}
-                  placeholder="Enter system instructions, user prompt, or criteria given to the model..."
-                  rows={6}
-                  style={{
-                    width: '100%',
-                    background: 'var(--color-input-bg)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 10,
-                    padding: '12px 14px',
-                    fontSize: 12.5,
-                    color: 'var(--color-foreground)',
-                    outline: 'none',
-                    fontFamily: 'Inter, sans-serif',
-                    resize: 'vertical',
-                    boxSizing: 'border-box',
-                    lineHeight: 1.5,
-                  }}
-                />
-              </div>
-
-              {/* Text Area 2: Model Output to Evaluate */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Model Output to Evaluate
-                  </label>
-                  <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
-                    {modelOutputText.length} chars
-                  </span>
-                </div>
-                <textarea
-                  value={modelOutputText}
-                  onChange={e => setModelOutputText(e.target.value)}
-                  placeholder="Paste the AI-generated model response, draft, or code to evaluate..."
-                  rows={6}
-                  style={{
-                    width: '100%',
-                    background: 'var(--color-input-bg)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 10,
-                    padding: '12px 14px',
-                    fontSize: 12.5,
-                    color: 'var(--color-foreground)',
-                    outline: 'none',
-                    fontFamily: 'JetBrains Mono, monospace',
-                    resize: 'vertical',
-                    boxSizing: 'border-box',
-                    lineHeight: 1.5,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Run Button & Evaluation Meta Action */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <IcJudge size={15} style={{ color: 'var(--color-accent-violet, #7C3AED)' }} />
-                <span>Runs 6 Parallel Judges: Accuracy, Relevance, Reasoning, Hallucination, Safety & Style</span>
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {viewMode === 'workspace' ? (
               <button
                 type="button"
-                onClick={handleRunEvaluation}
-                disabled={isRunning || !taskName.trim() || !promptText.trim() || !modelOutputText.trim()}
+                onClick={() => setViewMode('history')}
                 className="pill-primary"
-                style={{
-                  padding: '10px 24px',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  gap: 8,
-                  opacity: isRunning || !taskName.trim() || !promptText.trim() || !modelOutputText.trim() ? 0.5 : 1,
-                  cursor: isRunning ? 'wait' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
+                style={{ fontSize: 12.5, padding: '7px 16px', gap: 6, display: 'flex', alignItems: 'center', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
               >
-                {isRunning ? <IcRotate size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <IcSparkles size={16} />}
-                <span>{isRunning ? 'Evaluating with Judges...' : 'Run Evaluation'}</span>
+                <History size={14} /> History ({filtered.length})
               </button>
-            </div>
-
-            {/* Running Step Status Indicator */}
-            {isRunning && (
-              <div
-                style={{
-                  marginTop: 18,
-                  padding: '14px 18px',
-                  borderRadius: 10,
-                  background: 'rgba(124,58,237,0.12)',
-                  border: '1px solid rgba(124,58,237,0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                }}
+            ) : (
+              <button
+                type="button"
+                onClick={() => setViewMode('workspace')}
+                className="pill-primary"
+                style={{ fontSize: 12.5, padding: '7px 16px', gap: 6, display: 'flex', alignItems: 'center', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
               >
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#38BDF8', animation: 'ping 1s infinite' }} />
-                <span style={{ fontSize: 13, color: 'var(--color-foreground)', fontWeight: 500 }}>{evalStep}</span>
-              </div>
+                <IcPlus size={14} /> New Evaluation
+              </button>
             )}
+          </div>
+        </div>
 
-            {/* Error Message Alert */}
-            {evalError && (
-              <div
-                style={{
-                  marginTop: 18,
-                  padding: '14px 18px',
-                  borderRadius: 10,
-                  background: 'rgba(248, 113, 113, 0.12)',
-                  border: '1px solid rgba(248, 113, 113, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  color: '#F87171',
-                  fontSize: 13,
-                }}
-              >
-                <IcFlag size={16} style={{ flexShrink: 0 }} />
-                <span><strong>Evaluation Error:</strong> {evalError}</span>
-              </div>
-            )}
+        <PageContent style={{ paddingBottom: 64 }}>
+          {/* Workspace Runner Area */}
+          {viewMode === 'workspace' ? (
+            <div
+              className="card-base"
+              style={{
+                padding: 28,
+                marginBottom: 28,
+                borderRadius: 18,
+                background: 'linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(56,189,248,0.03) 50%, var(--color-card, #13111C) 100%)',
+                border: '1px solid rgba(124,58,237,0.22)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.18)',
+              }}
+            >
 
-            {/* PROMINENT POLISHED EVALUATION RESULTS CARD */}
-            {activeResult && !isRunning && (
-              <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--color-border)' }}>
-                {/* Result Header & Prominent Score Visualizer */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, alignItems: 'center', marginBottom: 24 }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          color: '#34D399',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.08em',
-                          background: 'rgba(52, 211, 153, 0.12)',
-                          padding: '2px 8px',
-                          borderRadius: 6,
-                          border: '1px solid rgba(52, 211, 153, 0.25)',
-                        }}
-                      >
-                        Evaluation Complete
-                      </span>
-                      <span style={{ fontSize: 12, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                        ID: #{activeResult.id}
-                      </span>
-                    </div>
-                    <h4 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, color: 'var(--color-foreground)' }}>
-                      {activeResult.task}
-                    </h4>
-                    <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-                      Target Model: <span style={{ fontWeight: 600, color: 'var(--color-foreground)' }}>{activeResult.model}</span> • Evaluated with <span style={{ fontWeight: 600, color: 'var(--color-accent-violet, #7C3AED)' }}>gpt-oss:120b-cloud</span>
-                    </div>
+              {/* Top Inputs: Task Name & Searchable Model Dropdown */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1.4fr) minmax(240px, 1fr)', gap: 16, marginBottom: 18 }}>
+                {/* Task Title (Auto-Generated from Prompt) */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Evaluation Task Name
+                    </label>
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: 'var(--color-accent-violet, #7C3AED)',
+                        background: 'rgba(124,58,237,0.12)',
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <IcSparkles size={11} /> Auto-Generated
+                    </span>
                   </div>
-
-                  {/* Polished Radial Gauge & Status Visualizer */}
-                  <PolishedScoreGauge
-                    score={activeResult.compositeScore}
-                    status={activeResult.status}
+                  <input
+                    type="text"
+                    value={taskName}
+                    readOnly
+                    placeholder="Auto-generated from Prompt / Task Input..."
+                    style={{
+                      width: '100%',
+                      background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 12,
+                      padding: '12px 16px',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: 'var(--color-foreground)',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      cursor: 'default',
+                    }}
                   />
                 </div>
 
-                {/* Actions Toolbar */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    6 Automated Judge Score Breakdown
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      type="button"
-                      onClick={handleCopyReport}
-                      className="pill-outline"
-                      style={{ fontSize: 12, padding: '6px 12px', gap: 6, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                    >
-                      {copiedReport ? <IcCheck size={14} style={{ color: '#34D399' }} /> : <IcCopy size={14} />}
-                      <span>{copiedReport ? 'Report Copied!' : 'Copy Summary'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/dashboard/evaluations/${activeResult.id}`)}
-                      className="pill-primary"
-                      style={{ fontSize: 12, padding: '6px 14px', gap: 4, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                    >
-                      View Deep Analysis <IcChevronRight size={14} />
-                    </button>
-                  </div>
+                {/* Searchable Model Selector */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Select Target Model
+                  </label>
+                  <SearchableModelDropdown
+                    selectedModelId={selectedModel}
+                    onSelect={id => setSelectedModel(id)}
+                  />
                 </div>
+              </div>
 
-                {/* 6 Score Breakdown Cards Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, marginBottom: 24 }}>
-                  {activeResult.rubrics.map(r => (
-                    <JudgeScoreCard key={r.key} rubric={r} />
-                  ))}
-                </div>
-
-                {/* Model Response Box */}
-                <div style={{ background: 'var(--color-surface-deep)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Evaluated Model Output ({activeResult.model})
-                    </div>
-                    <span style={{ fontSize: 11, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
-                      Evaluated against ground truth
+              {/* SEPARATED TEXT AREAS */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, marginBottom: 20 }}>
+                {/* Text Area 1: Prompt Input */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Prompt / Task Input
+                    </label>
+                    <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                      {promptText.length} chars
                     </span>
                   </div>
-                  <div
+                  <textarea
+                    value={promptText}
+                    onChange={e => setPromptText(e.target.value)}
+                    placeholder="Enter system instructions, user prompt, or criteria given to the model..."
+                    rows={6}
                     style={{
-                      fontSize: 12.5,
+                      width: '100%',
+                      background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 12,
+                      padding: '14px 16px',
+                      fontSize: 13,
                       color: 'var(--color-foreground)',
-                      lineHeight: 1.6,
-                      whiteSpace: 'pre-wrap',
-                      fontFamily: 'JetBrains Mono, monospace',
-                      background: 'var(--color-card)',
-                      padding: 12,
-                      borderRadius: 8,
-                      border: '1px solid var(--color-border-faint)',
-                      maxHeight: 220,
-                      overflowY: 'auto',
+                      outline: 'none',
+                      fontFamily: 'Inter, sans-serif',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      lineHeight: 1.55,
+                      transition: 'border-color 0.15s',
                     }}
-                  >
-                    {activeResult.response}
+                    onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet, #7C3AED)')}
+                    onBlur={e => (e.target.style.borderColor = 'var(--color-border)')}
+                  />
+                </div>
+
+                {/* Text Area 2: Model Output to Evaluate */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Model Output to Evaluate
+                    </label>
+                    <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                      {modelOutputText.length} chars
+                    </span>
                   </div>
+                  <textarea
+                    value={modelOutputText}
+                    onChange={e => setModelOutputText(e.target.value)}
+                    placeholder="Paste the AI-generated model response, draft, or code to evaluate..."
+                    rows={6}
+                    style={{
+                      width: '100%',
+                      background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 12,
+                      padding: '14px 16px',
+                      fontSize: 13,
+                      color: 'var(--color-foreground)',
+                      outline: 'none',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      lineHeight: 1.55,
+                      transition: 'border-color 0.15s',
+                    }}
+                    onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet, #7C3AED)')}
+                    onBlur={e => (e.target.style.borderColor = 'var(--color-border)')}
+                  />
                 </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Evaluation History Header & Filter Bar */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-foreground)', marginRight: 8 }}>
-            Evaluation History ({filtered.length})
-          </div>
-
-          {/* Search bar */}
-          <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
-            <IcSearch size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-            <input
-              value={query}
-              onChange={e => {
-                setQuery(e.target.value)
-                setPage(1)
-              }}
-              placeholder="Search by task or run ID…"
-              style={{
-                width: '100%',
-                fontSize: 12.5,
-                padding: '8px 12px 8px 34px',
-                borderRadius: 8,
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-input-bg)',
-                color: 'var(--color-foreground)',
-                outline: 'none',
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-muted)' }}>
-            <IcFilter size={14} />
-          </div>
-
-          <select
-            value={filterModel}
-            onChange={e => {
-              setFilterModel(e.target.value)
-              setPage(1)
-            }}
-            style={selectStyle}
-          >
-            <option value="all">All models</option>
-            {MODELS.map(m => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filterStatus}
-            onChange={e => {
-              setFilterStatus(e.target.value)
-              setPage(1)
-            }}
-            style={selectStyle}
-          >
-            <option value="all">All statuses</option>
-            <option value="Passed">Passed</option>
-            <option value="Flagged">Flagged</option>
-          </select>
-
-          {(query || filterModel !== 'all' || filterStatus !== 'all') && (
-            <button
-              onClick={() => {
-                setQuery('')
-                setFilterModel('all')
-                setFilterStatus('all')
-                setPage(1)
-              }}
-              style={{ fontSize: 12, color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-
-        {/* History Table */}
-        <div className="card-base" style={{ overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  {['Task', 'Model', 'Overall Score', 'Judges', 'Time', 'Status', ''].map(h => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: '12px 20px',
-                        textAlign: 'left',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: 'var(--color-muted)',
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visible.length === 0 && (
-                  <tr>
-                    <td colSpan={7} style={{ padding: '40px 24px', textAlign: 'center', fontSize: 13, color: 'var(--color-muted)' }}>
-                      No evaluation runs match these filters.
-                    </td>
-                  </tr>
-                )}
-                {visible.map(r => (
-                  <tr
-                    key={r.id}
-                    onClick={() => navigate(`/dashboard/evaluations/${r.id}`)}
-                    style={{ borderBottom: '1px solid var(--color-border-faint)', transition: 'background 0.1s', cursor: 'pointer' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <td style={{ padding: '13px 20px', fontSize: 13, color: 'var(--color-foreground)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                      {r.task}
-                    </td>
-                    <td style={{ padding: '13px 20px', fontSize: 12, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap' }}>
-                      {r.model}
-                    </td>
-                    <td style={{ padding: '13px 20px' }}>
-                      <ScoreBadge score={r.score} />
-                    </td>
-                    <td style={{ padding: '13px 20px', fontSize: 13, color: 'var(--color-muted)' }}>
-                      {r.judges}/6
-                    </td>
-                    <td style={{ padding: '13px 20px', fontSize: 12, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
-                      {r.ts}
-                    </td>
-                    <td style={{ padding: '13px 20px' }}>
-                      <StatusPill status={r.status} />
-                    </td>
-                    <td style={{ padding: '13px 20px' }}>
-                      <Link
-                        to={`/dashboard/evaluations/${r.id}`}
-                        style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 2 }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-foreground)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
-                      >
-                        View <IcChevronRight size={12} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {filtered.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderTop: '1px solid var(--color-border)' }}>
-              <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-                Page {page} of {pageCount}
-              </span>
-              <div style={{ display: 'flex', gap: 8 }}>
+              {/* Run Button & Evaluation Meta Action */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ fontSize: 12.5, color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <IcJudge size={16} style={{ color: 'var(--color-accent-violet, #7C3AED)' }} />
+                  <span>Runs 6 Parallel Judges: Accuracy, Relevance, Reasoning, Hallucination, Safety & Style</span>
+                </div>
                 <button
-                  disabled={page === 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  type="button"
+                  onClick={handleRunEvaluation}
+                  disabled={isRunning || !taskName.trim() || !promptText.trim() || !modelOutputText.trim()}
+                  className="pill-primary"
                   style={{
-                    fontSize: 12,
-                    padding: '6px 12px',
-                    borderRadius: 7,
-                    border: '1px solid var(--color-border)',
-                    background: 'transparent',
-                    color: page === 1 ? 'var(--color-muted-weak)' : 'var(--color-muted-stronger)',
-                    cursor: page === 1 ? 'default' : 'pointer',
+                    padding: '12px 28px',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    gap: 8,
+                    opacity: isRunning || !taskName.trim() || !promptText.trim() || !modelOutputText.trim() ? 0.5 : 1,
+                    cursor: isRunning ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    boxShadow: '0 4px 18px rgba(124,58,237,0.3)',
                   }}
                 >
-                  Previous
-                </button>
-                <button
-                  disabled={page === pageCount}
-                  onClick={() => setPage(p => Math.min(pageCount, p + 1))}
-                  style={{
-                    fontSize: 12,
-                    padding: '6px 12px',
-                    borderRadius: 7,
-                    border: '1px solid var(--color-border)',
-                    background: 'transparent',
-                    color: page === pageCount ? 'var(--color-muted-weak)' : 'var(--color-muted-stronger)',
-                    cursor: page === pageCount ? 'default' : 'pointer',
-                  }}
-                >
-                  Next
+                  {isRunning ? <IcRotate size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <IcSparkles size={16} />}
+                  <span>{isRunning ? 'Evaluating with Judges...' : 'Run Evaluation'}</span>
                 </button>
               </div>
+
+              {/* Running Step Status Indicator */}
+              {isRunning && (
+                <div
+                  style={{
+                    marginTop: 20,
+                    padding: '16px 20px',
+                    borderRadius: 12,
+                    background: 'rgba(124,58,237,0.12)',
+                    border: '1px solid rgba(124,58,237,0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                  }}
+                >
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#38BDF8', animation: 'ping 1s infinite' }} />
+                  <span style={{ fontSize: 13.5, color: 'var(--color-foreground)', fontWeight: 600 }}>{evalStep}</span>
+                </div>
+              )}
+
+              {/* Error Message Alert */}
+              {evalError && (
+                <div
+                  style={{
+                    marginTop: 20,
+                    padding: '16px 20px',
+                    borderRadius: 12,
+                    background: 'rgba(248, 113, 113, 0.12)',
+                    border: '1px solid rgba(248, 113, 113, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    color: '#F87171',
+                    fontSize: 13.5,
+                  }}
+                >
+                  <IcFlag size={16} style={{ flexShrink: 0 }} />
+                  <span><strong>Evaluation Error:</strong> {evalError}</span>
+                </div>
+              )}
+
+              {/* PROMINENT EVALUATION RESULTS CARD */}
+              {activeResult && !isRunning && (
+                <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--color-border)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, alignItems: 'center', marginBottom: 24 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 800,
+                            color: '#34D399',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            background: 'rgba(52, 211, 153, 0.14)',
+                            padding: '3px 10px',
+                            borderRadius: 6,
+                            border: '1px solid rgba(52, 211, 153, 0.3)',
+                          }}
+                        >
+                          Evaluation Complete
+                        </span>
+                        <span style={{ fontSize: 12, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                          ID: #{activeResult.id}
+                        </span>
+                      </div>
+                      <h4 style={{ margin: '0 0 6px', fontSize: 22, fontWeight: 800, color: 'var(--color-foreground)' }}>
+                        {activeResult.task}
+                      </h4>
+                      <div style={{ fontSize: 13, color: 'var(--color-muted)' }}>
+                        Target Model: <span style={{ fontWeight: 700, color: 'var(--color-foreground)' }}>{activeResult.model}</span> • Evaluated with <span style={{ fontWeight: 700, color: 'var(--color-accent-violet, #7C3AED)' }}>gpt-oss:120b-cloud</span>
+                      </div>
+                    </div>
+
+                    <PolishedScoreGauge
+                      score={activeResult.compositeScore}
+                      status={activeResult.status}
+                    />
+                  </div>
+
+                  {/* Actions Toolbar */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      6 Automated Judge Score Breakdown
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={handleCopyReport}
+                        className="pill-outline"
+                        style={{ fontSize: 12, padding: '7px 14px', gap: 6, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                      >
+                        {copiedReport ? <IcCheck size={14} style={{ color: '#34D399' }} /> : <IcCopy size={14} />}
+                        <span>{copiedReport ? 'Report Copied!' : 'Copy Summary'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleExportJSON}
+                        className="pill-primary"
+                        style={{ fontSize: 12, padding: '7px 16px', gap: 4, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                      >
+                        Export JSON
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 6 Score Breakdown Cards Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, marginBottom: 24 }}>
+                    {activeResult.rubrics.map(r => (
+                      <JudgeScoreCard key={r.key} rubric={r} />
+                    ))}
+                  </div>
+
+                  {/* Model Response Box */}
+                  <div style={{ background: 'var(--color-surface, rgba(255,255,255,0.02))', border: '1px solid var(--color-border)', borderRadius: 14, padding: 18 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        Evaluated Model Output ({activeResult.model})
+                      </div>
+                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                        Evaluated against ground truth
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: 'var(--color-foreground)',
+                        lineHeight: 1.6,
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        background: 'var(--color-card, #13111C)',
+                        padding: 14,
+                        borderRadius: 10,
+                        border: '1px solid var(--color-border-faint)',
+                        maxHeight: 220,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {activeResult.response}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            <>
+              {/* Evaluation History Header & Filter Bar */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-foreground)', marginRight: 8, letterSpacing: '-0.01em' }}>
+                  Evaluation History ({filtered.length})
+                </div>
+
+                {/* Search bar */}
+                <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
+                  <IcSearch size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                  <input
+                    value={query}
+                    onChange={e => {
+                      setQuery(e.target.value)
+                      setPage(1)
+                    }}
+                    placeholder="Search by task or run ID…"
+                    style={{
+                      width: '100%',
+                      fontSize: 13,
+                      padding: '8px 12px 8px 34px',
+                      borderRadius: 10,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-input-bg)',
+                      color: 'var(--color-foreground)',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-muted)' }}>
+                  <IcFilter size={14} />
+                </div>
+
+                <select
+                  value={filterModel}
+                  onChange={e => {
+                    setFilterModel(e.target.value)
+                    setPage(1)
+                  }}
+                  style={selectStyle}
+                >
+                  <option value="all">All models</option>
+                  {MODELS.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={filterStatus}
+                  onChange={e => {
+                    setFilterStatus(e.target.value)
+                    setPage(1)
+                  }}
+                  style={selectStyle}
+                >
+                  <option value="all">All statuses</option>
+                  <option value="Passed">Passed</option>
+                  <option value="Flagged">Flagged</option>
+                </select>
+
+                {(query || filterModel !== 'all' || filterStatus !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery('')
+                      setFilterModel('all')
+                      setFilterStatus('all')
+                      setPage(1)
+                    }}
+                    style={{ fontSize: 12, color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+
+              {/* History Table */}
+              <div className="card-base" style={{ overflow: 'hidden', borderRadius: 16, border: '1px solid var(--color-border)' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface, rgba(255,255,255,0.02))' }}>
+                        {['Task', 'Model', 'Overall Score', 'Judges', 'Time', 'Status', ''].map(h => (
+                          <th
+                            key={h}
+                            style={{
+                              padding: '14px 20px',
+                              textAlign: 'left',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: 'var(--color-muted)',
+                              letterSpacing: '0.06em',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visible.length === 0 && (
+                        <tr>
+                          <td colSpan={7} style={{ padding: '40px 24px', textAlign: 'center', fontSize: 13.5, color: 'var(--color-muted)' }}>
+                            {loadingHistory ? 'Loading evaluation history…' : 'No evaluation runs match these filters.'}
+                          </td>
+                        </tr>
+                      )}
+                      {visible.map(r => (
+                        <tr
+                          key={r.id}
+                          onClick={() => navigate(`/dashboard/evaluations/${r.id}`)}
+                          style={{ borderBottom: '1px solid var(--color-border-faint)', transition: 'background 0.1s', cursor: 'pointer' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-hover, rgba(255,255,255,0.03))')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <td style={{ padding: '14px 20px', fontSize: 13.5, color: 'var(--color-foreground)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                            {r.task}
+                          </td>
+                          <td style={{ padding: '14px 20px', fontSize: 12.5, color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap' }}>
+                            {r.model}
+                          </td>
+                          <td style={{ padding: '14px 20px' }}>
+                            <ScoreBadge score={r.score} />
+                          </td>
+                          <td style={{ padding: '14px 20px', fontSize: 13, color: 'var(--color-muted)', fontWeight: 600 }}>
+                            {r.judges}/6
+                          </td>
+                          <td style={{ padding: '14px 20px', fontSize: 12.5, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
+                            {r.ts}
+                          </td>
+                          <td style={{ padding: '14px 20px' }}>
+                            <StatusPill status={r.status} />
+                          </td>
+                          <td style={{ padding: '14px 20px' }}>
+                            <Link
+                              to={`/dashboard/evaluations/${r.id}`}
+                              style={{ fontSize: 12.5, color: 'var(--color-muted)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 2, fontWeight: 600 }}
+                              onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-foreground)')}
+                              onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
+                            >
+                              View <IcChevronRight size={13} />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {filtered.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderTop: '1px solid var(--color-border)' }}>
+                    <span style={{ fontSize: 12.5, color: 'var(--color-muted)' }}>
+                      Page {page} of {pageCount}
+                    </span>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        disabled={page === 1}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        style={{
+                          fontSize: 12,
+                          padding: '6px 14px',
+                          borderRadius: 8,
+                          border: '1px solid var(--color-border)',
+                          background: 'transparent',
+                          color: page === 1 ? 'var(--color-muted-weak)' : 'var(--color-muted-stronger)',
+                          cursor: page === 1 ? 'default' : 'pointer',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="button"
+                        disabled={page === pageCount}
+                        onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+                        style={{
+                          fontSize: 12,
+                          padding: '6px 14px',
+                          borderRadius: 8,
+                          border: '1px solid var(--color-border)',
+                          background: 'transparent',
+                          color: page === pageCount ? 'var(--color-muted-weak)' : 'var(--color-muted-stronger)',
+                          cursor: page === pageCount ? 'default' : 'pointer',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           )}
-        </div>
-      </PageContent>
+        </PageContent>
+      </div>
 
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes ping { 0% { transform: scale(1); opacity: 1; } 75%, 100% { transform: scale(2); opacity: 0; } }
+        @keyframes evalFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes evalSplashFadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+        @keyframes evalProgress { 0%{width:0%} 100%{width:100%} }
         @keyframes dropdownFadeIn {
           from { opacity: 0; transform: translateY(-6px) scale(0.98); }
           to { opacity: 1; transform: translateY(0) scale(1); }

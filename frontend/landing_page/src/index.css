@@ -16,11 +16,16 @@
 }
 
 :root {
+  color-scheme: dark;
   --color-background: #0A0A0A;
   --color-background-rgb: 10, 10, 10;
   --color-foreground: #F2F2F2;
   --color-card: rgba(255, 255, 255, 0.03);
+  --color-card-solid: #13111C;
   --color-card-border: rgba(255, 255, 255, 0.08);
+  --color-dropdown-bg: #14131F;
+  --color-dropdown-border: rgba(255, 255, 255, 0.14);
+  --color-dropdown-hover: rgba(255, 255, 255, 0.06);
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-light: rgba(255, 255, 255, 0.12);
   --color-border-faint: rgba(255, 255, 255, 0.06);
@@ -44,11 +49,16 @@
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
   --color-background: #F8F9FA;
   --color-background-rgb: 248, 249, 250;
   --color-foreground: #0F172A;
   --color-card: #FFFFFF;
+  --color-card-solid: #FFFFFF;
   --color-card-border: rgba(15, 23, 42, 0.08);
+  --color-dropdown-bg: #FFFFFF;
+  --color-dropdown-border: rgba(15, 23, 42, 0.15);
+  --color-dropdown-hover: rgba(124, 58, 237, 0.08);
   --color-border: rgba(15, 23, 42, 0.12);
   --color-border-light: rgba(15, 23, 42, 0.18);
   --color-border-faint: rgba(15, 23, 42, 0.06);
@@ -69,6 +79,41 @@
   --color-accent-violet: #7C3AED;
   --color-accent-cyan: #0284C7;
   --color-accent-magenta: #DB2777;
+}
+
+/* Global Select & Option Theme Styling */
+select {
+  color-scheme: dark;
+  background-color: var(--color-card-solid);
+  color: var(--color-foreground);
+  border-color: var(--color-border);
+}
+
+:root[data-theme="light"] select {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  color: #0F172A;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+select option {
+  background-color: #13111C;
+  color: #F2F2F2;
+}
+
+:root[data-theme="light"] select option {
+  background-color: #FFFFFF;
+  color: #0F172A;
+}
+
+select optgroup {
+  background-color: #13111C;
+  color: #F2F2F2;
+}
+
+:root[data-theme="light"] select optgroup {
+  background-color: #FFFFFF;
+  color: #0F172A;
 }
 
 *, *::before, *::after {

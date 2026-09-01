@@ -350,7 +350,7 @@ export default function AppShell() {
           </button>
         </div>
 
-        <div key={pathname} className="page-transition-container flex-1 flex flex-col h-full overflow-hidden">
+        <div key={pathname} className="page-transition-container flex-1 flex flex-col h-full min-h-0 overflow-y-auto">
           <Outlet />
         </div>
       </main>
