@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router'
 import { TopBar, PageContent } from '../components/AppShell'
+import { useSettings } from '../components/ThemeProvider'
 import { IcChevronRight, IcRotate, IcFlag, IcChevronDown, IcCheck } from '../components/icons'
 
 type RubricItem = {
@@ -100,12 +101,57 @@ const DEFAULT_DETAIL: DetailData = DETAIL_MAP['1234']
 
 export default function EvalDetail() {
   const { id } = useParams()
+  const { profile } = useSettings()
   const [expanded, setExpanded] = useState<string | null>(null)
   const [reRunning, setReRunning] = useState(false)
   const [reRunComplete, setReRunComplete] = useState(false)
 
-  const detailData = (id && DETAIL_MAP[id]) ? DETAIL_MAP[id] : DEFAULT_DETAIL
-  const composite = Math.round(detailData.rubrics.reduce((s, r) => s + r.score, 0) / detailData.rubrics.length)
+  const [detailData, setDetailData] = useState<DetailData>(() => (id && DETAIL_MAP[id]) ? DETAIL_MAP[id] : DEFAULT_DETAIL)
+
+  useEffect(() => {
+    if (!id) return
+    const fetchDetail = async () => {
+      try {
+        const userEmail = profile?.email || 'sarah@judgeai.dev'
+        const headers = {
+          'Content-Type': 'application/json',
+          'X-User-Email': userEmail,
+          'X-User-Id': userEmail,
+        }
+        let res = await fetch(`http://localhost:8001/evaluations/${id}`, { headers }).catch(() => null)
+        if (!res || !res.ok) {
+          res = await fetch(`http://localhost:8000/evaluations/${id}`, { headers }).catch(() => null)
+        }
+        if (res && res.ok) {
+          const data = await res.json()
+          const dt = data.created_at ? new Date(data.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent'
+          setDetailData({
+            task: data.task,
+            model: data.model,
+            date: dt,
+            status: data.status,
+            prompt: data.prompt,
+            response: data.response,
+            rubrics: (data.rubrics || []).map((r: any) => ({
+              key: r.key,
+              label: r.label,
+              score: r.score,
+              color: r.color || '#7C3AED',
+              border: `${r.color || '#7C3AED'}33`,
+              reasoning: r.reasoning,
+            })),
+          })
+        }
+      } catch {}
+    }
+    fetchDetail()
+  }, [id, profile?.email])
+
+  const composite = Math.round(
+    detailData.rubrics.length > 0
+      ? detailData.rubrics.reduce((s, r) => s + r.score, 0) / detailData.rubrics.length
+      : 0
+  )
 
   const handleReRun = () => {
     setReRunning(true)

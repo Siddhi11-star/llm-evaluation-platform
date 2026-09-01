@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     # Ollama Configuration
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_API_KEY: str = os.getenv("OLLAMA_API_KEY", "")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "minimax-m3:cloud")
     USE_OLLAMA: bool = os.getenv("USE_OLLAMA", "true").lower() in ("true", "1", "t")
     OLLAMA_CLOUD_MODELS: list[str] = [
