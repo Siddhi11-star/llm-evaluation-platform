@@ -311,6 +311,171 @@ function JudgeSplashScreen() {
   )
 }
 
+// ─── Custom Candidate Model Dropdown Component ───────────────────────────────
+
+function CandidateModelSelector({
+  selectedModelName,
+  onSelect,
+}: {
+  selectedModelName: string
+  onSelect: (modelName: string) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const selectedModel = AVAILABLE_MODELS.find(m => m.name === selectedModelName) || AVAILABLE_MODELS[0]
+  const modelColor = selectedModel.color || '#7C3AED'
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
+  return (
+    <div ref={dropdownRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          background: `linear-gradient(135deg, ${modelColor}14 0%, var(--color-input-bg, rgba(0,0,0,0.25)) 100%)`,
+          border: `1px solid ${modelColor}${isOpen ? 'aa' : '55'}`,
+          borderRadius: 10,
+          padding: '7px 14px',
+          fontSize: 12.5,
+          color: 'var(--color-foreground)',
+          cursor: 'pointer',
+          boxShadow: isOpen
+            ? `0 0 16px ${modelColor}40, 0 0 0 2px ${modelColor}25`
+            : `0 0 12px ${modelColor}20, inset 0 0 8px ${modelColor}0d`,
+          transition: 'all 0.25s ease',
+          textAlign: 'left',
+          minWidth: 210,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <div
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: modelColor,
+              flexShrink: 0,
+              boxShadow: `0 0 10px ${modelColor}, 0 0 3px ${modelColor}`,
+              transition: 'all 0.25s ease',
+            }}
+          />
+          <span style={{ fontWeight: 700, color: 'var(--color-foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {selectedModel.name} <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 400 }}>({selectedModel.provider})</span>
+          </span>
+        </div>
+
+        <IcChevronDown
+          size={13}
+          style={{
+            color: isOpen ? modelColor : 'var(--color-muted)',
+            transform: isOpen ? 'rotate(180deg)' : 'none',
+            transition: 'transform 0.2s ease',
+            flexShrink: 0,
+          }}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            width: '100%',
+            minWidth: 230,
+            zIndex: 100,
+            background: 'var(--color-dropdown-bg, #14131F)',
+            border: `1px solid ${modelColor}44`,
+            borderRadius: 12,
+            boxShadow: `0 16px 36px rgba(0, 0, 0, 0.4), 0 0 20px ${modelColor}18`,
+            backdropFilter: 'blur(20px)',
+            overflow: 'hidden',
+            animation: 'dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+            padding: '6px',
+          }}
+        >
+          {AVAILABLE_MODELS.map(m => {
+            const isSelected = m.name === selectedModelName
+            return (
+              <div
+                key={m.id}
+                onClick={() => {
+                  onSelect(m.name)
+                  setIsOpen(false)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  background: isSelected ? `${m.color}20` : 'transparent',
+                  border: isSelected ? `1px solid ${m.color}55` : '1px solid transparent',
+                  boxShadow: isSelected ? `0 0 10px ${m.color}25` : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.12s ease',
+                  marginBottom: 2,
+                }}
+                onMouseEnter={e => {
+                  if (!isSelected) e.currentTarget.style.background = 'var(--color-dropdown-hover, var(--color-hover))'
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <div
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: m.color,
+                      flexShrink: 0,
+                      boxShadow: `0 0 8px ${m.color}aa`,
+                    }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span
+                      style={{
+                        fontSize: 12.5,
+                        fontWeight: isSelected ? 700 : 600,
+                        color: isSelected ? m.color : 'var(--color-foreground)',
+                      }}
+                    >
+                      {m.name}
+                    </span>
+                    <span style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>
+                      {m.provider}
+                    </span>
+                  </div>
+                </div>
+
+                {isSelected && <IcCheck size={13} style={{ color: m.color }} />}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Component: JudgeConfig ─────────────────────────────────────────────
 
 export default function JudgeConfig() {
@@ -338,11 +503,21 @@ export default function JudgeConfig() {
   const [historyQuery, setHistoryQuery] = useState('')
   const [historyWinnerFilter, setHistoryWinnerFilter] = useState<'all' | 'A' | 'B' | 'Tie'>('all')
 
-  const [prompt, setPrompt] = useState(INITIAL_JUDGE_HISTORY[0].prompt)
-  const [modelA, setModelA] = useState(INITIAL_JUDGE_HISTORY[0].modelA)
-  const [modelB, setModelB] = useState(INITIAL_JUDGE_HISTORY[0].modelB)
-  const [responseA, setResponseA] = useState(INITIAL_JUDGE_HISTORY[0].responseA)
-  const [responseB, setResponseB] = useState(INITIAL_JUDGE_HISTORY[0].responseB)
+  const [prompt, setPrompt] = useState('')
+  const [modelA, setModelA] = useState(AVAILABLE_MODELS[0].name)
+  const [modelB, setModelB] = useState(AVAILABLE_MODELS[1].name)
+  const [responseA, setResponseA] = useState('')
+  const [responseB, setResponseB] = useState('')
+
+  // Animated 3-dot loading cycle for placeholders: '' -> '.' -> '..' -> '...' -> ''
+  const [dotCount, setDotCount] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotCount(prev => (prev + 1) % 4)
+    }, 450)
+    return () => clearInterval(interval)
+  }, [])
+  const animatedDots = '.'.repeat(dotCount)
 
   const [judgeModel, setJudgeModel] = useState(JUDGE_MODELS[0].id)
   const [isGeneratingResponses, setIsGeneratingResponses] = useState(false)
@@ -743,7 +918,8 @@ export default function JudgeConfig() {
                     ref={promptTextareaRef}
                     value={prompt}
                     onChange={e => setPrompt(e.target.value)}
-                    placeholder="Enter the prompt or task directive that both AI models will be evaluated on..."
+                    placeholder={`Enter the prompt or task directive that both AI models will be evaluated on${animatedDots}`}
+                    className="judge-placeholder-blink"
                     style={{
                       width: '100%',
                       minHeight: 90,
@@ -781,10 +957,12 @@ export default function JudgeConfig() {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 12,
-                      background: 'var(--color-surface, rgba(255,255,255,0.02))',
+                      background: `linear-gradient(135deg, ${modelAObj.color}08 0%, var(--color-surface, rgba(255,255,255,0.02)) 100%)`,
                       padding: 18,
                       borderRadius: 14,
-                      border: '1px solid var(--color-border)',
+                      border: `1px solid ${modelAObj.color}35`,
+                      boxShadow: `0 4px 20px ${modelAObj.color}10`,
+                      transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -809,24 +987,10 @@ export default function JudgeConfig() {
                         <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--color-foreground)' }}>Candidate A</span>
                       </div>
                       <div>
-                        <select
-                          value={modelA}
-                          onChange={e => setModelA(e.target.value)}
-                          style={{
-                            borderRadius: 8,
-                            padding: '6px 12px',
-                            fontSize: 12.5,
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            outline: 'none',
-                          }}
-                        >
-                          {AVAILABLE_MODELS.map(m => (
-                            <option key={m.id} value={m.name}>
-                              {m.name} ({m.provider})
-                            </option>
-                          ))}
-                        </select>
+                        <CandidateModelSelector
+                          selectedModelName={modelA}
+                          onSelect={name => setModelA(name)}
+                        />
                       </div>
                     </div>
 
@@ -834,7 +998,8 @@ export default function JudgeConfig() {
                       rows={10}
                       value={responseA}
                       onChange={e => setResponseA(e.target.value)}
-                      placeholder={`Paste or generate ${modelA}'s response here...`}
+                      placeholder={`Paste or generate ${modelA}'s response here${animatedDots}`}
+                      className="judge-placeholder-blink"
                       style={{
                         width: '100%',
                         background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
@@ -860,10 +1025,12 @@ export default function JudgeConfig() {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 12,
-                      background: 'var(--color-surface, rgba(255,255,255,0.02))',
+                      background: `linear-gradient(135deg, ${modelBObj.color}08 0%, var(--color-surface, rgba(255,255,255,0.02)) 100%)`,
                       padding: 18,
                       borderRadius: 14,
-                      border: '1px solid var(--color-border)',
+                      border: `1px solid ${modelBObj.color}35`,
+                      boxShadow: `0 4px 20px ${modelBObj.color}10`,
+                      transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -888,24 +1055,10 @@ export default function JudgeConfig() {
                         <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--color-foreground)' }}>Candidate B</span>
                       </div>
                       <div>
-                        <select
-                          value={modelB}
-                          onChange={e => setModelB(e.target.value)}
-                          style={{
-                            borderRadius: 8,
-                            padding: '6px 12px',
-                            fontSize: 12.5,
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            outline: 'none',
-                          }}
-                        >
-                          {AVAILABLE_MODELS.map(m => (
-                            <option key={m.id} value={m.name}>
-                              {m.name} ({m.provider})
-                            </option>
-                          ))}
-                        </select>
+                        <CandidateModelSelector
+                          selectedModelName={modelB}
+                          onSelect={name => setModelB(name)}
+                        />
                       </div>
                     </div>
 
@@ -913,7 +1066,8 @@ export default function JudgeConfig() {
                       rows={10}
                       value={responseB}
                       onChange={e => setResponseB(e.target.value)}
-                      placeholder={`Paste or generate ${modelB}'s response here...`}
+                      placeholder={`Paste or generate ${modelB}'s response here${animatedDots}`}
+                      className="judge-placeholder-blink"
                       style={{
                         width: '100%',
                         background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
@@ -976,7 +1130,7 @@ export default function JudgeConfig() {
                   <button
                     type="button"
                     onClick={handleJudge}
-                    disabled={isJudging}
+                    disabled={isJudging || !prompt.trim() || !responseA.trim() || !responseB.trim()}
                     className="pill-primary"
                     style={{
                       fontSize: 13.5,
@@ -984,8 +1138,8 @@ export default function JudgeConfig() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 8,
-                      cursor: isJudging ? 'not-allowed' : 'pointer',
-                      opacity: isJudging ? 0.7 : 1,
+                      cursor: isJudging || !prompt.trim() || !responseA.trim() || !responseB.trim() ? 'not-allowed' : 'pointer',
+                      opacity: isJudging || !prompt.trim() || !responseA.trim() || !responseB.trim() ? 0.5 : 1,
                     }}
                   >
                     {isJudging ? <IcRotate size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <IcJudge size={15} />}
@@ -1504,6 +1658,20 @@ export default function JudgeConfig() {
         @keyframes judgeSplashFadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
         @keyframes judgeProgress { 0%{width:0%} 100%{width:100%} }
         @media(max-width:768px){ .judge-side-by-side { grid-template-columns: 1fr !important; } }
+        .judge-placeholder-blink::placeholder {
+          color: var(--color-muted);
+          opacity: 0.65;
+          animation: placeholderBlink 3s ease-in-out infinite;
+          transition: opacity 0.2s ease;
+        }
+        .judge-placeholder-blink:focus::placeholder {
+          opacity: 0 !important;
+          animation: none !important;
+        }
+        @keyframes placeholderBlink {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.85; }
+        }
       `}</style>
     </>
   )

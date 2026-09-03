@@ -11,6 +11,7 @@ import {
   IcMic,
   IcPlus,
   IcTrash,
+  IcSparkles,
 } from '../components/icons'
 import { JudgeAISwarmLanding } from '../components/swarm/JudgeAISwarmLanding'
 import { Search, X as XIcon } from 'lucide-react'
@@ -201,9 +202,157 @@ function getModelColor(model: string): string {
   return MODEL_COLORS[model] || '#8B5CF6'
 }
 
+// ─── Agent Swarm Splash Screen ──────────────────────────────────────────────
+
+function SwarmSplashScreen() {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'var(--color-background)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Background Glow */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '48%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 600,
+          height: 600,
+          background: 'radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(56, 189, 248, 0.08) 45%, transparent 70%)',
+          filter: 'blur(40px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      {/* Central Content */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          animation: 'swarmSplashFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        }}
+      >
+        {/* Centered Swarm Illustration */}
+        <div style={{ position: 'relative', marginBottom: 20 }}>
+          <img
+            src="/swarm-illustration.png"
+            alt="JudgeAI Autonomous Swarm"
+            style={{
+              width: 340,
+              maxWidth: '85vw',
+              height: 'auto',
+              filter: 'drop-shadow(0 20px 45px rgba(124, 58, 237, 0.35))',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              animation: 'swarmFloat 3s ease-in-out infinite',
+            }}
+          />
+        </div>
+
+        {/* Badge */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 12px',
+            borderRadius: 999,
+            background: 'rgba(124,58,237,0.12)',
+            border: '1px solid rgba(124,58,237,0.25)',
+            color: '#7C3AED',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: 12,
+          }}
+        >
+          <IcSparkles size={12} /> Autonomous Agent Swarm
+        </div>
+
+        <h1
+          style={{
+            margin: '0 0 8px',
+            fontSize: 'clamp(28px, 4.5vw, 38px)',
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            color: 'var(--color-foreground)',
+            lineHeight: 1.15,
+          }}
+        >
+          Agent Swarm
+        </h1>
+
+        <p
+          style={{
+            margin: '0 0 28px',
+            fontSize: 'clamp(13px, 2vw, 15px)',
+            color: 'var(--color-muted)',
+            maxWidth: 460,
+            lineHeight: 1.5,
+            fontWeight: 500,
+          }}
+        >
+          Coordinating multi-agent workflows, parallel execution, and consensus…
+        </p>
+
+        {/* 4-Second Animated Progress Indicator */}
+        <div
+          style={{
+            width: 220,
+            height: 5,
+            background: 'var(--color-border-light, rgba(0,0,0,0.08))',
+            borderRadius: 999,
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, #7C3AED, #38BDF8, #A78BFA)',
+              borderRadius: 999,
+              animation: 'swarmProgress 4s linear forwards',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function AgentSwarmPage() {
+  // Splash state — 4-second initial mount transition
+  const [showSplash, setShowSplash] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false)
+    }, 4000)
+    return () => clearTimeout(timer)
+  }, [])
+
   const { theme } = useSettings()
   const isLightTheme = theme === 'light'
 
@@ -466,7 +615,20 @@ export default function AgentSwarmPage() {
 
   return (
     <>
-      <TopBar title="JudgeAI Agent Swarm">
+      {/* 4-Second Initial Splash Screen */}
+      {showSplash && <SwarmSplashScreen />}
+
+      <div
+        style={{
+          opacity: showSplash ? 0 : 1,
+          transition: 'opacity 0.4s ease',
+          pointerEvents: showSplash ? 'none' : 'auto',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <TopBar title="JudgeAI Agent Swarm">
         {screenMode === 'active_swarm' && (
           <button
             onClick={handleNewSwarm}
@@ -1442,6 +1604,13 @@ export default function AgentSwarmPage() {
           </div>
         </div>
       )}
+      </div>
+
+      <style>{`
+        @keyframes swarmSplashFadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+        @keyframes swarmFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes swarmProgress { 0%{width:0%} 100%{width:100%} }
+      `}</style>
     </>
   )
 }

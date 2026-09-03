@@ -610,7 +610,74 @@ export default function AdvisorAgentPage() {
           flexDirection: 'column',
         }}
       >
-        <TopBar title="Advisor Agent">
+        {/* TopBar Header with Illustration, Title, Subtitle & Action Controls */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 24px',
+            borderBottom: '1px solid var(--color-border)',
+            flexWrap: 'wrap',
+            gap: 16,
+            background: 'var(--color-surface-subtle, transparent)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 500px' }}>
+            {/* Advisor Illustration with Glow */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {/* Ambient Glow */}
+              <div
+                style={{
+                  position: 'absolute',
+                  width: 110,
+                  height: 70,
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(124,58,237,0.45) 0%, rgba(56,189,248,0.25) 60%, transparent 80%)',
+                  filter: 'blur(16px)',
+                  pointerEvents: 'none',
+                }}
+              />
+              <img
+                src="/advisor-illustration.png"
+                alt="AI & Tool Consultant"
+                style={{
+                  height: 82,
+                  width: 'auto',
+                  maxWidth: 145,
+                  objectFit: 'contain',
+                  position: 'relative',
+                  filter: 'drop-shadow(0 8px 22px rgba(124,58,237,0.55))',
+                }}
+              />
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-foreground)', fontFamily: "'Inter', sans-serif" }}>
+                  AI & Tool Consultant
+                </h1>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    background: 'rgba(124,58,237,0.15)',
+                    color: 'var(--color-accent-violet, #7C3AED)',
+                    border: '1px solid rgba(124,58,237,0.3)',
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
+                  Advisor v1.0
+                </span>
+              </div>
+              <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--color-muted)', lineHeight: 1.4, maxWidth: 780, fontFamily: "'Inter', sans-serif" }}>
+                Formulate your technical objective. The Advisor evaluates your task complexity against verified catalog ground-truth to recommend optimal free and paid architectures with custom prompt synthesis.
+              </p>
+            </div>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
@@ -657,75 +724,11 @@ export default function AdvisorAgentPage() {
               <IcCompare size={14} /> Compare Models
             </Link>
           </div>
-        </TopBar>
+        </div>
 
         <div style={{ display: 'flex', flex: 1, minHeight: '100%' }} className="advisor-layout">
           {/* Main Content Column */}
           <PageContent style={{ flex: 1, maxWidth: 'none', paddingBottom: 64 }}>
-            {/* Header / Hero Section */}
-            <div
-              style={{
-                marginBottom: 28,
-                padding: '24px 28px',
-                background: 'linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(56,189,248,0.03) 100%)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 18,
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  top: -40,
-                  right: -40,
-                  width: 180,
-                  height: 180,
-                  background: 'radial-gradient(circle, rgba(124,58,237,0.18), transparent 70%)',
-                  pointerEvents: 'none',
-                }}
-              />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 14,
-                    background: 'linear-gradient(135deg, #7C3AED, #38BDF8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 8px 20px rgba(124,58,237,0.3)',
-                  }}
-                >
-                  <IcAdvisor size={24} color="#fff" />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-foreground)' }}>
-                      AI & Tool Consultant
-                    </h2>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        background: 'rgba(124,58,237,0.18)',
-                        color: '#A78BFA',
-                        fontWeight: 700,
-                      }}
-                    >
-                      Advisor v1.0
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-muted)', maxWidth: 680, lineHeight: 1.55 }}>
-                    Formulate your technical objective. The Advisor evaluates your task complexity against verified catalog ground-truth to recommend optimal free and paid architectures with custom prompt synthesis.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Task Input Card */}
             <div
               className="card-base"

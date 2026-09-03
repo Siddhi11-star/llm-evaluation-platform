@@ -330,6 +330,8 @@ function SearchableModelDropdown({
     }
   }, [isOpen])
 
+  const modelColor = selectedModel.color || '#8B5CF6'
+
   return (
     <div ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
       <button
@@ -340,15 +342,17 @@ function SearchableModelDropdown({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
-          border: isOpen ? '1px solid var(--color-accent-violet, #7C3AED)' : '1px solid var(--color-border)',
-          borderRadius: 12,
-          padding: '12px 16px',
-          fontSize: 13,
+          background: `linear-gradient(135deg, ${modelColor}14 0%, var(--color-input-bg, rgba(0,0,0,0.25)) 100%)`,
+          border: `1px solid ${modelColor}${isOpen ? 'aa' : '55'}`,
+          borderRadius: 14,
+          padding: '14px 18px',
+          fontSize: 13.5,
           color: 'var(--color-foreground)',
           cursor: 'pointer',
-          boxShadow: isOpen ? '0 0 0 3px rgba(124, 58, 237, 0.15)' : 'none',
-          transition: 'all 0.15s ease',
+          boxShadow: isOpen
+            ? `0 0 20px ${modelColor}40, 0 0 0 3px ${modelColor}25`
+            : `0 0 16px ${modelColor}22, inset 0 0 14px ${modelColor}0d`,
+          transition: 'all 0.25s ease',
           textAlign: 'left',
         }}
       >
@@ -358,9 +362,10 @@ function SearchableModelDropdown({
               width: 10,
               height: 10,
               borderRadius: '50%',
-              background: selectedModel.color,
+              background: modelColor,
               flexShrink: 0,
-              boxShadow: `0 0 8px ${selectedModel.color}88`,
+              boxShadow: `0 0 12px ${modelColor}, 0 0 4px ${modelColor}`,
+              transition: 'all 0.25s ease',
             }}
           />
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -379,10 +384,11 @@ function SearchableModelDropdown({
               fontSize: 10.5,
               padding: '2px 8px',
               borderRadius: 6,
-              background: 'var(--color-surface, rgba(255,255,255,0.04))',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-muted)',
+              background: `${modelColor}18`,
+              border: `1px solid ${modelColor}44`,
+              color: 'var(--color-foreground)',
               fontWeight: 700,
+              transition: 'all 0.25s ease',
             }}
           >
             {selectedModel.category || 'LLM'}
@@ -390,7 +396,7 @@ function SearchableModelDropdown({
           <IcChevronDown
             size={14}
             style={{
-              color: 'var(--color-muted)',
+              color: isOpen ? modelColor : 'var(--color-muted)',
               transform: isOpen ? 'rotate(180deg)' : 'none',
               transition: 'transform 0.2s ease',
             }}
@@ -407,12 +413,13 @@ function SearchableModelDropdown({
             right: 0,
             zIndex: 100,
             background: 'var(--color-dropdown-bg, #14131F)',
-            border: '1px solid var(--color-dropdown-border, var(--color-border))',
+            border: `1px solid ${modelColor}44`,
             borderRadius: 14,
-            boxShadow: '0 16px 36px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.2)',
+            boxShadow: `0 16px 36px rgba(0, 0, 0, 0.4), 0 0 24px ${modelColor}18`,
             backdropFilter: 'blur(20px)',
             overflow: 'hidden',
             animation: 'dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+            transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
           }}
         >
           <div
@@ -476,9 +483,9 @@ function SearchableModelDropdown({
                     fontSize: 12,
                     padding: '6px 12px',
                     borderRadius: 6,
-                    background: 'rgba(124, 58, 237, 0.15)',
-                    border: '1px solid rgba(124, 58, 237, 0.35)',
-                    color: 'var(--color-accent-violet, #7C3AED)',
+                    background: `${modelColor}20`,
+                    border: `1px solid ${modelColor}44`,
+                    color: modelColor,
                     cursor: 'pointer',
                     fontWeight: 700,
                   }}
@@ -502,8 +509,9 @@ function SearchableModelDropdown({
                       justifyContent: 'space-between',
                       padding: '10px 12px',
                       borderRadius: 8,
-                      background: isSelected ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
-                      border: isSelected ? '1px solid rgba(124, 58, 237, 0.35)' : '1px solid transparent',
+                      background: isSelected ? `${m.color}20` : 'transparent',
+                      border: isSelected ? `1px solid ${m.color}55` : '1px solid transparent',
+                      boxShadow: isSelected ? `0 0 12px ${m.color}25` : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.12s ease',
                     }}
@@ -522,6 +530,7 @@ function SearchableModelDropdown({
                           borderRadius: '50%',
                           background: m.color,
                           flexShrink: 0,
+                          boxShadow: `0 0 8px ${m.color}aa`,
                         }}
                       />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -529,7 +538,7 @@ function SearchableModelDropdown({
                           style={{
                             fontSize: 13,
                             fontWeight: isSelected ? 700 : 600,
-                            color: isSelected ? 'var(--color-accent-violet, #7C3AED)' : 'var(--color-foreground)',
+                            color: isSelected ? m.color : 'var(--color-foreground)',
                           }}
                         >
                           {m.name}
@@ -547,16 +556,16 @@ function SearchableModelDropdown({
                             fontSize: 10,
                             padding: '2px 6px',
                             borderRadius: 4,
-                            background: 'var(--color-surface, rgba(255,255,255,0.04))',
-                            border: '1px solid var(--color-border)',
-                            color: 'var(--color-muted)',
+                            background: isSelected ? `${m.color}18` : 'var(--color-surface, rgba(255,255,255,0.04))',
+                            border: isSelected ? `1px solid ${m.color}40` : '1px solid var(--color-border)',
+                            color: isSelected ? m.color : 'var(--color-muted)',
                             fontWeight: 600,
                           }}
                         >
                           {m.category}
                         </span>
                       )}
-                      {isSelected && <IcCheck size={14} style={{ color: 'var(--color-accent-violet, #7C3AED)' }} />}
+                      {isSelected && <IcCheck size={14} style={{ color: m.color }} />}
                     </div>
                   </div>
                 )
@@ -1001,19 +1010,29 @@ export default function Evaluations() {
   const [loadingHistory, setLoadingHistory] = useState(true)
   const [viewMode, setViewMode] = useState<'workspace' | 'history'>('workspace')
 
-  // Form State for New Evaluation
-  const [promptText, setPromptText] = useState(PROMPT_TEMPLATES[0].prompt)
-  const [taskName, setTaskName] = useState(() => generateTaskName(PROMPT_TEMPLATES[0].prompt))
+  // Form State for New Evaluation (blank on first visit)
+  const [promptText, setPromptText] = useState('')
+  const [taskName, setTaskName] = useState('')
   const [selectedModel, setSelectedModel] = useState('claude-3.5-sonnet')
-  const [modelOutputText, setModelOutputText] = useState(PROMPT_TEMPLATES[0].output)
+  const [modelOutputText, setModelOutputText] = useState('')
   const [copiedReport, setCopiedReport] = useState(false)
+
+  // Animated 3-dot loading cycle for placeholders: '' -> '.' -> '..' -> '...' -> ''
+  const [dotCount, setDotCount] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotCount(prev => (prev + 1) % 4)
+    }, 450)
+    return () => clearInterval(interval)
+  }, [])
+  const animatedDots = '.'.repeat(dotCount)
 
   // Synchronize task name whenever prompt text changes
   useEffect(() => {
     if (promptText.trim()) {
       setTaskName(generateTaskName(promptText))
     } else {
-      setTaskName('General Task Evaluation')
+      setTaskName('')
     }
   }, [promptText])
 
@@ -1095,7 +1114,9 @@ export default function Evaluations() {
 
   // Execute Real LLM Evaluation Run via POST /evaluations/run
   const handleRunEvaluation = async () => {
-    if (!taskName.trim() || !promptText.trim() || !modelOutputText.trim() || isRunning) return
+    if (!promptText.trim() || !modelOutputText.trim() || isRunning) return
+
+    const effectiveTaskName = taskName.trim() || (promptText.trim() ? generateTaskName(promptText) : '') || 'General Task Evaluation'
 
     setIsRunning(true)
     setEvalError(null)
@@ -1104,7 +1125,7 @@ export default function Evaluations() {
 
     try {
       const payload = {
-        task_name: taskName.trim(),
+        task_name: effectiveTaskName,
         prompt_input: promptText.trim(),
         model_output: modelOutputText.trim(),
         target_model: selectedModel,
@@ -1345,9 +1366,9 @@ export default function Evaluations() {
             <div
               className="card-base"
               style={{
-                padding: 28,
+                padding: '32px 36px 36px',
                 marginBottom: 28,
-                borderRadius: 18,
+                borderRadius: 20,
                 background: 'linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(56,189,248,0.03) 50%, var(--color-card, #13111C) 100%)',
                 border: '1px solid rgba(124,58,237,0.22)',
                 boxShadow: '0 8px 30px rgba(0,0,0,0.18)',
@@ -1355,11 +1376,11 @@ export default function Evaluations() {
             >
 
               {/* Top Inputs: Task Name & Searchable Model Dropdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1.4fr) minmax(240px, 1fr)', gap: 16, marginBottom: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1.4fr) minmax(240px, 1fr)', gap: 20, marginBottom: 22 }}>
                 {/* Task Title (Auto-Generated from Prompt) */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       Evaluation Task Name
                     </label>
                     <span
@@ -1381,27 +1402,30 @@ export default function Evaluations() {
                   <input
                     type="text"
                     value={taskName}
-                    readOnly
-                    placeholder="Auto-generated from Prompt / Task Input..."
+                    onChange={e => setTaskName(e.target.value)}
+                    placeholder={`Type task name or auto-generate from prompt${animatedDots}`}
+                    className="eval-placeholder-blink"
                     style={{
                       width: '100%',
                       background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 12,
-                      padding: '12px 16px',
-                      fontSize: 13,
-                      fontWeight: 700,
+                      borderRadius: 14,
+                      padding: '14px 18px',
+                      fontSize: 13.5,
+                      fontWeight: 600,
                       color: 'var(--color-foreground)',
                       outline: 'none',
                       boxSizing: 'border-box',
-                      cursor: 'default',
+                      transition: 'border-color 0.15s',
                     }}
+                    onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet, #7C3AED)')}
+                    onBlur={e => (e.target.style.borderColor = 'var(--color-border)')}
                   />
                 </div>
 
                 {/* Searchable Model Selector */}
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                     Select Target Model
                   </label>
                   <SearchableModelDropdown
@@ -1412,11 +1436,11 @@ export default function Evaluations() {
               </div>
 
               {/* SEPARATED TEXT AREAS */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, marginBottom: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 24 }}>
                 {/* Text Area 1: Prompt Input */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       Prompt / Task Input
                     </label>
                     <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
@@ -1426,21 +1450,23 @@ export default function Evaluations() {
                   <textarea
                     value={promptText}
                     onChange={e => setPromptText(e.target.value)}
-                    placeholder="Enter system instructions, user prompt, or criteria given to the model..."
-                    rows={6}
+                    placeholder={`Type your prompt, instruction, or task criteria here${animatedDots}`}
+                    className="eval-placeholder-blink"
+                    rows={12}
                     style={{
                       width: '100%',
+                      minHeight: 280,
                       background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 12,
-                      padding: '14px 16px',
-                      fontSize: 13,
+                      borderRadius: 14,
+                      padding: '18px 20px',
+                      fontSize: 13.5,
                       color: 'var(--color-foreground)',
                       outline: 'none',
                       fontFamily: 'Inter, sans-serif',
                       resize: 'vertical',
                       boxSizing: 'border-box',
-                      lineHeight: 1.55,
+                      lineHeight: 1.6,
                       transition: 'border-color 0.15s',
                     }}
                     onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet, #7C3AED)')}
@@ -1450,8 +1476,8 @@ export default function Evaluations() {
 
                 {/* Text Area 2: Model Output to Evaluate */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       Model Output to Evaluate
                     </label>
                     <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
@@ -1461,21 +1487,23 @@ export default function Evaluations() {
                   <textarea
                     value={modelOutputText}
                     onChange={e => setModelOutputText(e.target.value)}
-                    placeholder="Paste the AI-generated model response, draft, or code to evaluate..."
-                    rows={6}
+                    placeholder={`Paste the model response or AI-generated output to evaluate here${animatedDots}`}
+                    className="eval-placeholder-blink"
+                    rows={12}
                     style={{
                       width: '100%',
+                      minHeight: 280,
                       background: 'var(--color-input-bg, rgba(0,0,0,0.25))',
                       border: '1px solid var(--color-border)',
-                      borderRadius: 12,
-                      padding: '14px 16px',
-                      fontSize: 13,
+                      borderRadius: 14,
+                      padding: '18px 20px',
+                      fontSize: 13.5,
                       color: 'var(--color-foreground)',
                       outline: 'none',
                       fontFamily: 'JetBrains Mono, monospace',
                       resize: 'vertical',
                       boxSizing: 'border-box',
-                      lineHeight: 1.55,
+                      lineHeight: 1.6,
                       transition: 'border-color 0.15s',
                     }}
                     onFocus={e => (e.target.style.borderColor = 'var(--color-accent-violet, #7C3AED)')}
@@ -1493,14 +1521,14 @@ export default function Evaluations() {
                 <button
                   type="button"
                   onClick={handleRunEvaluation}
-                  disabled={isRunning || !taskName.trim() || !promptText.trim() || !modelOutputText.trim()}
+                  disabled={isRunning || !promptText.trim() || !modelOutputText.trim()}
                   className="pill-primary"
                   style={{
                     padding: '12px 28px',
                     fontSize: 14,
                     fontWeight: 700,
                     gap: 8,
-                    opacity: isRunning || !taskName.trim() || !promptText.trim() || !modelOutputText.trim() ? 0.5 : 1,
+                    opacity: isRunning || !promptText.trim() || !modelOutputText.trim() ? 0.5 : 1,
                     cursor: isRunning ? 'wait' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -1869,6 +1897,20 @@ export default function Evaluations() {
         @keyframes dropdownFadeIn {
           from { opacity: 0; transform: translateY(-6px) scale(0.98); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .eval-placeholder-blink::placeholder {
+          color: var(--color-muted);
+          opacity: 0.65;
+          animation: placeholderBlink 3s ease-in-out infinite;
+          transition: opacity 0.2s ease;
+        }
+        .eval-placeholder-blink:focus::placeholder {
+          opacity: 0 !important;
+          animation: none !important;
+        }
+        @keyframes placeholderBlink {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.85; }
         }
       `}</style>
     </>

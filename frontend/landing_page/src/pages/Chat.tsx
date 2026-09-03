@@ -796,7 +796,155 @@ function ModelSelectorMenu({
   )
 }
 
+// ─── Chat Splash Screen ───────────────────────────────────────────────────────
+
+function ChatSplashScreen() {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'var(--color-background)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Background Glow */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '48%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 600,
+          height: 600,
+          background: 'radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(56, 189, 248, 0.08) 45%, transparent 70%)',
+          filter: 'blur(40px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      {/* Central Content */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          animation: 'chatSplashFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        }}
+      >
+        {/* Centered Illustration */}
+        <div style={{ position: 'relative', marginBottom: 20 }}>
+          <img
+            src="/chat-illustration.png"
+            alt="JudgeAI Chat Studio"
+            style={{
+              width: 360,
+              maxWidth: '85vw',
+              height: 'auto',
+              filter: 'drop-shadow(0 20px 45px rgba(124, 58, 237, 0.35))',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              animation: 'chatFloat 3s ease-in-out infinite',
+            }}
+          />
+        </div>
+
+        {/* Badge */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 12px',
+            borderRadius: 999,
+            background: 'rgba(124,58,237,0.12)',
+            border: '1px solid rgba(124,58,237,0.25)',
+            color: '#7C3AED',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: 12,
+          }}
+        >
+          <IcSparkles size={12} /> Conversational Studio
+        </div>
+
+        <h1
+          style={{
+            margin: '0 0 8px',
+            fontSize: 'clamp(28px, 4.5vw, 38px)',
+            fontWeight: 800,
+            letterSpacing: '-0.03em',
+            color: 'var(--color-foreground)',
+            lineHeight: 1.15,
+          }}
+        >
+          Chat Studio
+        </h1>
+
+        <p
+          style={{
+            margin: '0 0 28px',
+            fontSize: 'clamp(13px, 2vw, 15px)',
+            color: 'var(--color-muted)',
+            maxWidth: 460,
+            lineHeight: 1.5,
+            fontWeight: 500,
+          }}
+        >
+          Connecting to multi-model reasoning engines, workspace context, and tools…
+        </p>
+
+        {/* 4-Second Animated Progress Indicator */}
+        <div
+          style={{
+            width: 220,
+            height: 5,
+            background: 'var(--color-border-light, rgba(0,0,0,0.08))',
+            borderRadius: 999,
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, #7C3AED, #38BDF8, #A78BFA)',
+              borderRadius: 999,
+              animation: 'chatProgress 4s linear forwards',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ChatPage() {
+  // Splash state — 4-second initial mount transition
+  const [showSplash, setShowSplash] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false)
+    }, 4000)
+    return () => clearTimeout(timer)
+  }, [])
+
   const [threads, setThreads] = useState<ChatThread[]>(() => [makeEmptyThread('deepseek-v4-flash:cloud'), ...INITIAL_THREADS])
   const [activeThreadId, setActiveThreadId] = useState<string>(EMPTY_THREAD_ID)
   const [selectedModelId, setSelectedModelId] = useState<string>('deepseek-v4-flash:cloud')
@@ -1249,7 +1397,20 @@ export default function ChatPage() {
 
   return (
     <>
-      <TopBar title="JudgeAI">
+      {/* 4-Second Initial Splash Screen */}
+      {showSplash && <ChatSplashScreen />}
+
+      <div
+        style={{
+          opacity: showSplash ? 0 : 1,
+          transition: 'opacity 0.4s ease',
+          pointerEvents: showSplash ? 'none' : 'auto',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <TopBar title="JudgeAI">
         <button
           onClick={() => setHistoryCollapsed(!historyCollapsed)}
           title={historyCollapsed ? 'Show history sidebar' : 'Hide history sidebar'}
@@ -2377,8 +2538,12 @@ export default function ChatPage() {
           )}
         </main>
       </div>
+      </div>
 
       <style>{`
+        @keyframes chatSplashFadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+        @keyframes chatFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes chatProgress { 0%{width:0%} 100%{width:100%} }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes pulseMic { 0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.35); } 50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); } }
         @media(max-width: 768px) {
