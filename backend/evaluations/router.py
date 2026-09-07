@@ -27,23 +27,50 @@ router = APIRouter(prefix="/evaluations", tags=["Evaluations"])
 
 
 def get_current_user(
+    authorization: Optional[str] = Header(None, alias="Authorization"),
     x_user_email: Optional[str] = Header(None, alias="X-User-Email"),
     x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     user_id: Optional[str] = Query(None, description="Optional user ID query parameter"),
-    authorization: Optional[str] = Header(None, alias="Authorization"),
 ) -> str:
     """
-    Extracts the authenticated user ID or email from request headers, tokens, or query param.
-    Guarantees user isolation so users can only access their own evaluations.
+    Extracts and cryptographically validates the authenticated user ID from JWT Bearer tokens.
+    Enforces user data isolation so each user only has access to their own evaluation runs.
     """
-    if x_user_email and x_user_email.strip():
-        return x_user_email.strip().lower()
-    if x_user_id and x_user_id.strip():
-        return x_user_id.strip().lower()
     if authorization and authorization.startswith("Bearer "):
         token = authorization[7:].strip()
         if token:
-            return token.lower()
+            try:
+                from backend.auth_users.config import settings
+                secret_key = settings.JWT_SECRET_KEY
+                algorithm = settings.JWT_ALGORITHM
+            except ImportError:
+                import os
+                secret_key = os.getenv("JWT_SECRET_KEY", "judgeai-dev-secret-key-change-in-production-e938bf8c991a47290bc")
+                algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+
+            import jwt
+            try:
+                payload = jwt.decode(token, secret_key, algorithms=[algorithm])
+                sub = payload.get("sub") or payload.get("email")
+                if sub:
+                    return str(sub).lower().strip()
+            except jwt.ExpiredSignatureError:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Authentication token has expired. Please log in again.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            except jwt.InvalidTokenError:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid authentication token.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+    if x_user_id and x_user_id.strip():
+        return x_user_id.strip().lower()
+    if x_user_email and x_user_email.strip():
+        return x_user_email.strip().lower()
     if user_id and user_id.strip():
         return user_id.strip().lower()
     return "default_user@judgeai.dev"

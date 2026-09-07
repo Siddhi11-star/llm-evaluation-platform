@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { TopBar, PageContent } from '../components/AppShell'
+import { useAuth } from '../context/AuthContext'
 import {
   useSettings,
   UserProfile,
@@ -29,6 +31,7 @@ import {
 
 const TABS = [
   { key: 'profile', label: 'Profile', icon: IcUser },
+  { key: 'security', label: 'Security & Sessions', icon: IcKey },
   { key: 'appearance', label: 'Appearance', icon: IcSun },
   { key: 'chat', label: 'Chat', icon: IcSparkles },
   { key: 'evaluation', label: 'Evaluation', icon: IcCheck },
@@ -172,13 +175,51 @@ export default function Settings() {
     exportAllData,
   } = useSettings()
 
+  const navigate = useNavigate()
+  const {
+    user,
+    updateUserProfile,
+    changePassword,
+    getSecurityStatus,
+    requestEmailChange,
+    verifyEmailChange,
+    listSessions,
+    revokeSession,
+    revokeAllSessions,
+    deleteAccount,
+  } = useAuth()
+
   const [tab, setTab] = useState('profile')
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   // Local form states synced with context
-  const [profileForm, setProfileForm] = useState<UserProfile>(profile)
+  const [profileForm, setProfileForm] = useState<UserProfile>(() => ({
+    ...profile,
+    name: user?.name || profile.name,
+    email: user?.email || profile.email,
+  }))
   const [chatForm, setChatForm] = useState<ChatSettings>(chatSettings)
   const [evalForm, setEvalForm] = useState<EvalSettings>(evalSettings)
+
+  // Phase 5 Account & Security States
+  const [securityStatus, setSecurityStatus] = useState<any>(null)
+  const [sessionsList, setSessionsList] = useState<any[]>([])
+  const [sessionsLoading, setSessionsLoading] = useState(false)
+
+  // Change Password Form
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  // Change Email Modal Form
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailOtp, setEmailOtp] = useState('')
+  const [emailStep, setEmailStep] = useState<1 | 2>(1)
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailMsg, setEmailMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // Modal states
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
@@ -193,11 +234,19 @@ export default function Settings() {
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [confirmDeleteText, setConfirmDeleteText] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null)
 
   useEffect(() => {
-    setProfileForm(profile)
-  }, [profile])
+    setProfileForm(prev => ({
+      ...prev,
+      ...profile,
+      name: user?.name || prev.name || profile.name,
+      email: user?.email || prev.email || profile.email,
+    }))
+  }, [profile, user])
 
   useEffect(() => {
     setChatForm(chatSettings)
@@ -207,15 +256,144 @@ export default function Settings() {
     setEvalForm(evalSettings)
   }, [evalSettings])
 
+  // Load security status & sessions when switching to security tab
+  useEffect(() => {
+    if (tab === 'security') {
+      loadSecurityData()
+    }
+  }, [tab])
+
+  const loadSecurityData = async () => {
+    setSessionsLoading(true)
+    const [secRes, sessRes] = await Promise.all([
+      getSecurityStatus(),
+      listSessions()
+    ])
+    if (secRes.success && secRes.data) {
+      setSecurityStatus(secRes.data)
+    }
+    if (sessRes.success && sessRes.sessions) {
+      setSessionsList(sessRes.sessions)
+    }
+    setSessionsLoading(false)
+  }
+
   const showToast = (msg: string) => {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 2500)
   }
 
   // Profile Save
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     updateProfile(profileForm)
+    if (profileForm.name && profileForm.name !== user?.name) {
+      const res = await updateUserProfile(profileForm.name)
+      if (!res.success) {
+        showToast(res.error || 'Failed to update profile name')
+        return
+      }
+    }
     showToast('Profile updated successfully!')
+  }
+
+  // Password Change
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordMsg(null)
+
+    if (newPassword.length < 8) {
+      setPasswordMsg({ type: 'error', text: 'New password must be at least 8 characters long.' })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg({ type: 'error', text: 'New passwords do not match.' })
+      return
+    }
+
+    setPasswordLoading(true)
+    const res = await changePassword(newPassword, currentPassword)
+    setPasswordLoading(false)
+
+    if (res.success) {
+      setPasswordMsg({ type: 'success', text: res.message || 'Password changed successfully!' })
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      showToast('Password updated successfully!')
+      loadSecurityData()
+    } else {
+      setPasswordMsg({ type: 'error', text: res.error || 'Failed to change password.' })
+    }
+  }
+
+  // Email Change Request
+  const handleRequestEmailChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEmailMsg(null)
+    if (!newEmail || !newEmail.includes('@')) {
+      setEmailMsg({ type: 'error', text: 'Please enter a valid email address.' })
+      return
+    }
+
+    setEmailLoading(true)
+    const res = await requestEmailChange(newEmail)
+    setEmailLoading(false)
+
+    if (res.success) {
+      setEmailStep(2)
+      setEmailMsg({ type: 'success', text: res.message || `Verification code sent to ${newEmail}` })
+    } else {
+      setEmailMsg({ type: 'error', text: res.error || 'Failed to request email change.' })
+    }
+  }
+
+  // Email Change Verify
+  const handleVerifyEmailChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEmailMsg(null)
+    if (emailOtp.length !== 6) {
+      setEmailMsg({ type: 'error', text: 'Please enter the 6-digit verification code.' })
+      return
+    }
+
+    setEmailLoading(true)
+    const res = await verifyEmailChange(newEmail, emailOtp)
+    setEmailLoading(false)
+
+    if (res.success) {
+      showToast('Email address updated successfully!')
+      setShowEmailModal(false)
+      setEmailStep(1)
+      setNewEmail('')
+      setEmailOtp('')
+      setEmailMsg(null)
+      loadSecurityData()
+    } else {
+      setEmailMsg({ type: 'error', text: res.error || 'Invalid or expired verification code.' })
+    }
+  }
+
+  // Revoke Session
+  const handleRevokeSession = async (sessionId: string) => {
+    const res = await revokeSession(sessionId)
+    if (res.success) {
+      showToast('Session revoked successfully.')
+      setSessionsList(prev => prev.filter(s => s.id !== sessionId))
+    } else {
+      showToast(res.error || 'Failed to revoke session.')
+    }
+  }
+
+  // Revoke All Sessions
+  const handleRevokeAllSessions = async () => {
+    if (!window.confirm('Are you sure you want to log out of all other devices?')) return
+    const res = await revokeAllSessions()
+    if (res.success) {
+      showToast('All other sessions revoked.')
+      loadSecurityData()
+    } else {
+      showToast(res.error || 'Failed to revoke sessions.')
+    }
   }
 
   // Chat Save
@@ -280,12 +458,22 @@ export default function Settings() {
   }
 
   // Delete Account
-  const handleDeleteAccount = () => {
-    if (confirmDeleteText === 'DELETE') {
+  const handleDeleteAccount = async () => {
+    if (confirmDeleteText !== 'DELETE') return
+    setDeleteError(null)
+    setDeleteLoading(true)
+    const res = await deleteAccount('DELETE', deletePassword)
+    setDeleteLoading(false)
+
+    if (res.success) {
       resetToDefaults()
       setShowDeleteConfirm(false)
       setConfirmDeleteText('')
-      showToast('Account data purged and reset.')
+      setDeletePassword('')
+      showToast('Your account has been permanently deleted.')
+      navigate('/login')
+    } else {
+      setDeleteError(res.error || 'Failed to delete account. Please verify your password.')
     }
   }
 
@@ -443,14 +631,154 @@ export default function Settings() {
               </div>
               <div>
                 <Label>Email Address</Label>
-                <input
-                  style={inputStyle}
-                  value={profileForm.email}
-                  onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
-                  type="email"
-                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    style={{ ...inputStyle, opacity: 0.85, cursor: 'not-allowed' }}
+                    value={user?.email || profileForm.email}
+                    disabled
+                    type="email"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEmailModal(true)
+                      setEmailStep(1)
+                      setNewEmail('')
+                      setEmailOtp('')
+                      setEmailMsg(null)
+                    }}
+                    className="pill-outline"
+                    style={{ fontSize: 12, padding: '0 14px', whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    Change Email
+                  </button>
+                </div>
               </div>
             </div>
+
+            {/* Email Change Modal */}
+            {showEmailModal && (
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0.7)',
+                  backdropFilter: 'blur(4px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 9999,
+                  padding: 20,
+                }}
+              >
+                <div
+                  className="card-base"
+                  style={{
+                    maxWidth: 440,
+                    width: '100%',
+                    padding: 24,
+                    borderRadius: 14,
+                    border: '1px solid var(--color-border)',
+                  }}
+                >
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: 'var(--color-foreground)' }}>
+                    {emailStep === 1 ? 'Change Account Email' : 'Verify New Email'}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: 'var(--color-muted)', marginBottom: 18, lineHeight: 1.5 }}>
+                    {emailStep === 1
+                      ? 'We will send a 6-digit confirmation code to your new email address.'
+                      : `Enter the 6-digit verification code sent to ${newEmail}`}
+                  </div>
+
+                  {emailMsg && (
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 8,
+                        marginBottom: 14,
+                        fontSize: 12.5,
+                        background: emailMsg.type === 'error' ? 'rgba(248,113,113,0.15)' : 'rgba(52,211,153,0.15)',
+                        border: `1px solid ${emailMsg.type === 'error' ? 'rgba(248,113,113,0.3)' : 'rgba(52,211,153,0.3)'}`,
+                        color: emailMsg.type === 'error' ? '#F87171' : '#34D399',
+                      }}
+                    >
+                      {emailMsg.text}
+                    </div>
+                  )}
+
+                  {emailStep === 1 ? (
+                    <form onSubmit={handleRequestEmailChange}>
+                      <Label>New Email Address</Label>
+                      <input
+                        style={{ ...inputStyle, marginBottom: 16 }}
+                        type="email"
+                        placeholder="new.email@example.com"
+                        value={newEmail}
+                        onChange={e => setNewEmail(e.target.value)}
+                        required
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowEmailModal(false)}
+                          className="pill-outline"
+                          style={{ fontSize: 12.5, padding: '7px 14px' }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={emailLoading}
+                          className="pill-primary"
+                          style={{ fontSize: 12.5, padding: '7px 18px', fontWeight: 600 }}
+                        >
+                          {emailLoading ? 'Sending...' : 'Send Verification Code'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleVerifyEmailChange}>
+                      <Label>6-Digit Confirmation Code</Label>
+                      <input
+                        style={{ ...inputStyle, marginBottom: 16, letterSpacing: 4, textAlign: 'center', fontSize: 18 }}
+                        maxLength={6}
+                        placeholder="123456"
+                        value={emailOtp}
+                        onChange={e => setEmailOtp(e.target.value)}
+                        required
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => setEmailStep(1)}
+                          style={{ fontSize: 12, color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          Back
+                        </button>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                          <button
+                            type="button"
+                            onClick={() => setShowEmailModal(false)}
+                            className="pill-outline"
+                            style={{ fontSize: 12.5, padding: '7px 14px' }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={emailLoading || emailOtp.length !== 6}
+                            className="pill-primary"
+                            style={{ fontSize: 12.5, padding: '7px 18px', fontWeight: 600 }}
+                          >
+                            {emailLoading ? 'Verifying...' : 'Confirm & Update'}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div style={{ marginBottom: 16 }}>
               <Label>Organization</Label>
@@ -482,10 +810,204 @@ export default function Settings() {
                 Save Profile
               </button>
               <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-                Updates avatar across sidebar and header
+                Updates profile across JudgeAI platform
               </span>
             </div>
           </SectionCard>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════
+            SECURITY & SESSIONS TAB (Phase 5)
+            ═══════════════════════════════════════════════════════════════ */}
+        {tab === 'security' && (
+          <div>
+            {/* 1. Security Overview Banner */}
+            <SectionCard style={{ padding: 22 }}>
+              <SectionTitle>Account Security Status</SectionTitle>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+                <div style={{ padding: 14, borderRadius: 10, background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 4 }}>Email Verification</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: (user?.email_verified ?? securityStatus?.email_verified) ? '#34D399' : '#FBBF24' }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: (user?.email_verified ?? securityStatus?.email_verified) ? '#34D399' : '#FBBF24' }} />
+                    {(user?.email_verified ?? securityStatus?.email_verified) ? 'Verified' : 'Verification Required'}
+                  </div>
+                </div>
+
+                <div style={{ padding: 14, borderRadius: 10, background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 4 }}>Authentication Providers</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-foreground)' }}>
+                    {securityStatus?.providers?.length > 0
+                      ? securityStatus.providers.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')
+                      : (securityStatus?.has_password ? 'Email / Password' : 'Passwordless')}
+                  </div>
+                </div>
+
+                <div style={{ padding: 14, borderRadius: 10, background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 4 }}>Active Sessions</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-accent-violet)' }}>
+                    {sessionsList.length > 0 ? `${sessionsList.length} Active Device(s)` : '1 Active Session'}
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+
+            {/* 2. Change Password Form */}
+            <SectionCard style={{ padding: 22 }}>
+              <SectionTitle>{securityStatus?.has_password === false ? 'Set Account Password' : 'Change Password'}</SectionTitle>
+              <div style={{ fontSize: 12.5, color: 'var(--color-muted)', marginBottom: 18, lineHeight: 1.5 }}>
+                {securityStatus?.has_password === false
+                  ? 'Set a master password to log in directly without using third-party OAuth providers.'
+                  : 'Ensure your account uses a strong, unique password with at least 8 characters.'}
+              </div>
+
+              {passwordMsg && (
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    marginBottom: 16,
+                    fontSize: 12.5,
+                    background: passwordMsg.type === 'error' ? 'rgba(248,113,113,0.15)' : 'rgba(52,211,153,0.15)',
+                    border: `1px solid ${passwordMsg.type === 'error' ? 'rgba(248,113,113,0.3)' : 'rgba(52,211,153,0.3)'}`,
+                    color: passwordMsg.type === 'error' ? '#F87171' : '#34D399',
+                  }}
+                >
+                  {passwordMsg.text}
+                </div>
+              )}
+
+              <form onSubmit={handleChangePassword}>
+                {securityStatus?.has_password !== false && (
+                  <div style={{ marginBottom: 14 }}>
+                    <Label>Current Password</Label>
+                    <input
+                      style={inputStyle}
+                      type="password"
+                      value={currentPassword}
+                      onChange={e => setCurrentPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      required
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+                  <div>
+                    <Label>New Password</Label>
+                    <input
+                      style={inputStyle}
+                      type="password"
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Confirm New Password</Label>
+                    <input
+                      style={inputStyle}
+                      type="password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="pill-primary"
+                  style={{ fontSize: 13, padding: '9px 20px', fontWeight: 600 }}
+                >
+                  {passwordLoading ? 'Updating...' : (securityStatus?.has_password === false ? 'Set Password' : 'Update Password')}
+                </button>
+              </form>
+            </SectionCard>
+
+            {/* 3. Active Sessions / Device Management */}
+            <SectionCard style={{ padding: 22 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <SectionTitle style={{ marginBottom: 0 }}>Active Login Sessions</SectionTitle>
+                <button
+                  type="button"
+                  onClick={handleRevokeAllSessions}
+                  className="pill-outline"
+                  style={{ fontSize: 12, padding: '6px 14px', color: '#F87171', borderColor: 'rgba(248,113,113,0.3)' }}
+                >
+                  Log out all other devices
+                </button>
+              </div>
+
+              <div style={{ fontSize: 12.5, color: 'var(--color-muted)', marginBottom: 18 }}>
+                Manage your active web browser and API sessions. Revoking a session will force a logout on that device.
+              </div>
+
+              {sessionsLoading ? (
+                <div style={{ padding: 20, textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+                  Loading active sessions...
+                </div>
+              ) : sessionsList.length === 0 ? (
+                <div style={{ padding: 16, borderRadius: 8, background: 'var(--color-surface)', fontSize: 13, color: 'var(--color-muted)' }}>
+                  1 Active Session (Current Browser)
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {sessionsList.map(sess => (
+                    <div
+                      key={sess.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 16px',
+                        borderRadius: 10,
+                        background: 'var(--color-surface)',
+                        border: '1px solid var(--color-border)',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, fontWeight: 600, color: 'var(--color-foreground)', marginBottom: 3 }}>
+                          <span>Web Session ({sess.id.slice(0, 8)}...)</span>
+                          {sess.is_current && (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                background: 'rgba(124,58,237,0.15)',
+                                color: 'var(--color-accent-violet)',
+                                border: '1px solid rgba(124,58,237,0.3)',
+                                fontWeight: 700,
+                              }}
+                            >
+                              Current Device
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                          Created: {sess.created_at ? new Date(sess.created_at).toLocaleString() : 'Active session'}
+                        </div>
+                      </div>
+
+                      {!sess.is_current && (
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeSession(sess.id)}
+                          className="pill-outline"
+                          style={{ fontSize: 11.5, padding: '5px 12px', color: '#F87171', borderColor: 'rgba(248,113,113,0.3)' }}
+                        >
+                          Revoke
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </SectionCard>
+          </div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -1358,18 +1880,42 @@ export default function Settings() {
                   Confirm Permanent Account Deletion
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 10 }}>
-                  Please type <strong style={{ color: 'var(--color-foreground)' }}>DELETE</strong> to confirm deletion:
+                  This action is permanent and cannot be undone. All your evaluation datasets, judge logs, and active sessions will be completely purged.
                 </div>
-                <input
-                  style={{ ...inputStyle, marginBottom: 12, borderColor: 'rgba(248,113,113,0.3)' }}
-                  value={confirmDeleteText}
-                  onChange={e => setConfirmDeleteText(e.target.value)}
-                  placeholder="Type DELETE to confirm"
-                />
+
+                {deleteError && (
+                  <div style={{ padding: '8px 12px', borderRadius: 6, background: 'rgba(248,113,113,0.2)', color: '#F87171', fontSize: 12, marginBottom: 12 }}>
+                    {deleteError}
+                  </div>
+                )}
+
+                {securityStatus?.has_password !== false && (
+                  <div style={{ marginBottom: 10 }}>
+                    <Label>Enter Your Password</Label>
+                    <input
+                      style={{ ...inputStyle, marginBottom: 6, borderColor: 'rgba(248,113,113,0.3)' }}
+                      type="password"
+                      value={deletePassword}
+                      onChange={e => setDeletePassword(e.target.value)}
+                      placeholder="Your account password"
+                    />
+                  </div>
+                )}
+
+                <div style={{ marginBottom: 12 }}>
+                  <Label>Type DELETE to Confirm</Label>
+                  <input
+                    style={{ ...inputStyle, borderColor: 'rgba(248,113,113,0.3)' }}
+                    value={confirmDeleteText}
+                    onChange={e => setConfirmDeleteText(e.target.value)}
+                    placeholder="Type DELETE to confirm"
+                  />
+                </div>
+
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     onClick={handleDeleteAccount}
-                    disabled={confirmDeleteText !== 'DELETE'}
+                    disabled={confirmDeleteText !== 'DELETE' || deleteLoading}
                     style={{
                       fontSize: 12.5,
                       padding: '8px 16px',
@@ -1381,12 +1927,14 @@ export default function Settings() {
                       fontWeight: 600,
                     }}
                   >
-                    Permanently Delete
+                    {deleteLoading ? 'Purging Account...' : 'Permanently Delete'}
                   </button>
                   <button
                     onClick={() => {
                       setShowDeleteConfirm(false)
                       setConfirmDeleteText('')
+                      setDeletePassword('')
+                      setDeleteError(null)
                     }}
                     style={{
                       fontSize: 12.5,

@@ -14,6 +14,10 @@ import Docs from '../pages/Docs'
 import Login from '../pages/Login'
 import Chat from '../pages/Chat'
 import Onboarding from '../pages/Onboarding'
+import VerifyEmail from '../pages/VerifyEmail'
+import ForgotPassword from '../pages/ForgotPassword'
+import ResetPassword from '../pages/ResetPassword'
+import { ProtectedRoute } from '../components/ProtectedRoute'
 
 export const router = createBrowserRouter([
   { path: '/', Component: LandingPage },
@@ -21,12 +25,33 @@ export const router = createBrowserRouter([
   { path: '/docs', Component: Docs },
   { path: '/login', Component: Login },
   { path: '/signup', element: <Login mode="signup" /> },
+  { path: '/verify-email', Component: VerifyEmail },
+  { path: '/forgot-password', Component: ForgotPassword },
+  { path: '/reset-password', Component: ResetPassword },
   { path: '/guest-chat', Component: Chat },
-  { path: '/onboarding', Component: Onboarding },
-  { path: '/onboarding/:step', Component: Onboarding },
+  {
+    path: '/onboarding',
+    element: (
+      <ProtectedRoute>
+        <Onboarding />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/onboarding/:step',
+    element: (
+      <ProtectedRoute>
+        <Onboarding />
+      </ProtectedRoute>
+    ),
+  },
   {
     path: '/dashboard',
-    Component: AppShell,
+    element: (
+      <ProtectedRoute>
+        <AppShell />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, Component: Dashboard },
       { path: 'chat', Component: Chat },

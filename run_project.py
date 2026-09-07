@@ -36,6 +36,11 @@ SERVICES = [
         "cwd": ROOT_DIR,
     },
     {
+        "name": "Auth Service (Port 8004)",
+        "cmd": [sys.executable, "-m", "uvicorn", "backend.auth_users.main:app", "--host", "0.0.0.0", "--port", "8004"],
+        "cwd": ROOT_DIR,
+    },
+    {
         "name": "Agent Swarm Service (Port 5002)",
         "cmd": [sys.executable, "-m", "uvicorn", "backend.agent_swarm.main:app", "--host", "0.0.0.0", "--port", "5002"],
         "cwd": ROOT_DIR,
@@ -97,6 +102,7 @@ def main():
     print("  * Evaluations Service: http://localhost:8001 (docs: /docs)")
     print("  * Judge Agent:         http://localhost:8002 (docs: /docs)")
     print("  * Advisor Agent:       http://localhost:8003 (docs: /docs)")
+    print("  * Auth Service:        http://localhost:8004 (docs: /docs)")
     print("  * Agent Swarm:         http://localhost:5002 (docs: /docs)")
     print("  * Ollama LLM Engine:   http://localhost:11434")
     print("=" * 65)

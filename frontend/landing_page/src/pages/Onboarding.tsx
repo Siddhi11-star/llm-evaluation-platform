@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Logo } from '../components/MarketingShell'
 import { IcCheck, IcChevronRight } from '../components/icons'
+import { useAuth } from '../context/AuthContext'
 
 // ─── Reuse existing Pricing plans data ──────────────────────────────────────
 const PLANS = [
@@ -523,13 +524,15 @@ export default function Onboarding() {
     }
   }
 
+  const { updateOnboarding } = useAuth()
+
   const handlePaymentComplete = () => {
     setShowPayment(false)
     goTo(2)
   }
 
-  const handleStart = () => {
-    // Save onboarding data to localStorage for later use
+  const handleStart = async () => {
+    // Save onboarding data to localStorage for backward UI compatibility
     localStorage.setItem('judgeai_onboarding', JSON.stringify({
       plan: selectedPlan,
       role: selectedRole,
@@ -538,6 +541,16 @@ export default function Onboarding() {
       priorities: selectedPriorities,
       completedAt: new Date().toISOString(),
     }))
+
+    // Persist to authenticated user account in database
+    await updateOnboarding({
+      plan: selectedPlan || 'Free',
+      role: selectedRole || undefined,
+      use_cases: selectedUseCases,
+      models: selectedModels,
+      priorities: selectedPriorities,
+    })
+
     navigate('/dashboard/chat')
   }
 

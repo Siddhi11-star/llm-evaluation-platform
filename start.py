@@ -91,6 +91,7 @@ def main():
         ("Evaluations Service", EVALS_DIR, 8001),
         ("Judge Agent Service", JUDGE_DIR, 8002),
         ("Advisor Agent Service", ADVISOR_DIR, 8003),
+        ("Auth Service", ROOT_DIR / "backend" / "auth_users", 8004),
         ("Agent Swarm Service", SWARM_DIR, 5002),
     ]
 
@@ -111,13 +112,14 @@ def main():
     processes.append(p_frontend)
 
     print("\n\033[1;32m" + "=" * 60)
-    print("  🚀 All 6 Services are Running!")
+    print("  🚀 All 7 Services are Running!")
     print("=" * 60 + "\033[0m")
     print("  🌐 \033[1mFrontend:\033[0m     http://localhost:5173")
     print("  💬 \033[1mChat API:\033[0m     http://localhost:8000 (Docs: http://localhost:8000/docs)")
     print("  📊 \033[1mEvals API:\033[0m    http://localhost:8001 (Docs: http://localhost:8001/docs)")
     print("  ⚖️  \033[1mJudge API:\033[0m    http://localhost:8002 (Docs: http://localhost:8002/docs)")
     print("  💡 \033[1mAdvisor API:\033[0m  http://localhost:8003 (Docs: http://localhost:8003/docs)")
+    print("  🔐 \033[1mAuth API:\033[0m     http://localhost:8004 (Docs: http://localhost:8004/docs)")
     print("  🐝 \033[1mSwarm API:\033[0m    http://localhost:5002 (Docs: http://localhost:5002/docs)")
     print("=" * 60)
     print("\033[1;33mPress Ctrl+C to terminate all services.\033[0m\n")

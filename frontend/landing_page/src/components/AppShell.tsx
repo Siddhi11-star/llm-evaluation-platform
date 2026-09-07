@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, Outlet } from 'react-router'
 import { useSettings } from './ThemeProvider'
+import { useAuth } from '../context/AuthContext'
 import { Logo } from './Logo'
 import {
   IcHome,
@@ -58,8 +59,14 @@ export function PageContent({ children, style }: { children: React.ReactNode; st
 export default function AppShell() {
   const { pathname } = useLocation()
   const { theme, toggleTheme, profile, sidebarCollapsed, setSidebarCollapsed } = useSettings()
+  const { user: authUser, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [logoHovered, setLogoHovered] = useState(false)
+
+  const displayName = authUser?.name || profile.name || 'User'
+  const displayEmail = authUser?.email || profile.email || 'user@judgeai.dev'
+  const displayInitials =
+    (displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)) || 'U'
 
   const sidebarWidth = sidebarCollapsed ? 72 : 240
 
@@ -267,45 +274,109 @@ export default function AppShell() {
             {!sidebarCollapsed && (theme === 'dark' ? 'Light mode' : 'Dark mode')}
           </button>
 
-          <Link
-            to="/dashboard/settings"
+          <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-              gap: 10,
+              justifyContent: sidebarCollapsed ? 'center' : 'space-between',
               marginTop: 14,
-              textDecoration: 'none',
+              gap: 8,
             }}
           >
-            <div
+            <Link
+              to="/dashboard/settings"
+              title={`${displayName} (${displayEmail})`}
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                background: profile.avatarColor || 'linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-cyan))',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-                fontWeight: 700,
-                color: '#fff',
-                flexShrink: 0,
+                gap: 10,
+                textDecoration: 'none',
+                minWidth: 0,
+                flex: 1,
               }}
             >
-              {profile.avatarInitials || 'SL'}
-            </div>
-            {!sidebarCollapsed && (
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-foreground)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                  {profile.name}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--color-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                  {profile.email}
-                </div>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background:
+                    profile.avatarColor ||
+                    'linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-cyan))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: '#fff',
+                  flexShrink: 0,
+                }}
+              >
+                {displayInitials}
               </div>
+              {!sidebarCollapsed && (
+                <div style={{ overflow: 'hidden', minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: 'var(--color-foreground)',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {displayName}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--color-muted)',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {displayEmail}
+                  </div>
+                </div>
+              )}
+            </Link>
+
+            {!sidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => logout()}
+                title="Log out"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--color-muted)',
+                  cursor: 'pointer',
+                  padding: 6,
+                  borderRadius: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                  e.currentTarget.style.color = '#EF4444'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--color-muted)'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
             )}
-          </Link>
+          </div>
         </div>
       </aside>
 
