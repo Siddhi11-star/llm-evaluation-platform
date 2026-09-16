@@ -93,35 +93,37 @@ export const SwarmTopologyCenterpiece: React.FC<SwarmTopologyCenterpieceProps> =
               : 'bg-[var(--color-card)] border-[var(--color-border)] hover:border-purple-500/40 hover:bg-[var(--color-hover)]'
           }`}
         >
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-base">{session.orchestrator.avatar}</span>
-              <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-400 block">
+          <div className="flex items-center justify-between mb-1.5 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base shrink-0">{session.orchestrator.avatar}</span>
+              <div className="min-w-0">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-400 block truncate">
                   ORCHESTRATOR
                 </span>
-                <h4 className="text-xs font-bold text-[var(--color-foreground)]">
+                <h4 className="text-xs font-bold text-[var(--color-foreground)] truncate">
                   {session.orchestrator.name}
                 </h4>
               </div>
             </div>
-            {session.is_trivial ? (
-              <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-emerald-400">
-                <span>✓</span>
-                <span>Direct Reply</span>
-              </span>
-            ) : (
-              getStatusBadge(session.orchestrator.status)
-            )}
+            <div className="shrink-0">
+              {session.is_trivial ? (
+                <span className="flex items-center gap-1 text-[10px] font-mono font-semibold text-emerald-400">
+                  <span>✓</span>
+                  <span>Direct Reply</span>
+                </span>
+              ) : (
+                getStatusBadge(session.orchestrator.status)
+              )}
+            </div>
           </div>
 
           <p className="text-[11px] text-[var(--color-muted)] line-clamp-1 mb-2">
             {session.orchestrator.task}
           </p>
 
-          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-muted)] pt-2 border-t border-[var(--color-border-faint)]">
-            <span>Model: <strong className="text-[var(--color-foreground)]">{session.orchestrator.model}</strong></span>
-            <span>{session.orchestrator.tokens.toLocaleString()} tokens · {session.orchestrator.latency || '25ms'}</span>
+          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-muted)] pt-2 border-t border-[var(--color-border-faint)] flex-wrap gap-1">
+            <span className="truncate max-w-[200px]">Model: <strong className="text-[var(--color-foreground)]">{session.orchestrator.model}</strong></span>
+            <span className="shrink-0">{session.orchestrator.tokens.toLocaleString()} tokens · {session.orchestrator.latency || '25ms'}</span>
           </div>
         </div>
 
@@ -139,7 +141,7 @@ export const SwarmTopologyCenterpiece: React.FC<SwarmTopologyCenterpieceProps> =
       </div>
 
       {/* ================= 3. PARALLEL WORKER AGENTS ROW (MIDDLE) ================= */}
-      <div className="w-full max-w-3xl my-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 z-10 px-2">
+      <div className="w-full max-w-sm my-2 grid grid-cols-1 gap-3 z-10 px-2">
         {workerTasks.map((task, idx) => {
           const actualIndex = idx + 1
           const isSelected = selectedTaskIndex === actualIndex
@@ -155,25 +157,27 @@ export const SwarmTopologyCenterpiece: React.FC<SwarmTopologyCenterpieceProps> =
               }`}
             >
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{task.avatar}</span>
-                    <div>
-                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-purple-400 block truncate max-w-[120px]">
+                <div className="flex items-center justify-between mb-1.5 gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base shrink-0">{task.avatar}</span>
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-purple-400 block truncate">
                         {task.role}
                       </span>
-                      <h4 className="text-xs font-bold text-[var(--color-foreground)] truncate max-w-[130px]">
+                      <h4 className="text-xs font-bold text-[var(--color-foreground)] truncate">
                         {task.name}
                       </h4>
                     </div>
                   </div>
-                  {session.is_trivial ? (
-                    <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800/40 px-1.5 py-0.5 rounded border border-zinc-700/50">
-                      ○ Skipped
-                    </span>
-                  ) : (
-                    getStatusBadge(task.status)
-                  )}
+                  <div className="shrink-0">
+                    {session.is_trivial ? (
+                      <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800/40 px-1.5 py-0.5 rounded border border-zinc-700/50">
+                        ○ Skipped
+                      </span>
+                    ) : (
+                      getStatusBadge(task.status)
+                    )}
+                  </div>
                 </div>
 
                 <p className="text-[11px] text-[var(--color-muted)] line-clamp-2 leading-relaxed mb-3">
@@ -190,9 +194,9 @@ export const SwarmTopologyCenterpiece: React.FC<SwarmTopologyCenterpieceProps> =
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-muted)]">
-                  <span>Model: <strong className="text-[var(--color-foreground)]">{task.model}</strong></span>
-                  <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-muted)] flex-wrap gap-1">
+                  <span className="truncate max-w-[180px]">Model: <strong className="text-[var(--color-foreground)]">{task.model}</strong></span>
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <span>{task.tokensGenerated.toLocaleString()} tok</span>
                     <span>·</span>
                     <strong className="text-purple-300">{task.latencyMs}ms</strong>
@@ -226,37 +230,39 @@ export const SwarmTopologyCenterpiece: React.FC<SwarmTopologyCenterpieceProps> =
               : 'bg-[var(--color-card)] border-[var(--color-border)] hover:border-purple-500/40 hover:bg-[var(--color-hover)]'
           }`}
         >
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-base">{session.synthesisNode.avatar}</span>
-              <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-400 block">
+          <div className="flex items-center justify-between mb-1.5 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base shrink-0">{session.synthesisNode.avatar}</span>
+              <div className="min-w-0">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-400 block truncate">
                   SYNTHESIS
                 </span>
-                <h4 className="text-xs font-bold text-[var(--color-foreground)]">
+                <h4 className="text-xs font-bold text-[var(--color-foreground)] truncate">
                   {session.synthesisNode.name}
                 </h4>
               </div>
             </div>
-            {session.is_trivial ? (
-              <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800/40 px-1.5 py-0.5 rounded border border-zinc-700/50">
-                ○ Skipped
-              </span>
-            ) : (
-              getStatusBadge(session.synthesisNode.status)
-            )}
+            <div className="shrink-0">
+              {session.is_trivial ? (
+                <span className="text-[10px] font-mono text-zinc-400 bg-zinc-800/40 px-1.5 py-0.5 rounded border border-zinc-700/50">
+                  ○ Skipped
+                </span>
+              ) : (
+                getStatusBadge(session.synthesisNode.status)
+              )}
+            </div>
           </div>
 
           <p className="text-[11px] text-[var(--color-muted)] line-clamp-1 mb-2">
             {session.synthesisNode.task}
           </p>
 
-          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-muted)] pt-2 border-t border-[var(--color-border-faint)]">
-            <span>Model: <strong className="text-[var(--color-foreground)]">{session.synthesisNode.model}</strong></span>
+          <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-muted)] pt-2 border-t border-[var(--color-border-faint)] flex-wrap gap-1">
+            <span className="truncate max-w-[180px]">Model: <strong className="text-[var(--color-foreground)]">{session.synthesisNode.model}</strong></span>
             {session.is_trivial ? (
-              <span className="text-zinc-400">Direct Reply Served</span>
+              <span className="text-zinc-400 shrink-0">Direct Reply Served</span>
             ) : (
-              <span className="text-emerald-400 font-semibold">Meta Consensus Ready ✓</span>
+              <span className="text-emerald-400 font-semibold shrink-0">Meta Consensus Ready ✓</span>
             )}
           </div>
         </div>

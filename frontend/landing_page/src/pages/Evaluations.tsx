@@ -1226,6 +1226,30 @@ export default function Evaluations() {
     setTimeout(() => setCopiedReport(false), 2000)
   }
 
+  const handleExportJSON = () => {
+    if (!activeResult) return
+    const exportData = {
+      id: activeResult.id,
+      task_name: activeResult.task,
+      target_model: activeResult.model,
+      overall_composite_score: activeResult.compositeScore,
+      status: activeResult.status,
+      task_prompt: activeResult.prompt,
+      model_response: activeResult.response,
+      rubric_breakdown: activeResult.rubrics,
+      evaluated_at: new Date().toISOString(),
+    }
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `evaluation-${activeResult.id || Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const filtered = useMemo(() => {
     return runs.filter(r => {
       if (query && !r.task.toLowerCase().includes(query.toLowerCase()) && !r.id.includes(query)) return false

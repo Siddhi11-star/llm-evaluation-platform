@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useSettings } from '../components/ThemeProvider'
 import { TopBar } from '../components/AppShell'
+import { useAuth } from '../context/AuthContext'
 import {
   IcSend,
   IcCopy,
@@ -14,7 +15,16 @@ import {
   IcSparkles,
 } from '../components/icons'
 import { JudgeAISwarmLanding } from '../components/swarm/JudgeAISwarmLanding'
+import { SwarmTopologyCenterpiece } from '../components/swarm/SwarmTopologyCenterpiece'
+import { SwarmTimelineView } from '../components/swarm/SwarmTimelineView'
+import { SwarmMatrixView } from '../components/swarm/SwarmMatrixView'
+import { JudgeAISwarmSession, JudgeAIAgentTask, AgentStatus } from '../components/swarm/judgeAISwarmData'
+import { JudgeAITimelineStep, JudgeAISubAgentPod } from '../components/swarm/types'
 import { Search, X as XIcon } from 'lucide-react'
+
+// ─── API Base URL ─────────────────────────────────────────────────────────────
+
+const SWARM_API_BASE = import.meta.env.VITE_SWARM_API_URL || 'http://localhost:5002'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -51,6 +61,121 @@ type SwarmSession = {
   updatedAt: string
   messages: SwarmMessage[]
   agents: SwarmAgent[]
+}
+
+// ─── Helper: Format Date / Relative Time ─────────────────────────────────────
+
+function formatRelativeTime(dateStr?: string | Date): string {
+  if (!dateStr) return 'Earlier'
+  try {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return 'Earlier'
+    const diffSec = Math.floor((Date.now() - date.getTime()) / 1000)
+    if (diffSec < 60) return 'Just now'
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  } catch {
+    return 'Earlier'
+  }
+}
+
+// ─── Helper: Role Avatar Mapping ─────────────────────────────────────────────
+
+function getAgentAvatar(role: string): string {
+  const lower = role.toLowerCase()
+  if (lower.includes('research') || lower.includes('search') || lower.includes('context')) return '🔍'
+  if (lower.includes('reason') || lower.includes('logic') || lower.includes('math') || lower.includes('deduct')) return '🧠'
+  if (lower.includes('judge') || lower.includes('eval') || lower.includes('audit') || lower.includes('verify') || lower.includes('security')) return '⚖️'
+  if (lower.includes('code') || lower.includes('developer') || lower.includes('software') || lower.includes('engineer')) return '💻'
+  if (lower.includes('synthe') || lower.includes('lead') || lower.includes('orchestrat')) return '⚡'
+  if (lower.includes('data') || lower.includes('stat') || lower.includes('anal')) return '📊'
+  return '🤖'
+}
+
+// ─── Helper: Map Backend Swarm Session to UI Structure ────────────────────────
+
+function formatBackendSessionToUi(data: any): SwarmSession {
+  const sessionId = data.id || `swarm-${Date.now()}`
+  const title =
+    data.title ||
+    (data.prompt ? data.prompt.slice(0, 35) + (data.prompt.length > 35 ? '...' : '') : 'Swarm Session')
+  const modelName = data.modelName || 'gpt-oss:120b-cloud'
+  const updatedAt = formatRelativeTime(data.updated_at || data.created_at || data.startedAt)
+
+  const rawTasks = Array.isArray(data.tasks) ? data.tasks : []
+  const agents: SwarmAgent[] = rawTasks.map((t: any, idx: number) => ({
+    id: t.id || `agent-${idx + 1}`,
+    role: t.role || t.name || 'Specialist Agent',
+    task: t.taskPrompt || t.detailInfo?.overview || t.taskDescription || t.task || '',
+    model: t.model || 'gpt-oss:120b-cloud',
+    avatar: t.avatar || getAgentAvatar(t.role || t.name || ''),
+    status: (t.status === 'completed' || t.status === 'failed' || t.status === 'running') ? t.status : 'completed',
+    output: t.detailInfo?.artifactOutput?.content || t.output || '',
+    tokens: t.tokensGenerated || t.tokens || 0,
+    latency: t.latencyMs ? `${t.latencyMs}ms` : (t.latency || ''),
+  }))
+
+  let messages: SwarmMessage[] = []
+  if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+    messages = data.messages
+  } else if (data.prompt) {
+    const userMsg: SwarmMessage = {
+      id: `msg-u-${sessionId}`,
+      role: 'user',
+      text: data.prompt,
+      timestamp: data.startedAt || (data.created_at ? new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Earlier'),
+    }
+
+    let responseText = ''
+    let thinking = ''
+
+    if (data.is_trivial) {
+      thinking = data.thoughtSteps?.[0]?.content || data.orchestrator?.task || ''
+      responseText =
+        data.tasks?.[0]?.detailInfo?.artifactOutput?.content ||
+        data.synthesisText ||
+        data.orchestrator?.task ||
+        'Direct orchestrator response.'
+    } else {
+      thinking = data.orchestrator?.task || data.delegationLeadText || data.thoughtSteps?.[0]?.content || ''
+      if (data.deliverable?.content) {
+        responseText = data.deliverable.content
+      } else if (agents.length > 0) {
+        const synthParts = agents.map(
+          (a, i) => `**${i + 1}. ${a.role}** (${a.model})\n${a.output || a.task}`
+        )
+        responseText = `**Swarm Orchestrator** deployed **${agents.length} agents** across ${agents.length} cloud models in **${data.elapsedTime || ''}**.\n\n${synthParts.join('\n\n')}`
+      } else {
+        responseText = data.synthesisText || 'Swarm execution completed.'
+      }
+    }
+
+    const assistantMsg: SwarmMessage = {
+      id: `msg-a-${sessionId}`,
+      role: 'assistant',
+      text: responseText,
+      thinking,
+      showThinking: false,
+      timestamp: data.startedAt || (data.created_at ? new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Earlier'),
+      isStreaming: false,
+      agents,
+      isTrivial: data.is_trivial || false,
+      elapsedTime: data.elapsedTime || '',
+      totalTokens: data.totalTokens || 0,
+    }
+
+    messages = [userMsg, assistantMsg]
+  }
+
+  return {
+    id: sessionId,
+    title,
+    modelName,
+    updatedAt,
+    messages,
+    agents,
+  }
 }
 
 // ─── Inline Markdown Renderer ────────────────────────────────────────────────
@@ -355,9 +480,11 @@ export default function AgentSwarmPage() {
 
   const { theme } = useSettings()
   const isLightTheme = theme === 'light'
+  const { token } = useAuth()
 
   const [screenMode, setScreenMode] = useState<'landing' | 'active_swarm'>('landing')
   const [sessions, setSessions] = useState<SwarmSession[]>([])
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<SwarmMessage[]>([])
   const [input, setInput] = useState('')
@@ -365,15 +492,282 @@ export default function AgentSwarmPage() {
   const [activeAgents, setActiveAgents] = useState<SwarmAgent[]>([])
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
+  const [activeViewMode, setActiveViewMode] = useState<'cards' | 'topology' | 'timeline' | 'matrix'>('cards')
+  const [selectedTopologyIndex, setSelectedTopologyIndex] = useState<number>(0)
   const [searchQuery, setSearchQuery] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // ─── Derived Live Swarm State for Topology, Timeline & Matrix Views ────────
+
+  const liveSwarmSession: JudgeAISwarmSession = useMemo(() => {
+    const isSynthesisRunning =
+      isStreaming &&
+      activeAgents.length > 0 &&
+      activeAgents.every(a => a.status === 'completed' || a.status === 'failed')
+    const isSwarmCompleted =
+      !isStreaming &&
+      activeAgents.length > 0 &&
+      activeAgents.every(a => a.status === 'completed' || a.status === 'failed')
+
+    const orchStatus: AgentStatus =
+      isStreaming && activeAgents.length === 0
+        ? 'running'
+        : activeAgents.length > 0
+        ? 'completed'
+        : 'waiting'
+
+    const synthStatus: AgentStatus = isSwarmCompleted
+      ? 'completed'
+      : isSynthesisRunning
+      ? 'running'
+      : 'waiting'
+
+    const lastAssistantMsg = messages.filter(m => m.role === 'assistant').slice(-1)[0]
+    const lastUserMsg = messages.filter(m => m.role === 'user').slice(-1)[0]
+
+    const tasks: JudgeAIAgentTask[] = activeAgents.map((a, idx) => {
+      const latMs = parseInt((a.latency || '').replace(/[^0-9]/g, ''), 10) || 0
+      return {
+        id: a.id,
+        number: `0${idx + 1}`,
+        name: a.role,
+        role: a.role,
+        avatar: a.avatar || getAgentAvatar(a.role),
+        taskPrompt: a.task,
+        status:
+          a.status === 'completed'
+            ? 'completed'
+            : a.status === 'failed'
+            ? 'failed'
+            : a.status === 'running'
+            ? 'running'
+            : 'waiting',
+        model: a.model,
+        progress:
+          a.status === 'completed' || a.status === 'failed'
+            ? 100
+            : a.status === 'running'
+            ? 60
+            : 0,
+        tokensGenerated: a.tokens || 0,
+        latencyMs: latMs,
+        detailInfo: {
+          overview: a.task,
+          subtasks: [],
+          currentActivity: [
+            a.status === 'completed'
+              ? 'Execution finished'
+              : a.status === 'running'
+              ? 'Performing parallel inference'
+              : 'Pending dispatch',
+          ],
+          terminalLogs: [],
+          artifactOutput: a.output
+            ? {
+                type: 'markdown',
+                title: `${a.role} Output`,
+                content: a.output,
+              }
+            : undefined,
+        },
+      }
+    })
+
+    const totalTok =
+      activeAgents.reduce((sum, a) => sum + (a.tokens || 0), 0) +
+      (lastAssistantMsg?.totalTokens || 0)
+
+    return {
+      id: currentSessionId || 'swarm-live',
+      title: 'Active Swarm Execution',
+      category: 'Autonomous Multi-Agent Swarm',
+      totalTasks: activeAgents.length,
+      activeTaskIndex: selectedTopologyIndex,
+      attachmentsCount: 0,
+      modelName: 'gpt-oss:120b-cloud',
+      prompt: lastUserMsg?.text || '',
+      delegationLeadText: 'Orchestrating multi-agent cloud pods',
+      elapsedTime: lastAssistantMsg?.elapsedTime || '',
+      totalTokens: totalTok,
+      cost: `$${(totalTok * 0.000002).toFixed(4)}`,
+      swarmProgress: isSwarmCompleted ? 100 : isStreaming ? 60 : 0,
+      orchestrator: {
+        name: 'Swarm Orchestrator',
+        role: 'Planner & Pod Dispatcher',
+        avatar: '🤖',
+        model: 'gpt-oss:120b-cloud',
+        status: orchStatus,
+        progress: orchStatus === 'completed' ? 100 : orchStatus === 'running' ? 50 : 0,
+        tokens: 45,
+        latency: '28ms',
+        task:
+          lastAssistantMsg?.thinking || 'Decompose user query into parallel specialist agent pods',
+      },
+      tasks,
+      synthesisNode: {
+        name: 'Meta-Synthesizer',
+        role: 'Consensus & Deliverable Finalizer',
+        avatar: '⚡',
+        model: 'gpt-oss:120b-cloud',
+        status: synthStatus,
+        progress: synthStatus === 'completed' ? 100 : synthStatus === 'running' ? 50 : 0,
+        task: 'Synthesize specialist agent outputs into unified response',
+      },
+      thoughtSteps: [],
+      liveLogs: [],
+      is_trivial: false,
+    }
+  }, [activeAgents, isStreaming, currentSessionId, messages, selectedTopologyIndex])
+
+  const liveTimelineSteps: JudgeAITimelineStep[] = useMemo(() => {
+    const steps: JudgeAITimelineStep[] = []
+
+    if (activeAgents.length > 0 || isStreaming) {
+      steps.push({
+        agentId: 'orchestrator',
+        agentName: 'Swarm Orchestrator',
+        role: 'Query Decomposition & Planning',
+        color: '#8B5CF6',
+        startMs: 0,
+        durationMs: 40,
+        stage: 'dispatch',
+        status: activeAgents.length > 0 ? 'completed' : 'running',
+      })
+    }
+
+    activeAgents.forEach(agent => {
+      const latMs =
+        parseInt((agent.latency || '').replace(/[^0-9]/g, ''), 10) ||
+        (agent.status === 'running' ? 350 : 120)
+      steps.push({
+        agentId: agent.id,
+        agentName: agent.role,
+        role: agent.model,
+        color: getModelColor(agent.model),
+        startMs: 40,
+        durationMs: latMs,
+        stage: 'inference',
+        status:
+          agent.status === 'completed'
+            ? 'completed'
+            : agent.status === 'running'
+            ? 'running'
+            : 'completed',
+      })
+    })
+
+    const maxAgentDuration =
+      steps.length > 1 ? Math.max(...steps.slice(1).map(s => s.durationMs)) : 0
+
+    if (
+      activeAgents.some(a => a.status === 'completed') ||
+      (!isStreaming && activeAgents.length > 0)
+    ) {
+      const isSwarmDone = !isStreaming && activeAgents.length > 0
+      steps.push({
+        agentId: 'synthesis',
+        agentName: 'Meta-Synthesizer',
+        role: 'Consensus Synthesis',
+        color: '#10B981',
+        startMs: 40 + maxAgentDuration,
+        durationMs: isSwarmDone ? 180 : 80,
+        stage: 'synthesis',
+        status: isSwarmDone ? 'completed' : 'running',
+      })
+    }
+
+    return steps
+  }, [activeAgents, isStreaming])
+
+  const liveMatrixPods: JudgeAISubAgentPod[] = useMemo(() => {
+    return activeAgents.map(agent => {
+      const latMs = parseInt((agent.latency || '').replace(/[^0-9]/g, ''), 10) || 0
+      return {
+        id: agent.id,
+        name: agent.role,
+        role: agent.role,
+        avatar: agent.avatar || getAgentAvatar(agent.role),
+        color: getModelColor(agent.model),
+        model: agent.model,
+        status:
+          agent.status === 'completed'
+            ? 'completed'
+            : agent.status === 'running'
+            ? 'running'
+            : agent.status === 'failed'
+            ? 'error'
+            : 'queued',
+        taskDescription: agent.task,
+        progress: agent.status === 'completed' ? 100 : agent.status === 'running' ? 60 : 0,
+        tokensGenerated: agent.tokens || 0,
+        latencyMs: latMs,
+        toolCallsCount: 0,
+        logs: [],
+        outputSnippet: agent.output ? agent.output.slice(0, 150) : '',
+      }
+    })
+  }, [activeAgents])
+
+  const handleSelectTopologyIndex = (idx: number) => {
+    setSelectedTopologyIndex(idx)
+    if (idx >= 1 && idx <= activeAgents.length) {
+      const target = activeAgents[idx - 1]
+      if (target) {
+        setSelectedAgentId(target.id)
+      }
+    } else {
+      setSelectedAgentId(null)
+    }
+  }
+
+  // Auth Header Builder
+  const getAuthHeaders = useCallback(() => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    const currentToken = token || localStorage.getItem('judgeai_access_token')
+    if (currentToken) {
+      headers['Authorization'] = `Bearer ${currentToken}`
+    }
+    return headers
+  }, [token])
+
+  // ─── Fetch Swarm History from Backend ───────────────────────────────────
+
+  const fetchSwarmHistory = useCallback(async () => {
+    setIsHistoryLoading(true)
+    try {
+      const res = await fetch(`${SWARM_API_BASE}/api/swarm/history`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        const rawSessions = Array.isArray(data) ? data : (data.sessions || [])
+        const uiSessions = rawSessions.map((s: any) => formatBackendSessionToUi(s))
+        setSessions(uiSessions)
+      } else {
+        console.warn('Swarm history response status:', res.status)
+      }
+    } catch (err) {
+      console.warn('Could not fetch persistent swarm history:', err)
+    } finally {
+      setIsHistoryLoading(false)
+    }
+  }, [getAuthHeaders])
+
+  useEffect(() => {
+    fetchSwarmHistory()
+  }, [fetchSwarmHistory])
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isStreaming])
 
-  // Sync messages & agents back into sessions
+  // Sync messages & agents back into sessions state
   useEffect(() => {
     if (!currentSessionId) return
     setSessions(prev =>
@@ -392,15 +786,48 @@ export default function AgentSwarmPage() {
     setScreenMode('landing')
   }
 
-  const handleSelectSession = (sessionId: string) => {
-    const session = sessions.find(s => s.id === sessionId)
-    if (session) {
-      setCurrentSessionId(session.id)
-      setMessages(session.messages)
-      setActiveAgents(session.agents)
-      setScreenMode(session.messages.length > 0 ? 'active_swarm' : 'landing')
+  const handleSelectSession = async (sessionId: string) => {
+    // 1. Immediately switch to local cached state if available
+    const localSession = sessions.find(s => s.id === sessionId)
+    if (localSession && localSession.messages.length > 0) {
+      setCurrentSessionId(localSession.id)
+      setMessages(localSession.messages)
+      setActiveAgents(localSession.agents)
+      setScreenMode('active_swarm')
+      setSelectedAgentId(null)
     }
-    setSelectedAgentId(null)
+
+    // 2. Load detailed session from backend GET /api/swarm/history/{session_id}
+    try {
+      const res = await fetch(`${SWARM_API_BASE}/api/swarm/history/${sessionId}`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      })
+
+      if (res.ok) {
+        const sessionDetail = await res.json()
+        const formatted = formatBackendSessionToUi(sessionDetail)
+
+        setCurrentSessionId(formatted.id)
+        setMessages(formatted.messages)
+        setActiveAgents(formatted.agents)
+        setScreenMode(formatted.messages.length > 0 ? 'active_swarm' : 'landing')
+        setSelectedAgentId(null)
+
+        setSessions(prev =>
+          prev.map(s => (s.id === formatted.id ? formatted : s))
+        )
+      }
+    } catch (err) {
+      console.warn(`Could not load swarm session ${sessionId} detail from backend:`, err)
+      if (localSession) {
+        setCurrentSessionId(localSession.id)
+        setMessages(localSession.messages)
+        setActiveAgents(localSession.agents)
+        setScreenMode(localSession.messages.length > 0 ? 'active_swarm' : 'landing')
+      }
+    }
   }
 
   const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
@@ -422,7 +849,143 @@ export default function AgentSwarmPage() {
     handleSend(promptText)
   }
 
-  // ─── Send message → call swarm backend ─────────────────────────────────
+  // ─── Swarm Fallback Execution (POST /api/swarm/run) ────────────────────
+
+  const executeSwarmRunFallback = async (
+    trimmedPrompt: string,
+    initialSessionId: string,
+    assistantMsgId: string,
+    userMsg: SwarmMessage
+  ) => {
+    let sessionId = initialSessionId
+    let responseText = ''
+    let responseAgents: SwarmAgent[] = []
+    let isTrivial = false
+    let elapsedTime = ''
+    let totalTokens = 0
+    let thinking = ''
+    let backendSavedSession: SwarmSession | null = null
+
+    try {
+      const res = await fetch(`${SWARM_API_BASE}/api/swarm/run`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({ prompt: trimmedPrompt }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+
+        if (data.id) {
+          sessionId = data.id
+          setCurrentSessionId(sessionId)
+        }
+
+        isTrivial = data.is_trivial || false
+        elapsedTime = data.elapsedTime || ''
+        totalTokens = data.totalTokens || 0
+
+        if (isTrivial) {
+          const orch = data.orchestrator || {}
+          thinking = data.thoughtSteps?.[0]?.content || orch.task || ''
+          responseText =
+            data.tasks?.[0]?.detailInfo?.artifactOutput?.content ||
+            data.synthesisText ||
+            orch.task ||
+            'Direct orchestrator response.'
+        } else {
+          thinking = data.orchestrator?.task || data.delegationLeadText || ''
+          responseAgents = (data.tasks || []).map((t: any) => ({
+            id: t.id,
+            role: t.role || t.name,
+            task: t.taskPrompt || t.detailInfo?.overview || '',
+            model: t.model,
+            avatar: t.avatar || getAgentAvatar(t.role || t.name || ''),
+            status: (t.status === 'completed' || t.status === 'failed' || t.status === 'running') ? t.status : 'completed',
+            output: t.detailInfo?.artifactOutput?.content || '',
+            tokens: t.tokensGenerated,
+            latency: t.latencyMs ? `${t.latencyMs}ms` : (t.latency || ''),
+          }))
+
+          if (data.deliverable?.content) {
+            responseText = data.deliverable.content
+          } else {
+            const synthParts = responseAgents.map(
+              (a, i) => `**${i + 1}. ${a.role}** (${a.model})\n${a.output || a.task}`
+            )
+            responseText = `**Swarm Orchestrator** deployed **${responseAgents.length} agents** across ${responseAgents.length} cloud models in **${elapsedTime}**.\n\n${synthParts.join('\n\n')}`
+          }
+        }
+
+        backendSavedSession = formatBackendSessionToUi({
+          ...data,
+          prompt: trimmedPrompt,
+          tasks: data.tasks || responseAgents,
+        })
+        if (backendSavedSession) {
+          const savedSessionItem = backendSavedSession
+          setSessions(prev => {
+            const filtered = prev.filter(s => s.id !== savedSessionItem.id && s.id !== currentSessionId)
+            return [savedSessionItem, ...filtered]
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('Swarm fallback POST /api/swarm/run error:', err)
+    }
+
+    // Client-side fallback if backend unavailable
+    if (!responseText) {
+      const lower = trimmedPrompt.toLowerCase()
+      if (/^(hi|hello|hey|greetings)\b/i.test(lower)) {
+        isTrivial = true
+        responseText = `Hello! 👋 I am the **JudgeAI Swarm Orchestrator** powered by **gpt-oss:120b-cloud**.\n\nI coordinate specialized multi-agent swarms across cloud models (DeepSeek V4 Pro, GLM 5.2, MiniMax M3, Nemotron-3 Super, Gemma 4). Ask me any complex question, code evaluation, or research task to deploy a dynamic parallel agent swarm!`
+        thinking = 'Triage classifier detected conversational query — direct response without worker compute overhead.'
+      } else {
+        responseAgents = [
+          { id: 'a1', role: 'Context & Research Agent', task: `Conduct foundational analysis for: ${trimmedPrompt}`, model: 'deepseek-v4-pro:cloud', avatar: '🔍', status: 'completed' },
+          { id: 'a2', role: 'Deductive Reasoning Specialist', task: `Formulate multi-step logical proofs for: ${trimmedPrompt}`, model: 'glm-5.2:cloud', avatar: '🧠', status: 'completed' },
+          { id: 'a3', role: 'Verification & Quality Judge', task: `Audit assertions for groundedness and safety for: ${trimmedPrompt}`, model: 'minimax-m3:cloud', avatar: '⚖️', status: 'completed' },
+        ]
+        responseText = `**Swarm Orchestrator** deployed **${responseAgents.length} agents** across cloud models.\n\n` +
+          responseAgents.map((a, i) => `**${i + 1}. ${a.role}** (${a.model})\n${a.task}`).join('\n\n')
+        thinking = `Orchestrator decomposed prompt into ${responseAgents.length} specialized parallel agent pods.`
+      }
+    }
+
+    setActiveAgents(responseAgents)
+    const finalAssistantMsg: SwarmMessage = {
+      id: assistantMsgId,
+      role: 'assistant',
+      text: responseText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isStreaming: false,
+      thinking,
+      agents: responseAgents,
+      isTrivial,
+      elapsedTime,
+      totalTokens,
+    }
+
+    setMessages(prev => prev.map(m => (m.id === assistantMsgId ? finalAssistantMsg : m)))
+    setIsStreaming(false)
+
+    const fullMessages = [userMsg, finalAssistantMsg]
+    setSessions(prev =>
+      prev.map(s =>
+        s.id === sessionId
+          ? {
+              ...s,
+              messages: fullMessages,
+              agents: responseAgents,
+            }
+          : s
+      )
+    )
+  }
+
+  // ─── Real SSE Swarm Streaming (POST /api/swarm/stream) ─────────────────
 
   const handleSend = async (overrideText?: string) => {
     const textToSend = overrideText || input
@@ -434,9 +997,8 @@ export default function AgentSwarmPage() {
     setIsStreaming(true)
 
     // Ensure we have an active session
-    let sessionId = currentSessionId
-    if (!sessionId) {
-      sessionId = `swarm-${Date.now()}`
+    let sessionId: string = currentSessionId || `swarm-${Date.now()}`
+    if (!currentSessionId) {
       setCurrentSessionId(sessionId)
       const title = trimmedPrompt.slice(0, 35) + (trimmedPrompt.length > 35 ? '...' : '')
       const newSession: SwarmSession = {
@@ -462,6 +1024,8 @@ export default function AgentSwarmPage() {
       id: assistantMsgId,
       role: 'assistant',
       text: '',
+      thinking: 'Connecting to Swarm Orchestrator...',
+      showThinking: false,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isStreaming: true,
       agents: [],
@@ -471,128 +1035,290 @@ export default function AgentSwarmPage() {
     setMessages(prev => [...prev, userMsg, placeholderMsg])
     setActiveAgents([])
 
-    let responseText = ''
-    let responseAgents: SwarmAgent[] = []
-    let isTrivial = false
-    let elapsedTime = ''
-    let totalTokens = 0
-    let thinking = ''
-
     try {
-      const res = await fetch('http://localhost:5002/api/swarm/run', {
+      const response = await fetch(`${SWARM_API_BASE}/api/swarm/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
+        credentials: 'include',
         body: JSON.stringify({ prompt: trimmedPrompt }),
       })
 
-      if (res.ok) {
-        const data = await res.json()
+      if (!response.ok || !response.body) {
+        throw new Error(`SSE stream connection failed with HTTP status ${response.status}`)
+      }
 
-        isTrivial = data.is_trivial || false
-        elapsedTime = data.elapsedTime || ''
-        totalTokens = data.totalTokens || 0
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
+      let currentEvent = ''
+      let currentAgents: SwarmAgent[] = []
+      let currentThinking = 'Orchestrating agent swarm...'
+      let currentText = ''
+      let streamFinished = false
 
-        if (isTrivial) {
-          // Direct response — no worker agents needed
-          const orch = data.orchestrator || {}
-          thinking = data.thoughtSteps?.[0]?.content || orch.task || ''
-          responseText =
-            data.tasks?.[0]?.detailInfo?.artifactOutput?.content ||
-            data.synthesisText ||
-            orch.task ||
-            'Direct orchestrator response.'
-        } else {
-          // Multi-agent swarm response
-          thinking = data.orchestrator?.task || data.delegationLeadText || ''
-          responseAgents = (data.tasks || []).map((t: any) => ({
-            id: t.id,
-            role: t.role || t.name,
-            task: t.taskPrompt || t.detailInfo?.overview || '',
-            model: t.model,
-            avatar: t.avatar || '🤖',
-            status: 'completed' as const,
-            output: t.detailInfo?.artifactOutput?.content || '',
-            tokens: t.tokensGenerated,
-            latency: `${t.latencyMs}ms`,
-          }))
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
 
-          const synthParts = responseAgents.map(
-            (a, i) => `**${i + 1}. ${a.role}** (${a.model})\n${a.output || a.task}`
-          )
-          responseText = `**Swarm Orchestrator** deployed **${responseAgents.length} agents** across ${responseAgents.length} cloud models in **${elapsedTime}**.\n\n${synthParts.join('\n\n')}`
+        const lines = buffer.split(/\r?\n/)
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('event:')) {
+            currentEvent = line.replace(/^event:\s*/, '').trim()
+          } else if (line.startsWith('data:')) {
+            const dataStr = line.replace(/^data:\s*/, '').trim()
+            if (dataStr) {
+              try {
+                const data = JSON.parse(dataStr)
+                const eventType = currentEvent || 'message'
+
+                if (eventType === 'swarm_started') {
+                  if (data.session_id) {
+                    sessionId = data.session_id
+                    setCurrentSessionId(sessionId)
+                  }
+                  currentThinking = `Swarm session initialized on ${data.orchestrator_model || 'gpt-oss:120b-cloud'}. Orchestrator planning execution...`
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, thinking: currentThinking }
+                        : m
+                    )
+                  )
+                } else if (eventType === 'orchestrator_planning') {
+                  currentThinking = `Orchestrator decomposing prompt & planning parallel agent pods...`
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, thinking: currentThinking }
+                        : m
+                    )
+                  )
+                } else if (eventType === 'agent_started') {
+                  const agentId = data.agent_id || `agent-${currentAgents.length + 1}`
+                  const existingIdx = currentAgents.findIndex(a => a.id === agentId || a.role === data.role)
+                  const newAgent: SwarmAgent = {
+                    id: agentId,
+                    role: data.role || 'Specialist Agent',
+                    task: data.task || '',
+                    model: data.model || 'gpt-oss:120b-cloud',
+                    avatar: getAgentAvatar(data.role || ''),
+                    status: 'running',
+                    tokens: 0,
+                    latency: '',
+                    output: '',
+                  }
+
+                  if (existingIdx >= 0) {
+                    currentAgents[existingIdx] = { ...currentAgents[existingIdx], ...newAgent, status: 'running' }
+                  } else {
+                    currentAgents = [...currentAgents, newAgent]
+                  }
+
+                  currentThinking = `Deployed ${currentAgents.length} specialized agent pod${currentAgents.length > 1 ? 's' : ''} across cloud models.`
+                  setActiveAgents([...currentAgents])
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, thinking: currentThinking, agents: [...currentAgents] }
+                        : m
+                    )
+                  )
+                } else if (eventType === 'agent_completed') {
+                  const agentId = data.agent_id
+                  const existing = currentAgents.find(a => a.id === agentId || a.role === data.role)
+                  if (existing) {
+                    currentAgents = currentAgents.map(a => {
+                      if (a.id === agentId || a.role === data.role) {
+                        return {
+                          ...a,
+                          status: 'completed' as const,
+                          model: data.model || a.model,
+                          tokens: data.tokens ?? a.tokens,
+                          latency: data.latency_ms ? `${data.latency_ms}ms` : a.latency,
+                          output: data.output || data.output_snippet || a.output || '',
+                        }
+                      }
+                      return a
+                    })
+                  } else {
+                    currentAgents = [
+                      ...currentAgents,
+                      {
+                        id: agentId || `agent-${currentAgents.length + 1}`,
+                        role: data.role || 'Specialist Agent',
+                        model: data.model || 'gpt-oss:120b-cloud',
+                        task: '',
+                        avatar: getAgentAvatar(data.role || ''),
+                        status: 'completed',
+                        tokens: data.tokens ?? 0,
+                        latency: data.latency_ms ? `${data.latency_ms}ms` : '',
+                        output: data.output || data.output_snippet || '',
+                      },
+                    ]
+                  }
+
+                  setActiveAgents([...currentAgents])
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, agents: [...currentAgents] }
+                        : m
+                    )
+                  )
+                } else if (eventType === 'agent_failed') {
+                  const agentId = data.agent_id
+                  const existing = currentAgents.find(a => a.id === agentId || a.role === data.role)
+                  if (existing) {
+                    currentAgents = currentAgents.map(a => {
+                      if (a.id === agentId || a.role === data.role) {
+                        return {
+                          ...a,
+                          status: 'failed' as const,
+                          model: data.model || a.model,
+                          latency: data.latency_ms ? `${data.latency_ms}ms` : a.latency,
+                          output: `⚠️ ${data.error || 'Agent execution failed'}`,
+                        }
+                      }
+                      return a
+                    })
+                  } else {
+                    currentAgents = [
+                      ...currentAgents,
+                      {
+                        id: agentId || `agent-${currentAgents.length + 1}`,
+                        role: data.role || 'Specialist Agent',
+                        model: data.model || 'gpt-oss:120b-cloud',
+                        task: '',
+                        avatar: getAgentAvatar(data.role || ''),
+                        status: 'failed',
+                        tokens: 0,
+                        latency: data.latency_ms ? `${data.latency_ms}ms` : '',
+                        output: `⚠️ ${data.error || 'Agent execution failed'}`,
+                      },
+                    ]
+                  }
+
+                  setActiveAgents([...currentAgents])
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, agents: [...currentAgents] }
+                        : m
+                    )
+                  )
+                } else if (eventType === 'synthesis_started') {
+                  const succCount = data.successful_agents_count ?? currentAgents.filter(a => a.status === 'completed').length
+                  currentThinking = `Specialist tasks completed (${succCount} successful). Synthesizing consensus deliverable...`
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, thinking: currentThinking }
+                        : m
+                    )
+                  )
+                } else if (eventType === 'synthesis_completed') {
+                  currentText = data.synthesized_text || currentText
+                  currentThinking = `Synthesis finalized in ${data.latency_ms || 0}ms (${data.tokens || 0} tokens).`
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, text: currentText, thinking: currentThinking }
+                        : m
+                    )
+                  )
+                } else if (eventType === 'swarm_completed') {
+                  streamFinished = true
+                  setIsStreaming(false)
+                  const sessionData = data.session || {}
+                  const formatted = formatBackendSessionToUi({
+                    ...sessionData,
+                    id: data.session_id || sessionId,
+                    prompt: trimmedPrompt,
+                    elapsedTime: data.elapsed_time || sessionData.elapsedTime,
+                    totalTokens: data.total_tokens || sessionData.totalTokens,
+                    tasks: sessionData.tasks || currentAgents,
+                    synthesisText: currentText || sessionData.synthesisText,
+                  })
+
+                  const finalText =
+                    sessionData.deliverable?.content ||
+                    sessionData.synthesisText ||
+                    currentText ||
+                    (formatted.messages?.[1]?.text ? formatted.messages[1].text : '') ||
+                    'Swarm execution completed.'
+
+                  const finalAssistantMsg: SwarmMessage = {
+                    id: assistantMsgId,
+                    role: 'assistant',
+                    text: finalText,
+                    thinking: currentThinking || sessionData.orchestrator?.task || 'Swarm execution complete.',
+                    showThinking: false,
+                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    isStreaming: false,
+                    agents: currentAgents.length > 0 ? currentAgents : formatted.agents,
+                    isTrivial: sessionData.is_trivial || false,
+                    elapsedTime: data.elapsed_time || '',
+                    totalTokens: data.total_tokens || 0,
+                  }
+
+                  setMessages(prev =>
+                    prev.map(m => (m.id === assistantMsgId ? finalAssistantMsg : m))
+                  )
+
+                  if (currentAgents.length > 0) {
+                    setActiveAgents(currentAgents)
+                  } else if (formatted.agents.length > 0) {
+                    setActiveAgents(formatted.agents)
+                  }
+
+                  // Update session history
+                  const fullSessionItem: SwarmSession = {
+                    ...formatted,
+                    id: data.session_id || sessionId,
+                    messages: [userMsg, finalAssistantMsg],
+                    agents: currentAgents.length > 0 ? currentAgents : formatted.agents,
+                  }
+
+                  setSessions(prev => {
+                    const filtered = prev.filter(s => s.id !== fullSessionItem.id && s.id !== currentSessionId)
+                    return [fullSessionItem, ...filtered]
+                  })
+                } else if (eventType === 'swarm_failed') {
+                  streamFinished = true
+                  setIsStreaming(false)
+                  const errorMsg = `⚠️ **Swarm Execution Error**: ${data.error || 'An unexpected error occurred during swarm execution.'}`
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantMsgId
+                        ? { ...m, text: errorMsg, isStreaming: false }
+                        : m
+                    )
+                  )
+                }
+              } catch (e) {
+                console.warn('Error processing SSE data chunk:', e)
+              }
+            }
+          } else if (line.trim() === '') {
+            currentEvent = ''
+          }
         }
       }
-    } catch (err) {
-      console.warn('Swarm backend error, fallback activated:', err)
-    }
 
-    // Client-side fallback
-    if (!responseText) {
-      const lower = trimmedPrompt.toLowerCase()
-      if (/^(hi|hello|hey|greetings)\b/i.test(lower)) {
-        isTrivial = true
-        responseText = `Hello! 👋 I am the **JudgeAI Swarm Orchestrator** powered by **gpt-oss:120b-cloud**.\n\nI coordinate specialized multi-agent swarms across cloud models (DeepSeek V4 Pro, GLM 5.2, MiniMax M3, Nemotron-3 Super, Gemma 4). Ask me any complex question, code evaluation, or research task to deploy a dynamic parallel agent swarm!`
-        thinking = 'Triage classifier detected conversational query — direct response without worker compute overhead.'
-      } else {
-        responseAgents = [
-          { id: 'a1', role: 'Context & Research Agent', task: `Conduct foundational analysis for: ${trimmedPrompt}`, model: 'deepseek-v4-pro:cloud', avatar: '🔍', status: 'completed' },
-          { id: 'a2', role: 'Deductive Reasoning Specialist', task: `Formulate multi-step logical proofs for: ${trimmedPrompt}`, model: 'glm-5.2:cloud', avatar: '🧠', status: 'completed' },
-          { id: 'a3', role: 'Verification & Quality Judge', task: `Audit assertions for groundedness and safety for: ${trimmedPrompt}`, model: 'minimax-m3:cloud', avatar: '⚖️', status: 'completed' },
-        ]
-        responseText = `**Swarm Orchestrator** deployed **${responseAgents.length} agents** across cloud models.\n\n` +
-          responseAgents.map((a, i) => `**${i + 1}. ${a.role}** (${a.model})\n${a.task}`).join('\n\n')
-        thinking = `Orchestrator decomposed prompt into ${responseAgents.length} specialized parallel agent pods.`
-      }
-    }
-
-    // Set agents in right panel
-    setActiveAgents(responseAgents)
-
-    // Stream text word by word for realistic typing
-    const words = responseText.split(' ')
-    let currentLength = 0
-
-    const interval = setInterval(() => {
-      currentLength += Math.floor(Math.random() * 3) + 2
-      const chunk = words.slice(0, currentLength).join(' ')
-
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === assistantMsgId
-            ? {
-                ...m,
-                text: chunk,
-                thinking,
-                agents: responseAgents,
-                isTrivial,
-                elapsedTime,
-                totalTokens,
-              }
-            : m
-        )
-      )
-
-      if (currentLength >= words.length) {
-        clearInterval(interval)
+      if (!streamFinished) {
         setIsStreaming(false)
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantMsgId
-              ? {
-                  ...m,
-                  text: responseText,
-                  isStreaming: false,
-                  thinking,
-                  agents: responseAgents,
-                  isTrivial,
-                  elapsedTime,
-                  totalTokens,
-                }
-              : m
-          )
-        )
+        if (!currentText && currentAgents.length === 0) {
+          console.warn('Empty SSE stream received, executing fallback POST /api/swarm/run...')
+          await executeSwarmRunFallback(trimmedPrompt, sessionId, assistantMsgId, userMsg)
+        }
       }
-    }, 30)
+    } catch (streamErr) {
+      console.warn('SSE stream connection interrupted or failed, activating fallback POST /api/swarm/run:', streamErr)
+      await executeSwarmRunFallback(trimmedPrompt, sessionId, assistantMsgId, userMsg)
+    }
   }
 
   const handleCopy = (id: string, text: string) => {
@@ -768,7 +1494,33 @@ export default function AgentSwarmPage() {
               >
                 History
               </div>
-              {filteredSessions.length === 0 ? (
+              {isHistoryLoading ? (
+                <div
+                  style={{
+                    padding: '24px 12px',
+                    fontSize: 12,
+                    color: 'var(--color-muted)',
+                    textAlign: 'center',
+                    lineHeight: 1.6,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      border: '2px solid rgba(124,58,237,0.2)',
+                      borderTopColor: '#7C3AED',
+                      animation: 'spin 0.8s linear infinite',
+                    }}
+                  />
+                  <span>Loading history...</span>
+                </div>
+              ) : filteredSessions.length === 0 ? (
                 <div
                   style={{
                     padding: '24px 12px',
@@ -1149,9 +1901,10 @@ export default function AgentSwarmPage() {
                                 </button>
                                 <div style={{ flex: 1 }} />
                                 <button
-                                  onClick={() =>
-                                    handleSend(messages.findLast(x => x.role === 'user')?.text)
-                                  }
+                                  onClick={() => {
+                                    const lastUserMsg = [...messages].reverse().find(x => x.role === 'user')
+                                    if (lastUserMsg) handleSend(lastUserMsg.text)
+                                  }}
                                   style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -1333,10 +2086,10 @@ export default function AgentSwarmPage() {
             </div>
           </div>
 
-          {/* ═══════ RIGHT: Swarm Agents Panel ═══════ */}
+          {/* ═══════ RIGHT: Swarm Agents & Topology Panel ═══════ */}
           <div
             style={{
-              width: 420,
+              width: 460,
               flexShrink: 0,
               display: 'flex',
               flexDirection: 'column',
@@ -1344,26 +2097,63 @@ export default function AgentSwarmPage() {
               overflow: 'hidden',
             }}
           >
-            {/* Header */}
+            {/* Header with View Switcher */}
             <div
               style={{
-                padding: '18px 24px',
+                padding: '14px 20px',
                 borderBottom: '1px solid var(--color-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                gap: 8,
               }}
             >
-              <h3
+              {/* Segmented View Tabs */}
+              <div
                 style={{
-                  margin: 0,
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: 'var(--color-foreground)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 999,
+                  padding: 2,
+                  gap: 2,
                 }}
               >
-                Swarm Agents
-              </h3>
+                {(
+                  [
+                    { id: 'cards', label: 'Cards' },
+                    { id: 'topology', label: 'Topology' },
+                    { id: 'timeline', label: 'Timeline' },
+                    { id: 'matrix', label: 'Matrix' },
+                  ] as const
+                ).map(tab => {
+                  const isActive = activeViewMode === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveViewMode(tab.id)}
+                      style={{
+                        background: isActive ? 'rgba(124, 58, 237, 0.25)' : 'transparent',
+                        border: isActive
+                          ? '1px solid rgba(124, 58, 237, 0.4)'
+                          : '1px solid transparent',
+                        color: isActive ? '#D8B4FE' : 'var(--color-muted)',
+                        fontWeight: isActive ? 700 : 500,
+                        fontSize: 11,
+                        padding: '4px 10px',
+                        borderRadius: 999,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
+
               {activeAgents.length > 0 && (
                 <span
                   style={{
@@ -1374,6 +2164,7 @@ export default function AgentSwarmPage() {
                     background: 'rgba(16,185,129,0.12)',
                     color: '#10B981',
                     border: '1px solid rgba(16,185,129,0.2)',
+                    flexShrink: 0,
                   }}
                 >
                   {activeAgents.length} Active
@@ -1381,15 +2172,16 @@ export default function AgentSwarmPage() {
               )}
             </div>
 
-            {/* Agents Grid */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: 20 }} className="custom-scrollbar">
-              {activeAgents.length === 0 ? (
+            {/* Panel Body */}
+            <div style={{ flex: 1, overflowY: 'auto' }} className="custom-scrollbar">
+              {activeAgents.length === 0 && !isStreaming ? (
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     height: '100%',
+                    padding: 24,
                   }}
                 >
                   <div style={{ textAlign: 'center', color: 'var(--color-muted)' }}>
@@ -1399,138 +2191,169 @@ export default function AgentSwarmPage() {
                     </p>
                   </div>
                 </div>
+              ) : activeViewMode === 'topology' ? (
+                /* ─── 1. Topology View: Orchestrator → Specialist Agents → Synthesizer Flow ─── */
+                <div style={{ padding: 12 }}>
+                  <SwarmTopologyCenterpiece
+                    session={liveSwarmSession}
+                    selectedTaskIndex={selectedTopologyIndex}
+                    onSelectTaskIndex={handleSelectTopologyIndex}
+                    isLightTheme={isLightTheme}
+                  />
+                </div>
+              ) : activeViewMode === 'timeline' ? (
+                /* ─── 2. Timeline View: Real Execution Telemetry & Latency Breakdown ─── */
+                <div style={{ height: '100%', minHeight: 350 }}>
+                  <SwarmTimelineView
+                    timelineSteps={liveTimelineSteps}
+                    isExecuting={isStreaming}
+                    isLightTheme={isLightTheme}
+                  />
+                </div>
+              ) : activeViewMode === 'matrix' ? (
+                /* ─── 3. Matrix View: Specialist Pod Telemetry Grid ─── */
+                <div style={{ height: '100%', minHeight: 350 }}>
+                  <SwarmMatrixView
+                    pods={liveMatrixPods}
+                    isExecuting={isStreaming}
+                    isLightTheme={isLightTheme}
+                  />
+                </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-                  {activeAgents.map(agent => {
-                    const isSelected = selectedAgentId === agent.id
-                    const color = getModelColor(agent.model)
+                /* ─── 4. Cards View: Default Interactive Agent Cards ─── */
+                <div style={{ padding: 20 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+                    {activeAgents.map(agent => {
+                      const isSelected = selectedAgentId === agent.id
+                      const color = getModelColor(agent.model)
 
-                    return (
-                      <div
-                        key={agent.id}
-                        onClick={() => setSelectedAgentId(isSelected ? null : agent.id)}
-                        style={{
-                          background: isSelected ? `${color}12` : 'var(--color-card)',
-                          border: `1px solid ${isSelected ? `${color}40` : 'var(--color-border)'}`,
-                          borderRadius: 16,
-                          padding: 16,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 10,
-                        }}
-                        onMouseEnter={e => {
-                          if (!isSelected) {
-                            e.currentTarget.style.borderColor = `${color}30`
-                            e.currentTarget.style.background = 'var(--color-hover)'
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          if (!isSelected) {
-                            e.currentTarget.style.borderColor = 'var(--color-border)'
-                            e.currentTarget.style.background = 'var(--color-card)'
-                          }
-                        }}
-                      >
-                        {/* Agent Header */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: 10,
-                              background: `${color}20`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: 16,
-                            }}
-                          >
-                            {agent.avatar}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: 'var(--color-foreground)',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {agent.role}
-                            </div>
-                            <div style={{ fontSize: 10, color, fontWeight: 600, marginTop: 2 }}>
-                              {agent.model}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Status */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <span
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: '50%',
-                              background:
-                                agent.status === 'completed'
-                                  ? '#10B981'
-                                  : agent.status === 'running'
-                                  ? '#F59E0B'
-                                  : agent.status === 'failed'
-                                  ? '#EF4444'
-                                  : 'var(--color-muted)',
-                              boxShadow:
-                                agent.status === 'running'
-                                  ? '0 0 8px rgba(245,158,11,0.5)'
-                                  : 'none',
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 600,
-                              color: 'var(--color-muted)',
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            {agent.status}
-                          </span>
-                          {agent.tokens && (
-                            <span
-                              style={{
-                                fontSize: 9,
-                                color: 'var(--color-muted)',
-                                marginLeft: 'auto',
-                                fontFamily: 'monospace',
-                              }}
-                            >
-                              {agent.tokens} tok
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Task preview */}
+                      return (
                         <div
+                          key={agent.id}
+                          onClick={() => setSelectedAgentId(isSelected ? null : agent.id)}
                           style={{
-                            fontSize: 11,
-                            color: 'var(--color-muted)',
-                            lineHeight: 1.4,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
+                            background: isSelected ? `${color}12` : 'var(--color-card)',
+                            border: `1px solid ${isSelected ? `${color}40` : 'var(--color-border)'}`,
+                            borderRadius: 16,
+                            padding: 16,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 10,
+                          }}
+                          onMouseEnter={e => {
+                            if (!isSelected) {
+                              e.currentTarget.style.borderColor = `${color}30`
+                              e.currentTarget.style.background = 'var(--color-hover)'
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            if (!isSelected) {
+                              e.currentTarget.style.borderColor = 'var(--color-border)'
+                              e.currentTarget.style.background = 'var(--color-card)'
+                            }
                           }}
                         >
-                          {agent.task}
+                          {/* Agent Header */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 10,
+                                background: `${color}20`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 16,
+                              }}
+                            >
+                              {agent.avatar}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color: 'var(--color-foreground)',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                              >
+                                {agent.role}
+                              </div>
+                              <div style={{ fontSize: 10, color, fontWeight: 600, marginTop: 2 }}>
+                                {agent.model}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Status */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <span
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                background:
+                                  agent.status === 'completed'
+                                    ? '#10B981'
+                                    : agent.status === 'running'
+                                    ? '#F59E0B'
+                                    : agent.status === 'failed'
+                                    ? '#EF4444'
+                                    : 'var(--color-muted)',
+                                boxShadow:
+                                  agent.status === 'running'
+                                    ? '0 0 8px rgba(245,158,11,0.5)'
+                                    : 'none',
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 600,
+                                color: 'var(--color-muted)',
+                                textTransform: 'capitalize',
+                              }}
+                            >
+                              {agent.status}
+                            </span>
+                            {agent.tokens && (
+                              <span
+                                style={{
+                                  fontSize: 9,
+                                  color: 'var(--color-muted)',
+                                  marginLeft: 'auto',
+                                  fontFamily: 'monospace',
+                                }}
+                              >
+                                {agent.tokens} tok
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Task preview */}
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: 'var(--color-muted)',
+                              lineHeight: 1.4,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                            }}
+                          >
+                            {agent.task}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -1610,6 +2433,7 @@ export default function AgentSwarmPage() {
         @keyframes swarmSplashFadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
         @keyframes swarmFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
         @keyframes swarmProgress { 0%{width:0%} 100%{width:100%} }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
       `}</style>
     </>
   )

@@ -10,9 +10,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 try:
     from .config import settings
     from .router import router as swarm_router
+    from .db import SwarmDatabase
 except ImportError:
     from config import settings
     from router import router as swarm_router
+    from db import SwarmDatabase
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,8 +30,11 @@ async def lifespan(app: FastAPI):
         f"Orchestrator: {settings.ORCHESTRATOR_MODEL} — "
         f"Ollama: {settings.OLLAMA_BASE_URL}"
     )
+    await SwarmDatabase.connect()
     yield
+    await SwarmDatabase.close()
     logger.info("JudgeAI Agent Swarm Service shutting down")
+
 
 
 app = FastAPI(
