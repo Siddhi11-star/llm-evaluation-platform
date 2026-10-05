@@ -144,6 +144,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [fetchCurrentUser, refreshSession])
 
+  // Keep judgeai_profile in sync with authenticated user
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      if (user?.name) {
+        const raw = localStorage.getItem('judgeai_profile')
+        const parsed = raw ? JSON.parse(raw) : {}
+        parsed.name = user.name
+        if (user.email) parsed.email = user.email
+        const initials = user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+        if (initials) parsed.avatarInitials = initials
+        localStorage.setItem('judgeai_profile', JSON.stringify(parsed))
+        window.dispatchEvent(new Event('judgeai_profile_updated'))
+      }
+    } catch {}
+  }, [user])
+
   // Login handler
   const login = async (email: string, password: string) => {
     setIsLoading(true)
@@ -371,6 +388,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     localStorage.removeItem(TOKEN_STORAGE_KEY)
+    localStorage.removeItem('judgeai_profile')
+    window.dispatchEvent(new Event('judgeai_profile_updated'))
     setToken(null)
     setUser(null)
     setError(null)

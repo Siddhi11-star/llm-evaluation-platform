@@ -63,7 +63,8 @@ export default function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [logoHovered, setLogoHovered] = useState(false)
 
-  const displayName = authUser?.name || profile.name || 'User'
+  const rawDisplayName = authUser?.name || (profile.name && profile.name !== 'Sarah Lin' ? profile.name : '') || ''
+  const displayName = rawDisplayName.trim() || (authUser?.email ? authUser.email.split('@')[0] : 'User')
   const displayEmail = authUser?.email || profile.email || 'user@judgeai.dev'
   const displayInitials =
     (displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)) || 'U'

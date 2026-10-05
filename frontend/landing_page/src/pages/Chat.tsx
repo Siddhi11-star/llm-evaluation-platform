@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router'
 import { useState, useRef, useEffect } from 'react'
 import { TopBar } from '../components/AppShell'
 import { useSettings } from '../components/ThemeProvider'
+import { useAuth } from '../context/AuthContext'
 import {
   IcSend,
   IcPlus,
@@ -964,7 +965,12 @@ export default function ChatPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { profile } = useSettings()
+  const { user: authUser } = useAuth()
   const isGuest = location.pathname === '/guest-chat'
+
+  // Dynamic user name based on authenticated user session or profile settings
+  const rawDisplayName = authUser?.name || (profile?.name && profile.name !== 'Sarah Lin' ? profile.name : '') || ''
+  const displayName = rawDisplayName.trim() || (authUser?.email ? authUser.email.split('@')[0] : 'User')
 
   const activeThread = threads.find(t => t.id === activeThreadId) || threads[0]
   const selectedModel = MODELS.find(m => m.id === selectedModelId) || MODELS[0]
@@ -1632,7 +1638,7 @@ export default function ChatPage() {
                     <MeshGradientSVG size={145} modelColor={selectedModel.badgeColor} />
                   </div>
                   <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px', color: 'var(--color-foreground)' }}>
-                    {isGuest ? 'Welcome to JudgeAI' : `Welcome, ${profile?.name || 'Hitarth Saparia'}`}
+                    {isGuest ? 'Welcome to JudgeAI' : `Welcome, ${displayName}`}
                   </h1>
                 </div>
 

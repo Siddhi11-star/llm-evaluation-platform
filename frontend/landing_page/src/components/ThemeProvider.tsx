@@ -91,12 +91,12 @@ export interface SettingsContextValue {
 }
 
 const DEFAULT_PROFILE: UserProfile = {
-  name: 'Sarah Lin',
-  email: 'sarah@judgeai.dev',
-  org: 'Acme AI Labs',
-  bio: 'Lead ML Engineer focused on LLM multi-agent evaluation, alignment and safety guardrails.',
+  name: 'User',
+  email: 'user@judgeai.dev',
+  org: 'JudgeAI Labs',
+  bio: 'AI Engineer focused on LLM multi-agent evaluation, alignment and safety guardrails.',
   avatarColor: 'linear-gradient(135deg, #7C3AED, #38BDF8)',
-  avatarInitials: 'SL',
+  avatarInitials: 'U',
 }
 
 const DEFAULT_CHAT: ChatSettings = {
@@ -208,7 +208,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return DEFAULT_PROFILE
     try {
       const saved = localStorage.getItem('judgeai_profile')
-      return saved ? JSON.parse(saved) : DEFAULT_PROFILE
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.name === 'Sarah Lin') {
+          parsed.name = 'User'
+          parsed.avatarInitials = 'U'
+        }
+        return { ...DEFAULT_PROFILE, ...parsed }
+      }
+      return DEFAULT_PROFILE
     } catch {
       return DEFAULT_PROFILE
     }
@@ -293,6 +301,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem('judgeai_sidebar_collapsed', String(sidebarCollapsed))
   }, [sidebarCollapsed])
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      try {
+        const saved = localStorage.getItem('judgeai_profile')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed.name === 'Sarah Lin') {
+            parsed.name = 'User'
+            parsed.avatarInitials = 'U'
+          }
+          setProfileState(prev => ({ ...prev, ...parsed }))
+        } else {
+          setProfileState(DEFAULT_PROFILE)
+        }
+      } catch {}
+    }
+    window.addEventListener('judgeai_profile_updated', handleProfileUpdate)
+    window.addEventListener('storage', handleProfileUpdate)
+    return () => {
+      window.removeEventListener('judgeai_profile_updated', handleProfileUpdate)
+      window.removeEventListener('storage', handleProfileUpdate)
+    }
+  }, [])
 
   // Context Setters with Storage Sync
   const toggleTheme = () => setThemeState(prev => (prev === 'dark' ? 'light' : 'dark'))
